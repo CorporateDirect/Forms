@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Functionality Library - Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .form-container {
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .step {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            background: white;
+        }
+        
+        .step.active-step {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        input.error-field {
+            border-color: #e74c3c;
+            background-color: #fdf2f2;
+        }
+        
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        
+        .form-buttons {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        button[data-form="back-btn"] {
+            background: #6c757d;
+            color: white;
+        }
+        
+        button[data-form="next-btn"], button[data-form="submit"] {
+            background: #007bff;
+            color: white;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .summary-section {
+            background: #e9ecef;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .summary-field {
+            margin-bottom: 10px;
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+        }
+        
+        .summary-empty {
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .summary-filled {
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .hidden-step {
+            display: none !important;
+        }
+        
+        .debug-panel {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Form Functionality Library - Test</h1>
+    
+    <div class="form-container">
+        <form data-form="multistep" data-logic="true">
+            <h2>Multi-Step Form with Branching Logic</h2>
+            
+            <!-- Step 1: Basic Information -->
+            <div data-form="step" data-answer="step-1">
+                <h3>Step 1: Basic Information</h3>
+                
+                <div class="form-group">
+                    <label for="firstName">First Name *</label>
+                    <input type="text" id="firstName" name="firstName" data-step-field-name="firstName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastName">Last Name *</label>
+                    <input type="text" id="lastName" name="lastName" data-step-field-name="lastName" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email *</label>
+                    <input type="email" id="email" name="email" data-step-field-name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="role">What is your role?</label>
+                    <select id="role" name="role" data-step-field-name="role" data-go-to="manager-step" required>
+                        <option value="">Select a role</option>
+                        <option value="Manager">Manager</option>
+                        <option value="Employee">Employee</option>
+                        <option value="Contractor">Contractor</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Step 2: Manager-specific questions (conditional) -->
+            <div data-form="step" data-answer="manager-step" data-step-type="manager" data-step-subtype="details" data-step-number="1">
+                <h3>Step 2: Manager Details</h3>
+                
+                <div class="form-group">
+                    <label for="department">Department *</label>
+                    <input type="text" id="department" name="department" data-step-field-name="department" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="teamSize">Team Size</label>
+                    <input type="number" id="teamSize" name="teamSize" data-step-field-name="teamSize" min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="experience">Years of Management Experience</label>
+                    <input type="number" id="experience" name="experience" data-step-field-name="experience" min="0">
+                </div>
+            </div>
+            
+            <!-- Step 3: Additional Information -->
+            <div data-form="step" data-answer="step-3">
+                <h3>Step 3: Additional Information</h3>
+                
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" data-step-field-name="phone">
+                </div>
+                
+                <div class="form-group">
+                    <label for="comments">Comments</label>
+                    <textarea id="comments" name="comments" data-step-field-name="comments" rows="4"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" name="newsletter" data-step-field-name="newsletter" value="yes">
+                        Subscribe to newsletter
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Summary Step -->
+            <div data-form="step" data-answer="summary-step">
+                <h3>Summary</h3>
+                
+                <div class="summary-section">
+                    <h4>Your Information:</h4>
+                    
+                    <div class="form-group">
+                        <strong>Full Name:</strong>
+                        <div class="summary-field" data-summary-field="firstName|lastName" data-join="space">
+                            <span class="summary-empty">Not provided</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <strong>Email:</strong>
+                        <div class="summary-field" data-summary-field="email">
+                            <span class="summary-empty">Not provided</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <strong>Role:</strong>
+                        <div class="summary-field" data-summary-field="role">
+                            <span class="summary-empty">Not selected</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <strong>Manager Details:</strong>
+                        <div class="summary-field" data-summary-field="department|teamSize|experience" data-join="comma" data-summary-type="manager" data-summary-subtype="details" data-summary-number="1">
+                            <span class="summary-empty">Not applicable</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <strong>Contact Info:</strong>
+                        <div class="summary-field" data-summary-field="phone" data-join="dash">
+                            <span class="summary-empty">Not provided</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Navigation -->
+            <div class="form-buttons">
+                <button type="button" data-form="back-btn">← Back</button>
+                <button type="button" data-form="next-btn">Next →</button>
+                <button type="button" data-skip="summary-step">Skip to Summary</button>
+                <button type="submit" data-form="submit" style="display: none;">Submit Form</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Debug Panel -->
+    <div class="debug-panel">
+        <h3>Debug Information</h3>
+        <p>Open browser console to see detailed logging from the form library.</p>
+        <button onclick="logCurrentState()">Log Current State</button>
+        <button onclick="resetForm()">Reset Form</button>
+        <button onclick="validateForm()">Validate Form</button>
+    </div>
+    
+    <script>
+        // Debug functions
+        function logCurrentState() {
+            if (window.FormLib) {
+                window.FormLib.logCurrentState();
+            }
+        }
+        
+        function resetForm() {
+            if (window.FormLib) {
+                window.FormLib.resetForm();
+            }
+        }
+        
+        function validateForm() {
+            if (window.FormLib) {
+                const isValid = window.FormLib.validateForm();
+                alert('Form is ' + (isValid ? 'valid' : 'invalid'));
+            }
+        }
+        
+        // Log when library loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, FormLib should initialize automatically');
+            
+            // Add some delay to ensure library is loaded
+            setTimeout(() => {
+                if (window.FormLib) {
+                    console.log('FormLib is available:', window.FormLib);
+                    window.FormLib.logCurrentState();
+                } else {
+                    console.log('FormLib not found on window');
+                }
+            }, 1000);
+        });
+    </script>
+    
+    <!-- Load the compiled library -->
+    <script type="module">
+        // This would normally load from jsDelivr or your CDN
+        // For testing, you'll need to compile the TypeScript first
+        import FormLib from './dist/index.js';
+        console.log('FormLib imported:', FormLib);
+    </script>
+</body>
+</html> 

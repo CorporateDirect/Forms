@@ -1,0 +1,40 @@
+{
+  "name": "form-functionality-library",
+  "version": "1.0.0",
+  "description": "A modular, flexible form functionality library for Webflow forms supporting single-step, multi-step, and branching forms",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "serve": "python3 -m http.server 8000",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "forms",
+    "webflow",
+    "multi-step",
+    "branching",
+    "validation",
+    "typescript"
+  ],
+  "author": "Form Functionality Library",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/form-functionality-library.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/form-functionality-library/issues"
+  },
+  "homepage": "https://github.com/your-username/form-functionality-library#readme"
+} 
