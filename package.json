@@ -7,6 +7,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "build:prod": "tsc && terser dist/index.js --compress --mangle --output dist/index.min.js",
+    "minify": "terser dist/index.js --compress --mangle --output dist/index.min.js",
     "dev": "tsc --watch",
     "serve": "python3 -m http.server 8000",
     "clean": "rm -rf dist"
@@ -22,6 +24,7 @@
   "author": "Form Functionality Library",
   "license": "MIT",
   "devDependencies": {
+    "terser": "^5.43.1",
     "typescript": "^5.3.3"
   },
   "files": [
@@ -37,4 +40,4 @@
     "url": "https://github.com/your-username/form-functionality-library/issues"
   },
   "homepage": "https://github.com/your-username/form-functionality-library#readme"
-} 
+}

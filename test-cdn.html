@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDN Test - Form Functionality Library</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Form Functionality Library - CDN Test</h1>
+    
+    <div class="test-section">
+        <h2>CDN URLs to Test</h2>
+        <p><strong>Latest Version (Minified):</strong></p>
+        <code>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js</code>
+        
+        <p><strong>Specific Version (v1.0.0 - Minified):</strong></p>
+        <code>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.min.js</code>
+    </div>
+
+    <div class="test-section">
+        <h2>Library Status</h2>
+        <div id="library-status" class="status info">Testing library availability...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Form</h2>
+        <div id="test-form" data-form="multistep" data-logic="true">
+            <div data-form="step" data-answer="step-1">
+                <label>
+                    Name: 
+                    <input type="text" data-step-field-name="name" required>
+                </label>
+                <button type="button" data-form="next-btn">Next</button>
+            </div>
+            
+            <div data-form="step" data-answer="step-2" style="display: none;">
+                <label>
+                    Email: 
+                    <input type="email" data-step-field-name="email" required>
+                </label>
+                <button type="button" data-form="back-btn">Back</button>
+                <button type="button" data-form="submit">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Debug Console</h2>
+        <div id="debug-console" style="background: #f8f9fa; padding: 10px; font-family: monospace; white-space: pre-wrap; max-height: 200px; overflow-y: auto;"></div>
+    </div>
+
+    <!-- Try to load the library from jsDelivr CDN -->
+    <script>
+        // Test both URLs - prioritize minified versions
+        const urls = [
+            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js',
+            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.min.js',
+            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.js',
+            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.js'
+        ];
+
+        const statusDiv = document.getElementById('library-status');
+        const debugConsole = document.getElementById('debug-console');
+
+        function log(message) {
+            debugConsole.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            debugConsole.scrollTop = debugConsole.scrollHeight;
+        }
+
+        function testLibrary() {
+            if (typeof window.FormLibrary !== 'undefined') {
+                statusDiv.className = 'status success';
+                statusDiv.textContent = '✅ Form Functionality Library loaded successfully!';
+                log('Library loaded: ' + typeof window.FormLibrary);
+                log('Available methods: ' + Object.keys(window.FormLibrary.getInstance()).join(', '));
+                return true;
+            }
+            return false;
+        }
+
+        function loadScript(url) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = url;
+                script.onload = () => {
+                    log('Script loaded from: ' + url);
+                    resolve();
+                };
+                script.onerror = () => {
+                    log('Failed to load script from: ' + url);
+                    reject(new Error('Failed to load: ' + url));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // Try loading from the first URL, fallback to second
+        async function loadLibrary() {
+            log('Starting CDN test...');
+            
+            for (const url of urls) {
+                try {
+                    log('Attempting to load: ' + url);
+                    await loadScript(url);
+                    
+                    if (testLibrary()) {
+                        return;
+                    }
+                } catch (error) {
+                    log('Error: ' + error.message);
+                }
+            }
+
+            // If both URLs fail
+            statusDiv.className = 'status error';
+            statusDiv.textContent = '❌ Library failed to load from CDN. jsDelivr may still be syncing with GitHub.';
+            log('All CDN URLs failed. This is normal for new repositories - jsDelivr needs time to sync.');
+            log('Try again in 5-10 minutes.');
+        }
+
+        // Start the test
+        loadLibrary();
+
+        // If library loads, initialize it after a short delay
+        setTimeout(() => {
+            if (typeof window.FormLibrary !== 'undefined') {
+                log('Initializing form library...');
+                // The library auto-initializes, but we can access it
+                const formLib = window.FormLibrary.getInstance();
+                log('Form library initialized successfully');
+            }
+        }, 1000);
+    </script>
+</body>
+</html> 

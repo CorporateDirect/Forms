@@ -1,23 +1,96 @@
-Form Functionality Library - Console Logs
-==========================================
 
-This file will contain console output from testing the form library.
 
-To generate logs:
-1. Compile the TypeScript: npx tsc
-2. Open index.html in a browser
-3. Open browser console
-4. Interact with the form
-5. Copy console output here
-
-Expected log types:
-- FormState initialization
-- Module initialization (branching, multiStep, validation, errors, summary)
-- Field value changes
-- Step navigation
-- Branch evaluations
-- Validation results
-- Error handling
-- Summary updates
-
-The logs will help verify that all modules are working correctly and provide debugging information for any issues. 
+js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1486 Google Maps JavaScript API has been loaded directly without loading=async. This can result in suboptimal performance. For best-practice loading patterns please see https://goo.gle/js-api-loading
+Uca @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1486
+google.maps.Load @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:14
+(anonymous) @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1730
+(anonymous) @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1730
+realshield:179 Uncaught ReferenceError: radioGroups is not defined
+    at realshield:179:5
+    at NodeList.forEach (<anonymous>)
+    at realshield:172:52
+(anonymous) @ realshield:179
+(anonymous) @ realshield:172
+inspector.b9415ea5.js:12 Could not access stylesheet rules: SecurityError: Failed to read the 'cssRules' property from 'CSSStyleSheet': Cannot access rules
+    at inspector.b9415ea5.js:12:57303
+    at Array.forEach (<anonymous>)
+    at n (inspector.b9415ea5.js:12:57152)
+    at g (inspector.b9415ea5.js:12:55110)
+    at 1MLsW.@reduxjs/toolkit (inspector.b9415ea5.js:12:1920)
+    at u (inspector.b9415ea5.js:1:705)
+    at d (inspector.b9415ea5.js:1:809)
+    at fLzap../distance (inspector.b9415ea5.js:1:153421)
+    at u (inspector.b9415ea5.js:1:705)
+    at d (inspector.b9415ea5.js:1:809)
+(anonymous) @ inspector.b9415ea5.js:12
+n @ inspector.b9415ea5.js:12
+g @ inspector.b9415ea5.js:12
+1MLsW.@reduxjs/toolkit @ inspector.b9415ea5.js:12
+u @ inspector.b9415ea5.js:1
+d @ inspector.b9415ea5.js:1
+fLzap../distance @ inspector.b9415ea5.js:1
+u @ inspector.b9415ea5.js:1
+d @ inspector.b9415ea5.js:1
+fnXog.react @ inspector.b9415ea5.js:1
+u @ inspector.b9415ea5.js:1
+d @ inspector.b9415ea5.js:1
+6Zw46.react/jsx-runtime @ inspector.b9415ea5.js:1
+u @ inspector.b9415ea5.js:1
+d @ inspector.b9415ea5.js:1
+9glGq.react/jsx-runtime @ inspector.b9415ea5.js:1
+u @ inspector.b9415ea5.js:1
+fvzgQ.63e184fe9ed239b8 @ inspector.b9415ea5.js:1
+(anonymous) @ inspector.b9415ea5.js:1
+ads.914af30a.js:1 Ads initialization already in progress or completed
+ads.914af30a.js:1 Ads initialization already in progress or completed
+ads.914af30a.js:1 Ads initialization already in progress or completed
+inspector.b9415ea5.js:1 Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=%5Bobject%20Promise%5D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at n0 (inspector.b9415ea5.js:1:65377)
+    at l (inspector.b9415ea5.js:1:70370)
+    at ol (inspector.b9415ea5.js:1:82233)
+    at i (inspector.b9415ea5.js:1:130901)
+    at lM (inspector.b9415ea5.js:1:110198)
+    at inspector.b9415ea5.js:1:110064
+    at lO (inspector.b9415ea5.js:1:110072)
+    at lC (inspector.b9415ea5.js:1:106823)
+    at lw (inspector.b9415ea5.js:1:105378)
+    at C (inspector.b9415ea5.js:1:141367)
+s7 @ inspector.b9415ea5.js:1
+r.callback @ inspector.b9415ea5.js:1
+nW @ inspector.b9415ea5.js:1
+oX @ inspector.b9415ea5.js:1
+e @ inspector.b9415ea5.js:1
+(anonymous) @ inspector.b9415ea5.js:1
+lR @ inspector.b9415ea5.js:1
+lw @ inspector.b9415ea5.js:1
+C @ inspector.b9415ea5.js:1
+T @ inspector.b9415ea5.js:1
+inspector.b9415ea5.js:1 Uncaught Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=%5Bobject%20Promise%5D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
+    at n0 (inspector.b9415ea5.js:1:65377)
+    at l (inspector.b9415ea5.js:1:70370)
+    at ol (inspector.b9415ea5.js:1:82233)
+    at i (inspector.b9415ea5.js:1:130901)
+    at lM (inspector.b9415ea5.js:1:110198)
+    at inspector.b9415ea5.js:1:110064
+    at lO (inspector.b9415ea5.js:1:110072)
+    at lC (inspector.b9415ea5.js:1:106823)
+    at lw (inspector.b9415ea5.js:1:105378)
+    at C (inspector.b9415ea5.js:1:141367)
+n0 @ inspector.b9415ea5.js:1
+l @ inspector.b9415ea5.js:1
+ol @ inspector.b9415ea5.js:1
+i @ inspector.b9415ea5.js:1
+lM @ inspector.b9415ea5.js:1
+(anonymous) @ inspector.b9415ea5.js:1
+lO @ inspector.b9415ea5.js:1
+lC @ inspector.b9415ea5.js:1
+lw @ inspector.b9415ea5.js:1
+C @ inspector.b9415ea5.js:1
+T @ inspector.b9415ea5.js:1
+ads.914af30a.js:1 Attempting to initialize AdUnit
+ads.914af30a.js:1 AdUnit initialized successfully
+ads.914af30a.js:1 Ads initialized successfully for: https://corporate-formations.webflow.io/formations/realshield
+ads.914af30a.js:1 Ads initialization already in progress or completed
+v1?ray=958896d45d58dbc2&lang=auto:1 Request for the Private Access Token challenge.
+v1?ray=958896d45d58dbc2&lang=auto:1 
+auto/:1 The resource https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/cmg/1 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.

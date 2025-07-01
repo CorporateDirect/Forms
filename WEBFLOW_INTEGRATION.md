@@ -2,29 +2,23 @@
 
 ## jsDelivr CDN URLs
 
-### Latest Version (Recommended for Development)
+### Latest Version - Minified (Recommended for Production)
 ```html
-<script type="module">
-  import FormLib from 'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.js';
-  console.log('FormLib loaded:', FormLib);
-</script>
+<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js"></script>
 ```
 
-### Specific Version (Recommended for Production)
+### Specific Version - Minified (Most Reliable)
 ```html
-<script type="module">
-  import FormLib from 'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.js';
-  console.log('FormLib loaded:', FormLib);
-</script>
+<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.min.js"></script>
 ```
 
-### Non-Module Version (For older browsers)
+### Development Versions (Unminified)
 ```html
+<!-- Latest unminified (for debugging) -->
+<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.js"></script>
+
+<!-- Specific version unminified (for debugging) -->
 <script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.js"></script>
-<script>
-  // FormLib will be available as window.FormLib
-  console.log('FormLib loaded:', window.FormLib);
-</script>
 ```
 
 ## Webflow Implementation Steps
@@ -36,16 +30,17 @@ In Webflow Designer:
 2. Add this to the **Footer Code** section:
 
 ```html
-<script type="module">
-  import FormLib from 'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.js';
-  
-  // The library auto-initializes, but you can also manually control it
+<!-- Production version (minified) -->
+<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.min.js"></script>
+<script>
+  // The library auto-initializes when loaded
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('FormLib loaded and initialized');
+    console.log('Form Functionality Library loaded and initialized');
     
-    // Optional: Log current state for debugging
-    if (window.FormLib) {
-      window.FormLib.logCurrentState();
+    // Optional: Access the library instance for debugging
+    if (window.FormLibrary) {
+      const formLib = window.FormLibrary.getInstance();
+      console.log('Available methods:', Object.keys(formLib));
     }
   });
 </script>
