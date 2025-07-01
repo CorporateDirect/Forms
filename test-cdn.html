@@ -32,11 +32,14 @@
     
     <div class="test-section">
         <h2>CDN URLs to Test</h2>
+        <p><strong>Commit Version (Minified - MOST RELIABLE):</strong></p>
+        <code>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@cc77b04/dist/index.min.js</code>
+        
         <p><strong>Latest Version (Minified):</strong></p>
         <code>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js</code>
         
-        <p><strong>Specific Version (v1.0.0 - Minified):</strong></p>
-        <code>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.min.js</code>
+        <p><strong>Specific Version (v1.1.0 - Minified):</strong></p>
+        <code>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.1.0/dist/index.min.js</code>
     </div>
 
     <div class="test-section">
@@ -73,12 +76,13 @@
 
     <!-- Try to load the library from jsDelivr CDN -->
     <script>
-        // Test both URLs - prioritize minified versions
+        // Test URLs - prioritize commit version minified
         const urls = [
+            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@cc77b04/dist/index.min.js',
             'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js',
-            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.min.js',
-            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.js',
-            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.js'
+            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.1.0/dist/index.min.js',
+            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@cc77b04/dist/index.js',
+            'https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.js'
         ];
 
         const statusDiv = document.getElementById('library-status');

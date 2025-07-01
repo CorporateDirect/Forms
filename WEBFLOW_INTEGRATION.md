@@ -2,23 +2,34 @@
 
 ## jsDelivr CDN URLs
 
-### Latest Version - Minified (Recommended for Production)
+### Commit Version - Minified (RECOMMENDED - Most Reliable)
+```html
+<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@c18e6bc/dist/index.min.js"></script>
+```
+
+### Temporary Solution (While jsDelivr Syncs)
+```html
+<!-- GitHub Raw URL (use until jsDelivr syncs) -->
+<script src="https://raw.githubusercontent.com/CorporateDirect/Forms/c18e6bc/dist/index.min.js"></script>
+```
+
+### Latest Version - Minified (Production)
 ```html
 <script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js"></script>
 ```
 
-### Specific Version - Minified (Most Reliable)
+### Specific Version - Minified (Version Tagged)
 ```html
-<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.1.0/dist/index.min.js"></script>
 ```
 
-### Development Versions (Unminified)
+### Development Versions (Unminified - For Debugging Only)
 ```html
-<!-- Latest unminified (for debugging) -->
-<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.js"></script>
+<!-- Commit version unminified -->
+<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@cc77b04/dist/index.js"></script>
 
-<!-- Specific version unminified (for debugging) -->
-<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.js"></script>
+<!-- Latest unminified -->
+<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.js"></script>
 ```
 
 ## Webflow Implementation Steps
@@ -30,8 +41,11 @@ In Webflow Designer:
 2. Add this to the **Footer Code** section:
 
 ```html
-<!-- Production version (minified) -->
-<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.0.0/dist/index.min.js"></script>
+<!-- TEMPORARY: Use GitHub Raw URL until jsDelivr syncs (24-48 hours) -->
+<script src="https://raw.githubusercontent.com/CorporateDirect/Forms/c18e6bc/dist/index.min.js"></script>
+
+<!-- FUTURE: Use jsDelivr URL once it syncs -->
+<!-- <script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@c18e6bc/dist/index.min.js"></script> -->
 <script>
   // The library auto-initializes when loaded
   document.addEventListener('DOMContentLoaded', function() {

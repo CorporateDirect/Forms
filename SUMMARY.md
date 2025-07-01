@@ -10,6 +10,16 @@ Your form functionality library has been successfully built, optimized, and depl
 
 ### **Minified Versions (Recommended for Production)**
 
+**Commit Version (MOST RELIABLE - Once jsDelivr Syncs):**
+```html
+<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@c18e6bc/dist/index.min.js"></script>
+```
+
+**Temporary Solution (Use Now):**
+```html
+<script src="https://raw.githubusercontent.com/CorporateDirect/Forms/c18e6bc/dist/index.min.js"></script>
+```
+
 **Latest Version:**
 ```html
 <script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js"></script>
@@ -141,7 +151,8 @@ npm run clean
 
 1. **Add to Webflow Project Settings > Custom Code > Footer:**
 ```html
-<script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js"></script>
+<!-- TEMPORARY: Use until jsDelivr syncs (24-48 hours) -->
+<script src="https://raw.githubusercontent.com/CorporateDirect/Forms/c18e6bc/dist/index.min.js"></script>
 ```
 
 2. **Structure your forms using data attributes** (see WEBFLOW_INTEGRATION.md for complete guide)
