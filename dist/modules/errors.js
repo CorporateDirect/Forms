@@ -120,8 +120,13 @@ export function setCustomErrorMessage(fieldName, message) {
  * Find or create error message element for a field
  */
 function findOrCreateErrorElement(config) {
+    // Check if element has a parent element
+    if (!config.element.parentElement) {
+        logVerbose(`Cannot create error element for field: ${config.fieldName} - no parent element`);
+        return null;
+    }
     // Look for existing error element
-    let errorElement = config.element.parentElement?.querySelector(`.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${config.fieldName}"]`);
+    let errorElement = config.element.parentElement.querySelector(`.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${config.fieldName}"]`);
     if (!errorElement) {
         // Create new error element
         errorElement = document.createElement('div');
@@ -131,21 +136,14 @@ function findOrCreateErrorElement(config) {
         errorElement.style.fontSize = '0.875em';
         errorElement.style.marginTop = '0.25rem';
         errorElement.style.display = 'none';
-        // Try to insert after the input
+        // Insert after the input
         const parent = config.element.parentElement;
-        if (parent) {
-            // Look for the best insertion point
-            const nextSibling = config.element.nextSibling;
-            if (nextSibling) {
-                parent.insertBefore(errorElement, nextSibling);
-            }
-            else {
-                parent.appendChild(errorElement);
-            }
+        const nextSibling = config.element.nextSibling;
+        if (nextSibling) {
+            parent.insertBefore(errorElement, nextSibling);
         }
         else {
-            logVerbose(`Cannot create error element for field: ${config.fieldName} - no parent element`);
-            return null;
+            parent.appendChild(errorElement);
         }
         logVerbose(`Created error element for field: ${config.fieldName}`);
     }

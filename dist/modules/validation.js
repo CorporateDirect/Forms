@@ -249,10 +249,17 @@ function updateFieldVisualState(input, isValid, errorMessage) {
  */
 function findOrCreateErrorElement(input) {
     const fieldName = input.name || getAttrValue(input, 'data-step-field-name');
-    if (!fieldName)
+    if (!fieldName) {
+        logVerbose('Cannot create error element - no field name found');
         return null;
+    }
+    // Check if input has a parent element
+    if (!input.parentElement) {
+        logVerbose(`Cannot create error element for field: ${fieldName} - no parent element`);
+        return null;
+    }
     // Look for existing error element
-    let errorElement = input.parentElement?.querySelector(`.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${fieldName}"]`);
+    let errorElement = input.parentElement.querySelector(`.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${fieldName}"]`);
     if (!errorElement) {
         // Create new error element
         errorElement = document.createElement('div');
@@ -263,7 +270,14 @@ function findOrCreateErrorElement(input) {
         errorElement.style.marginTop = '0.25rem';
         errorElement.style.display = 'none';
         // Insert after the input
-        input.parentElement?.insertBefore(errorElement, input.nextSibling);
+        const nextSibling = input.nextSibling;
+        if (nextSibling) {
+            input.parentElement.insertBefore(errorElement, nextSibling);
+        }
+        else {
+            input.parentElement.appendChild(errorElement);
+        }
+        logVerbose(`Created error element for field: ${fieldName}`);
     }
     return errorElement;
 }
