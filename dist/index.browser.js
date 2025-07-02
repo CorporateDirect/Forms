@@ -596,17 +596,44 @@ function setupBranchingListeners(root) {
             htmlTarget.className.includes('radio') ||
             htmlTarget.closest('label') ||
             getAttrValue(target, 'data-go-to')) {
+            // If clicking on a label, try to find the radio input inside it
+            let dataGoToValue = getAttrValue(target, 'data-go-to');
+            let radioInput = null;
+            if (htmlTarget.tagName === 'LABEL' && !dataGoToValue) {
+                // Look for radio input inside the label
+                radioInput = htmlTarget.querySelector('input[type="radio"]');
+                if (radioInput) {
+                    dataGoToValue = getAttrValue(radioInput, 'data-go-to');
+                }
+            }
+            else if (htmlTarget.tagName === 'INPUT' && htmlTarget.type === 'radio') {
+                radioInput = htmlTarget;
+            }
             console.log('[FormLib] GLOBAL CLICK detected on potentially relevant element:', {
                 target,
                 tagName: htmlTarget.tagName,
                 className: htmlTarget.className,
                 id: htmlTarget.id,
-                dataGoTo: getAttrValue(target, 'data-go-to'),
+                dataGoTo: dataGoToValue,
                 isInput: htmlTarget.tagName === 'INPUT',
                 inputType: htmlTarget.tagName === 'INPUT' ? htmlTarget.type : null,
                 closestLabel: htmlTarget.closest('label'),
+                radioInput: radioInput,
+                radioInputDataGoTo: radioInput ? getAttrValue(radioInput, 'data-go-to') : null,
                 event: event
             });
+            // If we found a radio input with data-go-to, trigger the branching logic
+            if (radioInput && dataGoToValue) {
+                console.log('[FormLib] Triggering branching logic from global click detection');
+                // Check the radio button
+                radioInput.checked = true;
+                // Apply active class styling
+                applyRadioActiveClass(radioInput);
+                // Create synthetic change event and trigger branching
+                const syntheticEvent = new Event('change', { bubbles: true });
+                Object.defineProperty(syntheticEvent, 'target', { value: radioInput });
+                handleBranchTrigger(syntheticEvent, radioInput);
+            }
         }
     });
     branchingCleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup5, globalClickCleanup);
