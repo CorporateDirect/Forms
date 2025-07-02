@@ -979,6 +979,74 @@ function getBranchingState() {
     };
 }
 /**
+ * Debug function to test radio button detection (can be called from console)
+ */
+function debugRadioButtons() {
+    console.log('=== DEBUG: Radio Button Detection ===');
+    // Find all radio buttons with data-go-to
+    const radioButtons = document.querySelectorAll('input[type="radio"][data-go-to]');
+    console.log(`Found ${radioButtons.length} radio buttons with data-go-to:`);
+    radioButtons.forEach((radio, index) => {
+        const htmlRadio = radio;
+        const goTo = getAttrValue(radio, 'data-go-to');
+        const parentLabel = radio.closest('label');
+        console.log(`Radio ${index}:`, {
+            element: radio,
+            name: htmlRadio.name,
+            value: htmlRadio.value,
+            goTo: goTo,
+            checked: htmlRadio.checked,
+            parentLabel: parentLabel,
+            parentLabelClasses: parentLabel?.className,
+            style: htmlRadio.style.cssText,
+            allAttributes: Array.from(radio.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
+        });
+    });
+    // Find all labels that might contain radio buttons
+    const radioLabels = document.querySelectorAll('label.radio_field, label.w-radio');
+    console.log(`Found ${radioLabels.length} radio labels:`);
+    radioLabels.forEach((label, index) => {
+        const radioInside = label.querySelector('input[type="radio"]');
+        const goTo = radioInside ? getAttrValue(radioInside, 'data-go-to') : null;
+        console.log(`Label ${index}:`, {
+            element: label,
+            className: label.className,
+            radioInside: radioInside,
+            goTo: goTo,
+            radioName: radioInside ? radioInside.name : null
+        });
+    });
+    console.log('=== END DEBUG ===');
+}
+/**
+ * Test function to manually trigger radio button selection (can be called from console)
+ */
+function testRadioClick(goToValue) {
+    console.log(`=== TESTING: Manual radio click for ${goToValue} ===`);
+    const radioButton = document.querySelector(`input[type="radio"][data-go-to="${goToValue}"]`);
+    if (!radioButton) {
+        console.error(`Radio button with data-go-to="${goToValue}" not found`);
+        return;
+    }
+    console.log('Found radio button:', radioButton);
+    // Manually trigger the selection
+    radioButton.checked = true;
+    applyRadioActiveClass(radioButton);
+    // Create and dispatch events
+    const changeEvent = new Event('change', { bubbles: true });
+    const clickEvent = new Event('click', { bubbles: true });
+    console.log('Dispatching events...');
+    radioButton.dispatchEvent(clickEvent);
+    radioButton.dispatchEvent(changeEvent);
+    // Manually trigger branching logic
+    console.log('Manually triggering branch logic...');
+    handleBranchTrigger(changeEvent, radioButton);
+    console.log('=== END TEST ===');
+}
+// Make debug functions available globally for console access
+window.debugRadioButtons = debugRadioButtons;
+window.testRadioClick = testRadioClick;
+/**
  * Debug function to log current branching state (can be called from console)
  */
 function debugBranching() {
