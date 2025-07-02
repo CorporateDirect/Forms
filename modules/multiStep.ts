@@ -173,23 +173,34 @@ export function initMultiStep(root: Document | Element = document): void {
  * Completely hide a step or step_item using multiple methods
  */
 function hideStepCompletely(element: HTMLElement, description: string): void {
-  element.style.display = 'none !important';
-  element.style.visibility = 'hidden';
-  element.style.opacity = '0';
-  element.style.height = '0';
-  element.style.overflow = 'hidden';
-  element.style.position = 'absolute';
-  element.style.left = '-9999px';
+  // Use aggressive hiding only for step_items, normal hiding for regular steps
+  const isStepItem = description.includes('step_item');
+  
+  if (isStepItem) {
+    // Aggressive hiding for step_items
+    element.style.display = 'none !important';
+    element.style.visibility = 'hidden';
+    element.style.opacity = '0';
+    element.style.height = '0';
+    element.style.overflow = 'hidden';
+    element.style.position = 'absolute';
+    element.style.left = '-9999px';
+    addClass(element, CSS_CLASSES.HIDDEN_STEP_ITEM);
+  } else {
+    // Normal hiding for regular steps
+    element.style.display = 'none';
+    element.style.visibility = 'hidden';
+  }
+  
   addClass(element, 'hidden-step');
-  addClass(element, CSS_CLASSES.HIDDEN_STEP_ITEM);
   removeClass(element, CSS_CLASSES.ACTIVE_STEP);
   element.setAttribute('data-step-hidden', 'true');
   
-  console.log(`[FormLib] Forcibly hiding ${description}:`, {
+  console.log(`[FormLib] Hiding ${description}:`, {
     display: element.style.display,
     visibility: element.style.visibility,
     opacity: element.style.opacity,
-    height: element.style.height,
+    isStepItem,
     classes: element.className,
     dataAnswer: getAttrValue(element, 'data-answer')
   });
@@ -199,6 +210,7 @@ function hideStepCompletely(element: HTMLElement, description: string): void {
  * Show a step or step_item
  */
 function showStepCompletely(element: HTMLElement, description: string): void {
+  // Clear all possible hiding styles
   element.style.display = '';
   element.style.visibility = '';
   element.style.opacity = '';
@@ -206,6 +218,7 @@ function showStepCompletely(element: HTMLElement, description: string): void {
   element.style.overflow = '';
   element.style.position = '';
   element.style.left = '';
+  
   removeClass(element, 'hidden-step');
   removeClass(element, CSS_CLASSES.HIDDEN_STEP_ITEM);
   addClass(element, CSS_CLASSES.ACTIVE_STEP);
@@ -214,7 +227,6 @@ function showStepCompletely(element: HTMLElement, description: string): void {
   console.log(`[FormLib] Showing ${description}:`, {
     display: element.style.display,
     visibility: element.style.visibility,
-    opacity: element.style.opacity,
     classes: element.className,
     dataAnswer: getAttrValue(element, 'data-answer')
   });
