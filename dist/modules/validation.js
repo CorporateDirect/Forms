@@ -127,8 +127,7 @@ function handleFieldValidation(event, target) {
     // Check if field is in visible step
     const stepElement = target.closest(SELECTORS.STEP);
     if (stepElement) {
-        const stepId = getAttrValue(stepElement, 'data-answer') ||
-            getAttrValue(stepElement, 'id');
+        const stepId = getAttrValue(stepElement, 'data-answer');
         if (stepId && !FormState.isStepVisible(stepId)) {
             logVerbose(`Skipping validation for field in hidden step: ${fieldName}`);
             return;
@@ -272,9 +271,9 @@ function findOrCreateErrorElement(input) {
  * Validate a specific step
  */
 export function validateStep(stepId) {
-    const stepElement = queryByAttr(`[data-answer="${stepId}"], [id="${stepId}"]`);
+    const stepElement = queryByAttr(`[data-answer="${stepId}"]`);
     if (!stepElement) {
-        logVerbose(`Step not found: ${stepId}`);
+        logVerbose(`Step not found with data-answer="${stepId}"`);
         return true;
     }
     // Check if step is visible
@@ -311,8 +310,7 @@ export function validateAllVisibleFields() {
         const stepElement = fieldValidation.element.closest(SELECTORS.STEP);
         let shouldValidate = true;
         if (stepElement) {
-            const stepId = getAttrValue(stepElement, 'data-answer') ||
-                getAttrValue(stepElement, 'id');
+            const stepId = getAttrValue(stepElement, 'data-answer');
             if (stepId && !FormState.isStepVisible(stepId)) {
                 shouldValidate = false;
             }

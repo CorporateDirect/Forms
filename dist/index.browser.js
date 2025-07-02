@@ -878,27 +878,55 @@ function initMultiStep(root = document) {
     // Build step array
     steps = Array.from(stepElements).map((element, index) => {
         const htmlElement = element;
-        const stepId = getAttrValue(element, 'data-answer') ||
-            getAttrValue(element, 'id') ||
-            `step-${index + 1}`;
+        const dataAnswer = getAttrValue(element, 'data-answer');
+        // Require data-answer attribute for proper step identification
+        if (!dataAnswer) {
+            const errorMsg = `Step ${index} missing required data-answer attribute`;
+            logVerbose(errorMsg, { element: htmlElement });
+            console.warn(`[FormLib] ${errorMsg}. Each step must have a unique data-answer attribute for branching to work.`);
+            // Use a warning ID but this step won't work with branching
+            const stepId = `step-${index + 1}-missing-data-answer`;
+            const stepInfo = {
+                element: htmlElement,
+                id: stepId,
+                index,
+                type: getAttrValue(element, 'data-step-type') || undefined,
+                subtype: getAttrValue(element, 'data-step-subtype') || undefined,
+                number: getAttrValue(element, 'data-step-number') || undefined
+            };
+            logVerbose(`Registering step ${index} (WARNING: No data-answer)`, {
+                stepId,
+                dataAnswer: null,
+                warning: 'This step will not work with branching logic',
+                type: stepInfo.type,
+                element: htmlElement
+            });
+            // Register step in FormState
+            FormState.setStepInfo(stepId, {
+                type: stepInfo.type,
+                subtype: stepInfo.subtype,
+                number: stepInfo.number,
+                visible: index === 0, // First step is visible by default
+                visited: false
+            });
+            return stepInfo;
+        }
         const stepInfo = {
             element: htmlElement,
-            id: stepId,
+            id: dataAnswer, // Use data-answer as the step ID
             index,
             type: getAttrValue(element, 'data-step-type') || undefined,
             subtype: getAttrValue(element, 'data-step-subtype') || undefined,
             number: getAttrValue(element, 'data-step-number') || undefined
         };
         logVerbose(`Registering step ${index}`, {
-            stepId,
-            dataAnswer: getAttrValue(element, 'data-answer'),
-            elementId: getAttrValue(element, 'id'),
-            fallbackId: `step-${index + 1}`,
+            stepId: dataAnswer,
+            dataAnswer: dataAnswer,
             type: stepInfo.type,
             element: htmlElement
         });
         // Register step in FormState
-        FormState.setStepInfo(stepId, {
+        FormState.setStepInfo(dataAnswer, {
             type: stepInfo.type,
             subtype: stepInfo.subtype,
             number: stepInfo.number,
@@ -1440,8 +1468,7 @@ function handleFieldValidation(event, target) {
     // Check if field is in visible step
     const stepElement = target.closest(SELECTORS.STEP);
     if (stepElement) {
-        const stepId = getAttrValue(stepElement, 'data-answer') ||
-            getAttrValue(stepElement, 'id');
+        const stepId = getAttrValue(stepElement, 'data-answer');
         if (stepId && !FormState.isStepVisible(stepId)) {
             logVerbose(`Skipping validation for field in hidden step: ${fieldName}`);
             return;
@@ -1585,9 +1612,9 @@ function findOrCreateErrorElement(input) {
  * Validate a specific step
  */
 function validateStep(stepId) {
-    const stepElement = queryByAttr(`[data-answer="${stepId}"], [id="${stepId}"]`);
+    const stepElement = queryByAttr(`[data-answer="${stepId}"]`);
     if (!stepElement) {
-        logVerbose(`Step not found: ${stepId}`);
+        logVerbose(`Step not found with data-answer="${stepId}"`);
         return true;
     }
     // Check if step is visible
@@ -1624,8 +1651,7 @@ function validateAllVisibleFields() {
         const stepElement = fieldValidation.element.closest(SELECTORS.STEP);
         let shouldValidate = true;
         if (stepElement) {
-            const stepId = getAttrValue(stepElement, 'data-answer') ||
-                getAttrValue(stepElement, 'id');
+            const stepId = getAttrValue(stepElement, 'data-answer');
             if (stepId && !FormState.isStepVisible(stepId)) {
                 shouldValidate = false;
             }
