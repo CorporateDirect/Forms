@@ -30,8 +30,25 @@ function cleanModuleCode(code, modulePrefix) {
   
   // Rename conflicting variables with module prefix
   if (modulePrefix) {
-    code = code.replace(/let initialized/g, `let ${modulePrefix}Initialized`);
-    code = code.replace(/initialized/g, `${modulePrefix}Initialized`);
+    // Common conflicting variables found in modules
+    const conflictingVars = [
+      'initialized',
+      'cleanupFunctions',
+      'stepElements',
+      'currentStep',
+      'validationRules',
+      'errorElements',
+      'summaryFields'
+    ];
+    
+    conflictingVars.forEach(varName => {
+      // Replace let/const declarations
+      code = code.replace(new RegExp(`let ${varName}`, 'g'), `let ${modulePrefix}${varName.charAt(0).toUpperCase() + varName.slice(1)}`);
+      code = code.replace(new RegExp(`const ${varName}`, 'g'), `const ${modulePrefix}${varName.charAt(0).toUpperCase() + varName.slice(1)}`);
+      
+      // Replace variable usage (but be careful not to replace in strings or comments)
+      code = code.replace(new RegExp(`\\b${varName}\\b`, 'g'), `${modulePrefix}${varName.charAt(0).toUpperCase() + varName.slice(1)}`);
+    });
   }
   
   // Remove any trailing empty lines
