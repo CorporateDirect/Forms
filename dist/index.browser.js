@@ -542,12 +542,16 @@ function initBranching(root = document) {
  * Set up event listeners for branching logic
  */
 function setupBranchingListeners(root) {
+    console.log('[FormLib] Setting up branching event listeners on:', root);
     // Listen for changes on elements with data-go-to
     const cleanup1 = delegateEvent(root, 'change', SELECTORS.GO_TO, handleBranchTrigger);
+    console.log('[FormLib] Set up CHANGE listener for:', SELECTORS.GO_TO);
     // Listen for input events (for real-time branching)
     const cleanup2 = delegateEvent(root, 'input', SELECTORS.GO_TO, handleBranchTrigger);
+    console.log('[FormLib] Set up INPUT listener for:', SELECTORS.GO_TO);
     // Listen for click events on radio buttons and checkboxes
     const cleanup3 = delegateEvent(root, 'click', SELECTORS.GO_TO, handleBranchTrigger);
+    console.log('[FormLib] Set up CLICK listener for:', SELECTORS.GO_TO);
     // COMPREHENSIVE RADIO BUTTON HANDLING for custom styling
     // Handle clicks on various parts of custom radio button structures
     const radioSelectors = [
@@ -574,14 +578,39 @@ function setupBranchingListeners(root) {
         'label span',
         'label div'
     ];
+    console.log('[FormLib] Setting up comprehensive radio button listeners for selectors:', radioSelectors);
     // Set up comprehensive click handling
-    radioSelectors.forEach(selector => {
+    radioSelectors.forEach((selector, index) => {
+        const elementsFound = root.querySelectorAll(selector);
+        console.log(`[FormLib] Selector ${index} "${selector}" found ${elementsFound.length} elements`);
         const cleanup = delegateEvent(root, 'click', selector, handleUniversalRadioClick);
         branchingCleanupFunctions.push(cleanup);
     });
     // Also listen for keyboard events (Enter/Space on focused elements)
     const cleanup5 = delegateEvent(root, 'keydown', 'label.radio_field, label.w-radio, [data-go-to]', handleRadioKeydown);
-    branchingCleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup5);
+    console.log('[FormLib] Set up KEYDOWN listener for radio elements');
+    // ADD GLOBAL CLICK LISTENER for debugging
+    const globalClickCleanup = delegateEvent(root, 'click', '*', (event, target) => {
+        const htmlTarget = target;
+        if (htmlTarget.tagName === 'INPUT' ||
+            htmlTarget.className.includes('radio') ||
+            htmlTarget.closest('label') ||
+            getAttrValue(target, 'data-go-to')) {
+            console.log('[FormLib] GLOBAL CLICK detected on potentially relevant element:', {
+                target,
+                tagName: htmlTarget.tagName,
+                className: htmlTarget.className,
+                id: htmlTarget.id,
+                dataGoTo: getAttrValue(target, 'data-go-to'),
+                isInput: htmlTarget.tagName === 'INPUT',
+                inputType: htmlTarget.tagName === 'INPUT' ? htmlTarget.type : null,
+                closestLabel: htmlTarget.closest('label'),
+                event: event
+            });
+        }
+    });
+    branchingCleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup5, globalClickCleanup);
+    console.log('[FormLib] Total event listeners set up:', branchingCleanupFunctions.length);
 }
 /**
  * Universal handler for radio button clicks (handles all custom styling scenarios)
@@ -860,12 +889,43 @@ function hideStepItem(stepItemId) {
  */
 function triggerStepItemVisibility(stepItemId) {
     logVerbose(`Triggering step_item visibility: ${stepItemId}`);
-    // Import showStepItem dynamically to avoid circular dependency
-    import('./multiStep.js').then(({ showStepItem }) => {
-        showStepItem(stepItemId);
-    }).catch(error => {
+    // Show the step_item directly instead of dynamic import
+    showStepItemDirect(stepItemId);
+}
+/**
+ * Show step_item directly without dynamic import
+ */
+function showStepItemDirect(stepItemId) {
+    try {
+        // Find the step_item element
+        const stepItemElement = document.querySelector(`[data-answer="${stepItemId}"]`);
+        if (!stepItemElement) {
+            console.warn(`[FormLib] Step_item not found: ${stepItemId}`);
+            return;
+        }
+        // Make the step_item visible
+        stepItemElement.style.display = '';
+        stepItemElement.style.visibility = 'visible';
+        stepItemElement.style.opacity = '1';
+        // Remove hidden classes
+        stepItemElement.classList.remove('hidden-step', 'hidden-step-item');
+        // Add visible class if it exists
+        if (stepItemElement.classList.contains('step_item')) {
+            stepItemElement.classList.add('visible-step-item');
+        }
+        // Update FormState
+        FormState.setStepInfo(stepItemId, { visible: true });
+        logVerbose(`Successfully showed step_item: ${stepItemId}`, {
+            display: stepItemElement.style.display,
+            visibility: stepItemElement.style.visibility,
+            opacity: stepItemElement.style.opacity,
+            isStepItem: stepItemElement.classList.contains('step_item'),
+            classes: stepItemElement.className
+        });
+    }
+    catch (error) {
         console.warn('[FormLib] Failed to show step_item:', error);
-    });
+    }
 }
 /**
  * Activate a branch path
