@@ -553,9 +553,13 @@ function setupBranchingListeners(root) {
     const cleanup3 = delegateEvent(root, 'click', SELECTORS.GO_TO, handleBranchTrigger);
     console.log('[FormLib] Set up CLICK listener for:', SELECTORS.GO_TO);
     // COMPREHENSIVE RADIO BUTTON HANDLING for custom styling
-    // Prioritize the entire .radio_field wrapper as the primary clickable element
+    // Prioritize the most specific visual radio elements first
     const radioSelectors = [
-        // PRIMARY: Entire radio field wrapper (should capture most clicks)
+        // HIGHEST PRIORITY: Visual radio button elements (what users actually click)
+        '.radio_button-skip-step',
+        '.w-form-formradioinput',
+        '.w-radio-input',
+        // SECONDARY: Entire radio field wrapper
         '.radio_field',
         'label.radio_field',
         // Webflow radio wrappers
@@ -575,9 +579,6 @@ function setupBranchingListeners(root) {
         '.w-form-label',
         '.radio_button',
         '.radio-button',
-        '.w-radio-input',
-        '.w-form-formradioinput',
-        '.radio_button-skip-step',
         // Spans and divs inside radio fields
         '.radio_field span',
         '.radio_field div',
@@ -617,7 +618,19 @@ function setupBranchingListeners(root) {
                     dataGoToValue = getAttrValue(radioInput, 'data-go-to');
                 }
             }
-            // Method 3: Click on span or other element inside label - traverse up to find label
+            // Method 3: Click on visual radio elements (.radio_button-skip-step, etc.)
+            else if (!dataGoToValue && (htmlTarget.classList.contains('radio_button-skip-step') ||
+                htmlTarget.classList.contains('w-form-formradioinput') ||
+                htmlTarget.classList.contains('w-radio-input'))) {
+                const parentLabel = htmlTarget.closest('label');
+                if (parentLabel) {
+                    radioInput = parentLabel.querySelector('input[type="radio"]');
+                    if (radioInput) {
+                        dataGoToValue = getAttrValue(radioInput, 'data-go-to');
+                    }
+                }
+            }
+            // Method 4: Click on span or other element inside label - traverse up to find label
             else if (!dataGoToValue) {
                 const parentLabel = htmlTarget.closest('label');
                 if (parentLabel) {
@@ -688,6 +701,19 @@ function handleUniversalRadioClick(event, target) {
         radioInput = target.querySelector('input[type="radio"][data-go-to]');
         if (radioInput) {
             console.log('[FormLib] Found radio input inside .radio_field wrapper');
+        }
+    }
+    // Method 2.5: Click on .radio_button-skip-step or similar visual radio elements
+    if (!radioInput && (target.classList.contains('radio_button-skip-step') ||
+        target.classList.contains('w-form-formradioinput') ||
+        target.classList.contains('w-radio-input'))) {
+        // Look in the parent label for the radio input
+        const parentLabel = target.closest('label');
+        if (parentLabel) {
+            radioInput = parentLabel.querySelector('input[type="radio"][data-go-to]');
+            if (radioInput) {
+                console.log('[FormLib] Found radio input in parent label from visual radio element click');
+            }
         }
     }
     // Method 3: Click on element with data-go-to (find associated radio)
