@@ -57,7 +57,7 @@ export function initMultiStep(root = document) {
     // Find all step_item elements within parent steps
     stepItems = [];
     steps.forEach((parentStep, parentIndex) => {
-        const stepItemElements = parentStep.element.querySelectorAll('.step-item');
+        const stepItemElements = parentStep.element.querySelectorAll('.step_item');
         console.log(`[FormLib] Found ${stepItemElements.length} step_items in parent step ${parentIndex} (${parentStep.id})`);
         stepItemElements.forEach((stepItemElement, itemIndex) => {
             const htmlElement = stepItemElement;
@@ -180,6 +180,35 @@ function showStepCompletely(element, description) {
     });
 }
 /**
+ * Update required fields based on step_item subtype
+ */
+function updateRequiredFields(stepItemElement, enable = true) {
+    const subtype = getAttrValue(stepItemElement, 'data-step-subtype');
+    if (!subtype)
+        return;
+    console.log(`[FormLib] ${enable ? 'Enabling' : 'Disabling'} required fields for subtype: ${subtype}`);
+    // Find all fields with data-require-for-subtypes attribute in this step_item
+    const conditionalFields = stepItemElement.querySelectorAll('[data-require-for-subtypes]');
+    conditionalFields.forEach(field => {
+        const requiredForSubtypes = field.getAttribute('data-require-for-subtypes');
+        const htmlField = field;
+        if (requiredForSubtypes && requiredForSubtypes.split(',').map(s => s.trim()).includes(subtype)) {
+            // This field should be required for this subtype
+            if (enable) {
+                htmlField.required = true;
+                htmlField.disabled = false;
+                console.log(`[FormLib] Enabled required field: ${htmlField.name || htmlField.id} for subtype: ${subtype}`);
+            }
+            else {
+                htmlField.required = false;
+                htmlField.disabled = true;
+                htmlField.value = ''; // Clear the value when disabling
+                console.log(`[FormLib] Disabled required field: ${htmlField.name || htmlField.id} for subtype: ${subtype}`);
+            }
+        }
+    });
+}
+/**
  * Show a specific step_item within its parent step
  */
 export function showStepItem(stepItemId) {
@@ -214,11 +243,13 @@ export function showStepItem(stepItemId) {
     allStepItemsInParent.forEach(item => {
         console.log(`[FormLib] Hiding step_item: ${item.id} (data-answer="${getAttrValue(item.element, 'data-answer')}")`);
         hideStepCompletely(item.element, `step_item ${item.id}`);
+        updateRequiredFields(item.element, false); // Disable required fields for hidden step_items
         FormState.setStepVisibility(item.id, false);
     });
     console.log(`[FormLib] Now showing target step_item: ${stepItemId}`);
     // Show the target step_item
     showStepCompletely(stepItem.element, `step_item ${stepItemId}`);
+    updateRequiredFields(stepItem.element, true); // Enable required fields for visible step_item
     FormState.setStepVisibility(stepItemId, true);
     // Update current step_item tracking
     currentStepItemId = stepItemId;
@@ -240,6 +271,7 @@ export function hideStepItem(stepItemId) {
     logVerbose(`Hiding step_item: ${stepItemId}`);
     // Hide the step_item
     hideStepCompletely(stepItem.element, `step_item ${stepItemId}`);
+    updateRequiredFields(stepItem.element, false); // Disable required fields for hidden step_item
     FormState.setStepVisibility(stepItemId, false);
     // Clear current step_item tracking if this was the active one
     if (currentStepItemId === stepItemId) {
