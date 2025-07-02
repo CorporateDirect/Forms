@@ -63,6 +63,10 @@ function handleBranchTrigger(event, target) {
     if (target instanceof HTMLInputElement) {
         if (target.type === 'radio' && target.checked) {
             activateBranch(goToValue, target.value);
+            // For radio buttons with data-go-to, trigger step_item visibility
+            if (goToValue) {
+                triggerStepItemVisibility(goToValue);
+            }
         }
         else if (target.type === 'checkbox') {
             if (target.checked) {
@@ -97,6 +101,18 @@ function handleBranchTrigger(event, target) {
     if (hasActiveConditions) {
         updateStepVisibility();
     }
+}
+/**
+ * Trigger step_item visibility based on radio button selection
+ */
+function triggerStepItemVisibility(stepItemId) {
+    logVerbose(`Triggering step_item visibility: ${stepItemId}`);
+    // Import showStepItem dynamically to avoid circular dependency
+    import('./multiStep.js').then(({ showStepItem }) => {
+        showStepItem(stepItemId);
+    }).catch(error => {
+        console.warn('[FormLib] Failed to show step_item:', error);
+    });
 }
 /**
  * Activate a branch path

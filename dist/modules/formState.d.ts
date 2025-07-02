@@ -60,6 +60,10 @@ declare class FormStateManager {
      */
     getAllSteps(): Record<string, StepInfo>;
     /**
+     * Set step visibility
+     */
+    setStepVisibility(stepId: string, visible: boolean): void;
+    /**
      * Set current step in branch path
      */
     setCurrentStep(stepId: string): void;

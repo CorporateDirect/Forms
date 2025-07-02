@@ -144,6 +144,14 @@ class FormStateManager {
   }
 
   /**
+   * Set step visibility
+   */
+  public setStepVisibility(stepId: string, visible: boolean): void {
+    this.setStepInfo(stepId, { visible });
+    logVerbose(`Step visibility updated: ${stepId}`, { visible });
+  }
+
+  /**
    * Set current step in branch path
    */
   public setCurrentStep(stepId: string): void {
