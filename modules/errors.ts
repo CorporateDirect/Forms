@@ -161,37 +161,60 @@ export function setCustomErrorMessage(fieldName: string, message: string): void 
  * Find or create error message element for a field
  */
 function findOrCreateErrorElement(config: ErrorConfig): HTMLElement | null {
+  // Defensive checks
+  if (!config || !config.element) {
+    logVerbose('Cannot create error element - no config or element provided');
+    return null;
+  }
+
   // Check if element has a parent element
   if (!config.element.parentElement) {
-    logVerbose(`Cannot create error element for field: ${config.fieldName} - no parent element`);
+    logVerbose(`Cannot create error element for field: ${config.fieldName} - no parent element`, {
+      element: config.element,
+      parentElement: config.element.parentElement,
+      nodeName: config.element.nodeName,
+      id: config.element.id
+    });
     return null;
   }
 
   // Look for existing error element
-  let errorElement = config.element.parentElement.querySelector(
-    `.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${config.fieldName}"]`
-  ) as HTMLElement;
+  let errorElement: HTMLElement | null = null;
+  
+  try {
+    errorElement = config.element.parentElement.querySelector(
+      `.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${config.fieldName}"]`
+    ) as HTMLElement;
+  } catch (error) {
+    logVerbose(`Error finding existing error element for field: ${config.fieldName}`, error);
+    return null;
+  }
 
   if (!errorElement) {
-    // Create new error element
-    errorElement = document.createElement('div');
-    errorElement.className = CSS_CLASSES.ERROR_MESSAGE;
-    errorElement.setAttribute('data-field', config.fieldName);
-    errorElement.style.color = 'red';
-    errorElement.style.fontSize = '0.875em';
-    errorElement.style.marginTop = '0.25rem';
-    errorElement.style.display = 'none';
+    try {
+      // Create new error element
+      errorElement = document.createElement('div');
+      errorElement.className = CSS_CLASSES.ERROR_MESSAGE;
+      errorElement.setAttribute('data-field', config.fieldName);
+      errorElement.style.color = 'red';
+      errorElement.style.fontSize = '0.875em';
+      errorElement.style.marginTop = '0.25rem';
+      errorElement.style.display = 'none';
 
-    // Insert after the input
-    const parent = config.element.parentElement;
-    const nextSibling = config.element.nextSibling;
-    if (nextSibling) {
-      parent.insertBefore(errorElement, nextSibling);
-    } else {
-      parent.appendChild(errorElement);
+      // Insert after the input
+      const parent = config.element.parentElement;
+      const nextSibling = config.element.nextSibling;
+      if (nextSibling) {
+        parent.insertBefore(errorElement, nextSibling);
+      } else {
+        parent.appendChild(errorElement);
+      }
+
+      logVerbose(`Created error element for field: ${config.fieldName}`);
+    } catch (error) {
+      logVerbose(`Error creating error element for field: ${config.fieldName}`, error);
+      return null;
     }
-
-    logVerbose(`Created error element for field: ${config.fieldName}`);
   }
 
   return errorElement;

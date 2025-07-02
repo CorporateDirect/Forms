@@ -68,11 +68,24 @@ function setupFieldValidations(inputs: NodeListOf<Element>): void {
   inputs.forEach(input => {
     if (!isFormInput(input)) return;
 
-    const fieldName = input.name || getAttrValue(input, 'data-step-field-name');
-    if (!fieldName) return;
+    const htmlInput = input as HTMLInputElement;
+    const fieldName = htmlInput.name || getAttrValue(input, 'data-step-field-name');
+    if (!fieldName) {
+      logVerbose('Skipping field validation setup - no field name', {
+        element: input,
+        name: htmlInput.name,
+        dataStepFieldName: getAttrValue(input, 'data-step-field-name'),
+        id: htmlInput.id,
+        type: htmlInput.type
+      });
+      return;
+    }
 
     const rules = extractValidationRules(input);
-    if (rules.length === 0) return;
+    if (rules.length === 0) {
+      logVerbose(`No validation rules found for field: ${fieldName}`);
+      return;
+    }
 
     fieldValidations.set(fieldName, {
       element: input as HTMLElement,
@@ -80,7 +93,10 @@ function setupFieldValidations(inputs: NodeListOf<Element>): void {
       isValid: true
     });
 
-    logVerbose(`Validation rules set for field: ${fieldName}`, rules);
+    logVerbose(`Validation rules set for field: ${fieldName}`, { 
+      rules: rules.map(r => r.type),
+      rulesCount: rules.length 
+    });
   });
 }
 
@@ -186,8 +202,16 @@ function setupValidationListeners(root: Document | Element): void {
 function handleFieldValidation(event: Event, target: Element): void {
   if (!isFormInput(target)) return;
 
-  const fieldName = target.name || getAttrValue(target, 'data-step-field-name');
-  if (!fieldName) return;
+  const htmlTarget = target as HTMLInputElement;
+  const fieldName = htmlTarget.name || getAttrValue(target, 'data-step-field-name');
+  if (!fieldName) {
+    logVerbose('Skipping validation - no field name found', { 
+      element: target,
+      name: htmlTarget.name,
+      dataStepFieldName: getAttrValue(target, 'data-step-field-name')
+    });
+    return;
+  }
 
   // Check if field is in visible step
   const stepElement = target.closest(SELECTORS.STEP);
@@ -214,9 +238,14 @@ export function validateField(fieldName: string): boolean {
   }
 
   const input = fieldValidation.element;
+  if (!input) {
+    logVerbose(`No element found for field: ${fieldName}`);
+    return true;
+  }
+
   const value = getInputValue(input as HTMLInputElement);
 
-  logVerbose(`Validating field: ${fieldName}`, { value });
+  logVerbose(`Validating field: ${fieldName}`, { value, elementExists: !!input });
 
   // Run all validation rules
   let isValid = true;
@@ -235,8 +264,12 @@ export function validateField(fieldName: string): boolean {
   fieldValidation.isValid = isValid;
   fieldValidation.errorMessage = errorMessage;
 
-  // Update visual state
-  updateFieldVisualState(input, isValid, errorMessage);
+  // Update visual state - only if element exists and has parent
+  try {
+    updateFieldVisualState(input, isValid, errorMessage);
+  } catch (error) {
+    logVerbose(`Error updating visual state for field: ${fieldName}`, error);
+  }
 
   // Update FormState
   FormState.setField(fieldName, value);
@@ -334,40 +367,67 @@ function updateFieldVisualState(input: HTMLElement, isValid: boolean, errorMessa
  * Find or create error message element
  */
 function findOrCreateErrorElement(input: HTMLElement): HTMLElement | null {
+  // Defensive checks
+  if (!input) {
+    logVerbose('Cannot create error element - no input element provided');
+    return null;
+  }
+
   const fieldName = (input as HTMLInputElement).name || getAttrValue(input, 'data-step-field-name');
   if (!fieldName) {
-    logVerbose('Cannot create error element - no field name found');
+    logVerbose('Cannot create error element - no field name found', {
+      element: input,
+      name: (input as HTMLInputElement).name,
+      dataStepFieldName: getAttrValue(input, 'data-step-field-name')
+    });
     return null;
   }
 
   // Check if input has a parent element
   if (!input.parentElement) {
-    logVerbose(`Cannot create error element for field: ${fieldName} - no parent element`);
+    logVerbose(`Cannot create error element for field: ${fieldName} - no parent element`, {
+      element: input,
+      parentElement: input.parentElement,
+      nodeName: input.nodeName,
+      id: input.id
+    });
     return null;
   }
 
   // Look for existing error element
-  let errorElement = input.parentElement.querySelector(`.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${fieldName}"]`) as HTMLElement;
+  let errorElement: HTMLElement | null = null;
+  
+  try {
+    errorElement = input.parentElement.querySelector(`.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${fieldName}"]`) as HTMLElement;
+  } catch (error) {
+    logVerbose(`Error finding existing error element for field: ${fieldName}`, error);
+    return null;
+  }
   
   if (!errorElement) {
-    // Create new error element
-    errorElement = document.createElement('div');
-    errorElement.className = CSS_CLASSES.ERROR_MESSAGE;
-    errorElement.setAttribute('data-field', fieldName);
-    errorElement.style.color = 'red';
-    errorElement.style.fontSize = '0.875em';
-    errorElement.style.marginTop = '0.25rem';
-    errorElement.style.display = 'none';
-    
-    // Insert after the input
-    const nextSibling = input.nextSibling;
-    if (nextSibling) {
-      input.parentElement.insertBefore(errorElement, nextSibling);
-    } else {
-      input.parentElement.appendChild(errorElement);
+    try {
+      // Create new error element
+      errorElement = document.createElement('div');
+      errorElement.className = CSS_CLASSES.ERROR_MESSAGE;
+      errorElement.setAttribute('data-field', fieldName);
+      errorElement.style.color = 'red';
+      errorElement.style.fontSize = '0.875em';
+      errorElement.style.marginTop = '0.25rem';
+      errorElement.style.display = 'none';
+      
+      // Insert after the input
+      const nextSibling = input.nextSibling;
+      if (nextSibling) {
+        input.parentElement.insertBefore(errorElement, nextSibling);
+      } else {
+        input.parentElement.appendChild(errorElement);
+      }
+      
+      logVerbose(`Created error element for field: ${fieldName}`);
+    } catch (error) {
+      logVerbose(`Error creating error element for field: ${fieldName}`, error);
+      return null;
     }
-    
-    logVerbose(`Created error element for field: ${fieldName}`);
   }
 
   return errorElement;

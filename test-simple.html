@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormLib Simple Test</title>
+    <style>
+        .hidden-step { display: none !important; }
+        .active-step { border: 2px solid green; padding: 10px; margin: 10px 0; }
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .step { border: 1px solid #ccc; padding: 20px; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>FormLib Simple Test</h1>
+    
+    <!-- Multi-step form -->
+    <form data-form="multistep">
+        <h2>Multi-Step Form Test</h2>
+        
+        <!-- Step 1 -->
+        <div data-form="step" data-answer="step-1" class="step">
+            <h3>Step 1: Basic Info</h3>
+            <label>
+                First Name: 
+                <input type="text" name="firstName" data-step-field-name="firstName" required>
+            </label><br><br>
+            <label>
+                Last Name: 
+                <input type="text" name="lastName" data-step-field-name="lastName" required>
+            </label><br><br>
+            <button type="button" data-form="next-btn">Next</button>
+        </div>
+        
+        <!-- Step 2 -->
+        <div data-form="step" data-answer="step-2" class="step">
+            <h3>Step 2: Contact Info</h3>
+            <label>
+                Email: 
+                <input type="email" name="email" data-step-field-name="email" required>
+            </label><br><br>
+            <label>
+                Phone: 
+                <input type="tel" name="phone" data-step-field-name="phone" required>
+            </label><br><br>
+            <button type="button" data-form="back-btn">Back</button>
+            <button type="button" data-form="next-btn">Next</button>
+        </div>
+        
+        <!-- Step 3 -->
+        <div data-form="step" data-answer="step-3" class="step">
+            <h3>Step 3: Summary</h3>
+            <p>First Name: <span data-summary-field="firstName">--</span></p>
+            <p>Last Name: <span data-summary-field="lastName">--</span></p>
+            <p>Email: <span data-summary-field="email">--</span></p>
+            <p>Phone: <span data-summary-field="phone">--</span></p>
+            <br>
+            <button type="button" data-form="back-btn">Back</button>
+            <button type="submit" data-form="submit">Submit</button>
+        </div>
+    </form>
+    
+    <hr>
+    
+    <!-- Debug Section -->
+    <div id="debug">
+        <h3>Debug Info</h3>
+        <button onclick="debugFormLib()">Check FormLib Status</button>
+        <button onclick="showCurrentState()">Show Current State</button>
+        <div id="debug-output"></div>
+    </div>
+    
+    <!-- Load the FormLib -->
+    <script src="https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@1da3a3efe9b81c3b01d4f0b0785c4d8cc5b84f14/dist/index.browser.js"></script>
+    
+    <script>
+        // Debug functions
+        function debugFormLib() {
+            const output = document.getElementById('debug-output');
+            
+            if (typeof window.FormLib !== 'undefined') {
+                output.innerHTML = `
+                    <h4>✅ FormLib is loaded!</h4>
+                    <p>Initialized: ${window.FormLib.isInitialized()}</p>
+                    <p>Available methods: ${Object.getOwnPropertyNames(window.FormLib).join(', ')}</p>
+                `;
+            } else {
+                output.innerHTML = `
+                    <h4>❌ FormLib is NOT loaded</h4>
+                    <p>Check console for errors</p>
+                `;
+            }
+        }
+        
+        function showCurrentState() {
+            const output = document.getElementById('debug-output');
+            
+            if (typeof window.FormLib !== 'undefined' && window.FormLib.isInitialized()) {
+                const state = window.FormLib.getState();
+                output.innerHTML = `
+                    <h4>Current FormLib State:</h4>
+                    <pre>${JSON.stringify(state, null, 2)}</pre>
+                `;
+            } else {
+                output.innerHTML = `<p>FormLib not initialized</p>`;
+            }
+        }
+        
+        // Auto-check on load
+        setTimeout(() => {
+            debugFormLib();
+            console.log('=== FormLib Test Page Loaded ===');
+            console.log('Window.FormLib:', typeof window.FormLib);
+            if (window.FormLib) {
+                console.log('FormLib initialized:', window.FormLib.isInitialized());
+            }
+        }, 1000);
+    </script>
+</body>
+</html> 
