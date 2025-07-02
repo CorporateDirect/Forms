@@ -600,6 +600,9 @@ export function goToStep(stepIndex: number): void {
   // Show new step
   showStep(stepIndex);
 
+  // Ensure user is at the top of the new step (avoids "blank" appearance if content starts higher)
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
   // Update FormState
   FormState.setCurrentStep(newStep.id);
 
