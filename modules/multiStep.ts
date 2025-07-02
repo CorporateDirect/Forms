@@ -555,10 +555,19 @@ export function showStep(stepIndex: number): void {
   // Update FormState
   FormState.setStepInfo(step.id, { visible: true, visited: true });
   
+  // IMPORTANT: Keep step_items hidden when showing parent step
+  // Only show step_items when explicitly triggered by radio button clicks
+  const stepItemsInThisStep = stepItems.filter(item => item.parentStepIndex === stepIndex);
+  stepItemsInThisStep.forEach(stepItem => {
+    hideStepCompletely(stepItem.element, `step_item ${stepItem.id} (keeping hidden on parent step show)`);
+    FormState.setStepVisibility(stepItem.id, false);
+  });
+  
   logVerbose(`Step shown: ${step.id} (index: ${stepIndex})`, {
     display: element.style.display,
     visibility: element.style.visibility,
-    classes: element.className
+    classes: element.className,
+    stepItemsHidden: stepItemsInThisStep.length
   });
 }
 
