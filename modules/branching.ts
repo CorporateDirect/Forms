@@ -679,22 +679,34 @@ function deactivateBranch(target: string | null): void {
  */
 export function getNextStep(currentStep?: string): string | null {
   const activeConditions = FormState.getBranchPath().activeConditions;
-  
+
   logVerbose('Evaluating next step', {
     currentStep,
     activeConditions
   });
 
-  // Find the most relevant active condition
+  /*
+   * Iterate through activeConditions in insertion order and return the first
+   * branch target that:
+   * 1. Has a non-null / non-empty value (i.e. branch is active)
+   * 2. Is NOT the current step we are on (prevents immediate loops)
+   * 3. Has NOT already been visited according to FormState (prevents back-tracking)
+   */
   for (const [target, value] of Object.entries(activeConditions)) {
-    if (value !== null && value !== undefined && value !== '') {
+    const isActive = value !== null && value !== undefined && value !== '';
+    const isCurrent = target === currentStep;
+    const wasVisited = FormState.wasStepVisited(target);
+
+    logVerbose('Branch candidate', { target, value, isActive, isCurrent, wasVisited });
+
+    if (isActive && !isCurrent && !wasVisited) {
       logVerbose(`Next step determined by branch: ${target}`);
       return target;
     }
   }
 
-  // If no active conditions, return null (will fall back to sequential navigation)
-  logVerbose('No active branch conditions, using sequential navigation');
+  // If every active branch target was already visited (or none active), fall back to sequential navigation
+  logVerbose('No suitable active branch target found, using sequential navigation');
   return null;
 }
 
