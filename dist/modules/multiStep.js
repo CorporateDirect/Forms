@@ -45,9 +45,14 @@ export function initMultiStep(root = document) {
         });
         return stepInfo;
     });
+    // Hide all steps initially
+    steps.forEach((step, index) => {
+        hideElement(step.element);
+        removeClass(step.element, CSS_CLASSES.ACTIVE_STEP);
+    });
     // Set up navigation event listeners
     setupNavigationListeners(root);
-    // Initialize first step
+    // Initialize first step (this will show step 0 and hide others)
     if (steps.length > 0) {
         goToStep(0);
     }
