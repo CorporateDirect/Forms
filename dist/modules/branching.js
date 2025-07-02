@@ -38,59 +38,156 @@ function setupBranchingListeners(root) {
     const cleanup2 = delegateEvent(root, 'input', SELECTORS.GO_TO, handleBranchTrigger);
     // Listen for click events on radio buttons and checkboxes
     const cleanup3 = delegateEvent(root, 'click', SELECTORS.GO_TO, handleBranchTrigger);
-    // SPECIAL HANDLING: Listen for clicks on radio button labels (Webflow custom styling)
-    // This handles cases where radio inputs have opacity:0 and are positioned behind labels
-    const cleanup4 = delegateEvent(root, 'click', 'label.radio_field, label.w-radio, .radio_label, .w-form-label, .w-radio-input', handleRadioLabelClick);
-    cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4);
+    // COMPREHENSIVE RADIO BUTTON HANDLING for custom styling
+    // Handle clicks on various parts of custom radio button structures
+    const radioSelectors = [
+        // Direct radio elements
+        'input[type="radio"][data-go-to]',
+        // Labels containing radio buttons
+        'label.radio_field',
+        'label.w-radio',
+        'label:has(input[type="radio"][data-go-to])',
+        // Common custom radio elements
+        '.radio_label',
+        '.w-form-label',
+        '.w-radio-input',
+        '.radio_button',
+        '.radio-button',
+        '.form_checkbox-icon',
+        '.w-checkbox-input',
+        // Webflow specific
+        '.w-form-formradioinput',
+        '.radio_button-skip-step',
+        // Generic clickable elements that might contain radio buttons
+        '[data-go-to]',
+        // Spans and divs inside labels
+        'label span',
+        'label div'
+    ];
+    // Set up comprehensive click handling
+    radioSelectors.forEach(selector => {
+        const cleanup = delegateEvent(root, 'click', selector, handleUniversalRadioClick);
+        cleanupFunctions.push(cleanup);
+    });
+    // Also listen for keyboard events (Enter/Space on focused elements)
+    const cleanup5 = delegateEvent(root, 'keydown', 'label.radio_field, label.w-radio, [data-go-to]', handleRadioKeydown);
+    cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup5);
 }
 /**
- * Handle clicks on radio button labels (for Webflow custom styling)
+ * Universal handler for radio button clicks (handles all custom styling scenarios)
  */
-function handleRadioLabelClick(event, target) {
-    console.log('[FormLib] Radio label clicked', { target, tagName: target.tagName, className: target.className });
-    // Find the associated radio input within this label
-    let radioInput = target.querySelector('input[type="radio"][data-go-to]');
-    // If not found directly, also check if the clicked element is a child of a label containing the radio
+function handleUniversalRadioClick(event, target) {
+    console.log('[FormLib] Universal radio click handler triggered', {
+        target,
+        tagName: target.tagName,
+        className: target.className,
+        id: target.id
+    });
+    // Try to find the radio input in multiple ways
+    let radioInput = null;
+    // Method 1: Direct click on radio input
+    if (target.tagName === 'INPUT' && target.type === 'radio') {
+        const goTo = getAttrValue(target, 'data-go-to');
+        if (goTo) {
+            radioInput = target;
+            console.log('[FormLib] Direct radio input click detected');
+        }
+    }
+    // Method 2: Click on element with data-go-to (find associated radio)
     if (!radioInput) {
-        const parentLabel = target.closest('label.radio_field, label.w-radio');
+        const goTo = getAttrValue(target, 'data-go-to');
+        if (goTo) {
+            // Look for radio input with same data-go-to value
+            radioInput = document.querySelector(`input[type="radio"][data-go-to="${goTo}"]`);
+            console.log('[FormLib] Found radio via data-go-to attribute', { goTo, radioInput });
+        }
+    }
+    // Method 3: Look within clicked element for radio input
+    if (!radioInput) {
+        radioInput = target.querySelector('input[type="radio"][data-go-to]');
+        if (radioInput) {
+            console.log('[FormLib] Found radio input inside clicked element');
+        }
+    }
+    // Method 4: Look in parent elements (traverse up the DOM)
+    if (!radioInput) {
+        let currentElement = target.parentElement;
+        while (currentElement && !radioInput) {
+            radioInput = currentElement.querySelector('input[type="radio"][data-go-to]');
+            if (radioInput) {
+                console.log('[FormLib] Found radio input in parent element', { parent: currentElement });
+                break;
+            }
+            currentElement = currentElement.parentElement;
+            // Prevent infinite loop - stop at form or body
+            if (currentElement?.tagName === 'FORM' || currentElement?.tagName === 'BODY') {
+                break;
+            }
+        }
+    }
+    // Method 5: Look for closest label and find radio inside it
+    if (!radioInput) {
+        const parentLabel = target.closest('label');
         if (parentLabel) {
             radioInput = parentLabel.querySelector('input[type="radio"][data-go-to]');
-            console.log('[FormLib] Found radio input in parent label', { parentLabel, radioInput });
+            if (radioInput) {
+                console.log('[FormLib] Found radio input in closest label');
+            }
         }
     }
     if (!radioInput) {
-        console.log('[FormLib] No radio input with data-go-to found in clicked label or parent label');
-        // Also check for radio inputs without data-go-to for debugging
-        const anyRadioInput = (target.querySelector('input[type="radio"]') ||
-            target.closest('label')?.querySelector('input[type="radio"]'));
-        if (anyRadioInput) {
-            console.log('[FormLib] Found radio input without data-go-to', {
-                radioInput: anyRadioInput,
-                goTo: getAttrValue(anyRadioInput, 'data-go-to'),
-                name: anyRadioInput.name,
-                value: anyRadioInput.value,
-                allAttributes: Array.from(anyRadioInput.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
+        console.log('[FormLib] No radio input with data-go-to found after exhaustive search');
+        // Debug: Show what we did find
+        const anyRadio = target.querySelector('input[type="radio"]') ||
+            target.closest('label')?.querySelector('input[type="radio"]');
+        if (anyRadio) {
+            console.log('[FormLib] Found radio without data-go-to:', {
+                radio: anyRadio,
+                attributes: Array.from(anyRadio.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
             });
         }
         return;
     }
     const goToValue = getAttrValue(radioInput, 'data-go-to');
-    console.log('[FormLib] Found radio input in label', {
+    console.log('[FormLib] Successfully found radio input', {
         radioInput,
         goTo: goToValue,
         name: radioInput.name,
         value: radioInput.value,
-        allAttributes: Array.from(radioInput.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
+        checked: radioInput.checked
     });
+    // Prevent the event from triggering multiple times
+    event.preventDefault();
+    event.stopPropagation();
     // Check/select the radio button
     radioInput.checked = true;
     // Apply active class styling
     applyRadioActiveClass(radioInput);
-    // Trigger the branching logic for this radio input
+    // Trigger the branching logic
     const syntheticEvent = new Event('change', { bubbles: true });
     Object.defineProperty(syntheticEvent, 'target', { value: radioInput });
     console.log('[FormLib] Triggering branch logic for data-go-to:', goToValue);
     handleBranchTrigger(syntheticEvent, radioInput);
+}
+/**
+ * Handle keyboard events on radio button labels
+ */
+function handleRadioKeydown(event, target) {
+    // Only handle Enter and Space keys
+    if (event.key !== 'Enter' && event.key !== ' ') {
+        return;
+    }
+    console.log('[FormLib] Radio keyboard event', { key: event.key, target });
+    // Prevent default behavior and trigger click
+    event.preventDefault();
+    // Create a synthetic click event
+    const clickEvent = new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window
+    });
+    // Trigger the universal click handler
+    handleUniversalRadioClick(clickEvent, target);
 }
 /**
  * Handle branch trigger events
