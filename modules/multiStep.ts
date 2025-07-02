@@ -92,11 +92,21 @@ export function initMultiStep(root: Document | Element = document): void {
   stepItems = [];
   steps.forEach((parentStep, parentIndex) => {
     const stepItemElements = parentStep.element.querySelectorAll('.step_item');
-    logVerbose(`Found ${stepItemElements.length} step_items in parent step ${parentIndex}`);
+    console.log(`[FormLib] Found ${stepItemElements.length} step_items in parent step ${parentIndex} (${parentStep.id})`);
     
     stepItemElements.forEach((stepItemElement, itemIndex) => {
       const htmlElement = stepItemElement as HTMLElement;
       const dataAnswer = getAttrValue(stepItemElement, 'data-answer');
+      const dataGoTo = getAttrValue(stepItemElement, 'data-go-to');
+      
+      console.log(`[FormLib] Processing step_item ${itemIndex}:`, {
+        dataAnswer,
+        dataGoTo,
+        parentStepId: parentStep.id,
+        parentStepIndex: parentIndex,
+        element: htmlElement,
+        allAttributes: Array.from(htmlElement.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
+      });
       
       if (!dataAnswer) {
         console.warn(`[FormLib] Step item ${itemIndex} in parent step ${parentIndex} missing required data-answer attribute`);
@@ -114,7 +124,7 @@ export function initMultiStep(root: Document | Element = document): void {
         parentStepIndex: parentIndex
       };
 
-      logVerbose(`Registering step_item`, {
+      console.log(`[FormLib] Registered step_item:`, {
         stepId: dataAnswer,
         parentStepIndex: parentIndex,
         globalIndex: stepItems.length,
@@ -197,11 +207,23 @@ function showStepCompletely(element: HTMLElement, description: string): void {
  * Show a specific step_item within its parent step
  */
 export function showStepItem(stepItemId: string): void {
-  logVerbose(`Attempting to show step_item: ${stepItemId}`);
+  console.log(`[FormLib] Attempting to show step_item: ${stepItemId}`);
+  console.log(`[FormLib] Available step_items:`, stepItems.map(item => ({
+    id: item.id,
+    dataAnswer: getAttrValue(item.element, 'data-answer'),
+    element: item.element
+  })));
   
   const stepItem = stepItems.find(item => item.id === stepItemId);
   if (!stepItem) {
     console.warn(`[FormLib] Step item not found: ${stepItemId}`);
+    console.log(`[FormLib] Looking for step_item with data-answer="${stepItemId}"`);
+    // Try to find by data-answer attribute
+    const stepItemByAnswer = stepItems.find(item => getAttrValue(item.element, 'data-answer') === stepItemId);
+    if (stepItemByAnswer) {
+      console.log(`[FormLib] Found step_item by data-answer: ${stepItemId}`, stepItemByAnswer);
+      return showStepItem(stepItemByAnswer.id);
+    }
     return;
   }
 

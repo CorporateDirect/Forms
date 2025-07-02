@@ -102,21 +102,34 @@ function setupBranchingListeners(root: Document | Element): void {
  * Handle clicks on radio button labels (for Webflow custom styling)
  */
 function handleRadioLabelClick(event: Event, target: Element): void {
-  logVerbose('Radio label clicked', { target });
+  console.log('[FormLib] Radio label clicked', { target, tagName: target.tagName, className: target.className });
   
   // Find the associated radio input within this label
   const radioInput = target.querySelector('input[type="radio"][data-go-to]') as HTMLInputElement;
   
   if (!radioInput) {
-    logVerbose('No radio input with data-go-to found in clicked label');
+    console.log('[FormLib] No radio input with data-go-to found in clicked label');
+    // Also check for radio inputs without data-go-to for debugging
+    const anyRadioInput = target.querySelector('input[type="radio"]') as HTMLInputElement;
+    if (anyRadioInput) {
+      console.log('[FormLib] Found radio input without data-go-to', {
+        radioInput: anyRadioInput,
+        goTo: getAttrValue(anyRadioInput, 'data-go-to'),
+        name: anyRadioInput.name,
+        value: anyRadioInput.value,
+        allAttributes: Array.from(anyRadioInput.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
+      });
+    }
     return;
   }
   
-  logVerbose('Found radio input in label', {
+  const goToValue = getAttrValue(radioInput, 'data-go-to');
+  console.log('[FormLib] Found radio input in label', {
     radioInput,
-    goTo: getAttrValue(radioInput, 'data-go-to'),
+    goTo: goToValue,
     name: radioInput.name,
-    value: radioInput.value
+    value: radioInput.value,
+    allAttributes: Array.from(radioInput.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
   });
   
   // Check/select the radio button
@@ -125,6 +138,8 @@ function handleRadioLabelClick(event: Event, target: Element): void {
   // Trigger the branching logic for this radio input
   const syntheticEvent = new Event('change', { bubbles: true });
   Object.defineProperty(syntheticEvent, 'target', { value: radioInput });
+  
+  console.log('[FormLib] Triggering branch logic for data-go-to:', goToValue);
   handleBranchTrigger(syntheticEvent, radioInput);
 }
 
@@ -132,16 +147,29 @@ function handleRadioLabelClick(event: Event, target: Element): void {
  * Handle branch trigger events
  */
 function handleBranchTrigger(event: Event, target: Element): void {
-  if (!isFormInput(target)) return;
+  console.log('[FormLib] handleBranchTrigger called', {
+    target,
+    tagName: target.tagName,
+    type: (target as HTMLInputElement).type,
+    isFormInput: isFormInput(target)
+  });
+  
+  if (!isFormInput(target)) {
+    console.log('[FormLib] Target is not a form input, ignoring');
+    return;
+  }
 
   const goToValue = getAttrValue(target, 'data-go-to');
   const inputValue = getInputValue(target);
 
-  logVerbose('Branch trigger activated', {
+  console.log('[FormLib] Branch trigger activated', {
     element: target,
     goTo: goToValue,
     value: inputValue,
-    type: target.type || target.tagName
+    type: (target as HTMLInputElement).type || target.tagName,
+    checked: (target as HTMLInputElement).checked,
+    name: (target as HTMLInputElement).name,
+    allAttributes: Array.from(target.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
   });
 
   // Store the field value in state
