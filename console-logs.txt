@@ -1,16 +1,15 @@
-
-
 js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1486 Google Maps JavaScript API has been loaded directly without loading=async. This can result in suboptimal performance. For best-practice loading patterns please see https://goo.gle/js-api-loading
 Uca @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1486
 google.maps.Load @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:14
 (anonymous) @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1730
 (anonymous) @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1730
-realshield:179 Uncaught ReferenceError: radioGroups is not defined
-    at realshield:179:5
+index.min.js:1 Uncaught SyntaxError: Cannot use import statement outside a module (at index.min.js:1:1)
+realshield:181 Uncaught ReferenceError: radioGroups is not defined
+    at realshield:181:5
     at NodeList.forEach (<anonymous>)
-    at realshield:172:52
-(anonymous) @ realshield:179
-(anonymous) @ realshield:172
+    at realshield:174:52
+(anonymous) @ realshield:181
+(anonymous) @ realshield:174
 inspector.b9415ea5.js:12 Could not access stylesheet rules: SecurityError: Failed to read the 'cssRules' property from 'CSSStyleSheet': Cannot access rules
     at inspector.b9415ea5.js:12:57303
     at Array.forEach (<anonymous>)
@@ -91,6 +90,6 @@ ads.914af30a.js:1 Attempting to initialize AdUnit
 ads.914af30a.js:1 AdUnit initialized successfully
 ads.914af30a.js:1 Ads initialized successfully for: https://corporate-formations.webflow.io/formations/realshield
 ads.914af30a.js:1 Ads initialization already in progress or completed
-v1?ray=958896d45d58dbc2&lang=auto:1 Request for the Private Access Token challenge.
-v1?ray=958896d45d58dbc2&lang=auto:1 
-auto/:1 The resource https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/b/cmg/1 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+v1?ray=958eb247bf64fb50&lang=auto:1 Request for the Private Access Token challenge.
+v1?ray=958eb247bf64fb50&lang=auto:1 
+auto/:1 The resource https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/cmg/1 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
