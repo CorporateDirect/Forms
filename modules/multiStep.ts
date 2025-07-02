@@ -600,8 +600,8 @@ export function goToStep(stepIndex: number): void {
   // Show new step
   showStep(stepIndex);
 
-  // Ensure user is at the top of the new step (avoids "blank" appearance if content starts higher)
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Scroll the newly shown step into view to guarantee content is visible
+  newStep.element.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   // Update FormState
   FormState.setCurrentStep(newStep.id);
