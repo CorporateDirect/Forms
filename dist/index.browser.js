@@ -602,11 +602,19 @@ function handleBranchTrigger(event, target) {
 function activateBranch(target, value) {
     if (!target)
         return;
-    logVerbose(`Activating branch: ${target}`, { value });
+    logVerbose(`Activating branch: ${target}`, {
+        value,
+        valueType: typeof value,
+        targetString: String(target)
+    });
     // Set active condition in state
     FormState.setActiveCondition(target, value);
     // Clear fields from inactive branches
     clearInactiveBranchFields();
+    // Log current active conditions after setting
+    logVerbose('Active conditions after branch activation', {
+        activeConditions: FormState.getBranchPath().activeConditions
+    });
 }
 /**
  * Deactivate a branch path
@@ -830,6 +838,14 @@ function initMultiStep(root = document) {
             subtype: getAttrValue(element, 'data-step-subtype') || undefined,
             number: getAttrValue(element, 'data-step-number') || undefined
         };
+        logVerbose(`Registering step ${index}`, {
+            stepId,
+            dataAnswer: getAttrValue(element, 'data-answer'),
+            elementId: getAttrValue(element, 'id'),
+            fallbackId: `step-${index + 1}`,
+            type: stepInfo.type,
+            element: htmlElement
+        });
         // Register step in FormState
         FormState.setStepInfo(stepId, {
             type: stepInfo.type,
@@ -886,9 +902,19 @@ function handleNextClick(event, target) {
     }
     // Determine next step (considering branching logic)
     const nextStepId = getNextStep(currentStep.id);
+    logVerbose('Next step determination', {
+        currentStepId: currentStep.id,
+        branchNextStepId: nextStepId,
+        allStepIds: steps.map(s => ({ id: s.id, index: s.index }))
+    });
     if (nextStepId) {
         // Branch-determined next step
         const nextStepIndex = findStepIndexById(nextStepId);
+        logVerbose('Branch step lookup', {
+            targetStepId: nextStepId,
+            foundIndex: nextStepIndex,
+            foundStep: nextStepIndex !== -1 ? steps[nextStepIndex] : null
+        });
         if (nextStepIndex !== -1) {
             goToStep(nextStepIndex);
         }

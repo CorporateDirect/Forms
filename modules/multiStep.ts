@@ -63,6 +63,15 @@ export function initMultiStep(root: Document | Element = document): void {
       number: getAttrValue(element, 'data-step-number') || undefined
     };
 
+    logVerbose(`Registering step ${index}`, {
+      stepId,
+      dataAnswer: getAttrValue(element, 'data-answer'),
+      elementId: getAttrValue(element, 'id'),
+      fallbackId: `step-${index + 1}`,
+      type: stepInfo.type,
+      element: htmlElement
+    });
+
     // Register step in FormState
     FormState.setStepInfo(stepId, {
       type: stepInfo.type,
@@ -153,9 +162,21 @@ function handleNextClick(event: Event, target: Element): void {
   // Determine next step (considering branching logic)
   const nextStepId = getNextStep(currentStep.id);
   
+  logVerbose('Next step determination', {
+    currentStepId: currentStep.id,
+    branchNextStepId: nextStepId,
+    allStepIds: steps.map(s => ({ id: s.id, index: s.index }))
+  });
+  
   if (nextStepId) {
     // Branch-determined next step
     const nextStepIndex = findStepIndexById(nextStepId);
+    logVerbose('Branch step lookup', {
+      targetStepId: nextStepId,
+      foundIndex: nextStepIndex,
+      foundStep: nextStepIndex !== -1 ? steps[nextStepIndex] : null
+    });
+    
     if (nextStepIndex !== -1) {
       goToStep(nextStepIndex);
     } else {

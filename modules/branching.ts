@@ -148,13 +148,22 @@ function handleBranchTrigger(event: Event, target: Element): void {
 function activateBranch(target: string | null, value: any): void {
   if (!target) return;
 
-  logVerbose(`Activating branch: ${target}`, { value });
+  logVerbose(`Activating branch: ${target}`, { 
+    value,
+    valueType: typeof value,
+    targetString: String(target)
+  });
 
   // Set active condition in state
   FormState.setActiveCondition(target, value);
 
   // Clear fields from inactive branches
   clearInactiveBranchFields();
+  
+  // Log current active conditions after setting
+  logVerbose('Active conditions after branch activation', {
+    activeConditions: FormState.getBranchPath().activeConditions
+  });
 }
 
 /**
