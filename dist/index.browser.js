@@ -550,7 +550,7 @@ function setupBranchingListeners(root) {
     const cleanup3 = delegateEvent(root, 'click', SELECTORS.GO_TO, handleBranchTrigger);
     // SPECIAL HANDLING: Listen for clicks on radio button labels (Webflow custom styling)
     // This handles cases where radio inputs have opacity:0 and are positioned behind labels
-    const cleanup4 = delegateEvent(root, 'click', 'label.radio_field, label.w-radio', handleRadioLabelClick);
+    const cleanup4 = delegateEvent(root, 'click', 'label.radio_field, label.w-radio, .radio_label, .w-form-label, .w-radio-input', handleRadioLabelClick);
     branchingCleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4);
 }
 /**
@@ -559,11 +559,20 @@ function setupBranchingListeners(root) {
 function handleRadioLabelClick(event, target) {
     console.log('[FormLib] Radio label clicked', { target, tagName: target.tagName, className: target.className });
     // Find the associated radio input within this label
-    const radioInput = target.querySelector('input[type="radio"][data-go-to]');
+    let radioInput = target.querySelector('input[type="radio"][data-go-to]');
+    // If not found directly, also check if the clicked element is a child of a label containing the radio
     if (!radioInput) {
-        console.log('[FormLib] No radio input with data-go-to found in clicked label');
+        const parentLabel = target.closest('label.radio_field, label.w-radio');
+        if (parentLabel) {
+            radioInput = parentLabel.querySelector('input[type="radio"][data-go-to]');
+            console.log('[FormLib] Found radio input in parent label', { parentLabel, radioInput });
+        }
+    }
+    if (!radioInput) {
+        console.log('[FormLib] No radio input with data-go-to found in clicked label or parent label');
         // Also check for radio inputs without data-go-to for debugging
-        const anyRadioInput = target.querySelector('input[type="radio"]');
+        const anyRadioInput = (target.querySelector('input[type="radio"]') ||
+            target.closest('label')?.querySelector('input[type="radio"]'));
         if (anyRadioInput) {
             console.log('[FormLib] Found radio input without data-go-to', {
                 radioInput: anyRadioInput,
@@ -585,6 +594,8 @@ function handleRadioLabelClick(event, target) {
     });
     // Check/select the radio button
     radioInput.checked = true;
+    // Apply active class styling
+    applyRadioActiveClass(radioInput);
     // Trigger the branching logic for this radio input
     const syntheticEvent = new Event('change', { bubbles: true });
     Object.defineProperty(syntheticEvent, 'target', { value: radioInput });
@@ -626,6 +637,8 @@ function handleBranchTrigger(event, target) {
         if (target.type === 'radio' && target.checked) {
             // For radio buttons, first deactivate all other radio buttons in the same group
             handleRadioGroupSelection(target);
+            // Apply active class styling
+            applyRadioActiveClass(target);
             activateBranch(goToValue, target.value);
             // For radio buttons with data-go-to, trigger step_item visibility
             if (goToValue) {
@@ -665,6 +678,37 @@ function handleBranchTrigger(event, target) {
     if (hasActiveConditions) {
         updateStepVisibility();
     }
+}
+/**
+ * Apply active class to radio button and remove from others in the same group
+ */
+function applyRadioActiveClass(selectedRadio) {
+    const activeClass = getAttrValue(selectedRadio, 'fs-inputactive-class') || 'is-active-inputactive';
+    // Remove active class from other radio buttons in the same group
+    if (selectedRadio.name) {
+        const radioGroup = document.querySelectorAll(`input[type="radio"][name="${selectedRadio.name}"]`);
+        radioGroup.forEach(radio => {
+            const htmlRadio = radio;
+            const radioLabel = htmlRadio.closest('label');
+            if (htmlRadio !== selectedRadio) {
+                htmlRadio.classList.remove(activeClass);
+                if (radioLabel) {
+                    radioLabel.classList.remove(activeClass);
+                }
+            }
+        });
+    }
+    // Add active class to the selected radio and its label
+    selectedRadio.classList.add(activeClass);
+    const parentLabel = selectedRadio.closest('label');
+    if (parentLabel) {
+        parentLabel.classList.add(activeClass);
+    }
+    logVerbose(`Applied active class to radio button: ${selectedRadio.name}`, {
+        activeClass,
+        radioClasses: selectedRadio.className,
+        labelClasses: parentLabel?.className
+    });
 }
 /**
  * Handle radio button group selection - deactivate other options in the same group

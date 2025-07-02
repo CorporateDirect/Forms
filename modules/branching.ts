@@ -91,7 +91,7 @@ function setupBranchingListeners(root: Document | Element): void {
   const cleanup4 = delegateEvent(
     root,
     'click',
-    'label.radio_field, label.w-radio',
+    'label.radio_field, label.w-radio, .radio_label, .w-form-label, .w-radio-input',
     handleRadioLabelClick
   );
 
@@ -105,12 +105,22 @@ function handleRadioLabelClick(event: Event, target: Element): void {
   console.log('[FormLib] Radio label clicked', { target, tagName: target.tagName, className: target.className });
   
   // Find the associated radio input within this label
-  const radioInput = target.querySelector('input[type="radio"][data-go-to]') as HTMLInputElement;
+  let radioInput = target.querySelector('input[type="radio"][data-go-to]') as HTMLInputElement;
+  
+  // If not found directly, also check if the clicked element is a child of a label containing the radio
+  if (!radioInput) {
+    const parentLabel = target.closest('label.radio_field, label.w-radio');
+    if (parentLabel) {
+      radioInput = parentLabel.querySelector('input[type="radio"][data-go-to]') as HTMLInputElement;
+      console.log('[FormLib] Found radio input in parent label', { parentLabel, radioInput });
+    }
+  }
   
   if (!radioInput) {
-    console.log('[FormLib] No radio input with data-go-to found in clicked label');
+    console.log('[FormLib] No radio input with data-go-to found in clicked label or parent label');
     // Also check for radio inputs without data-go-to for debugging
-    const anyRadioInput = target.querySelector('input[type="radio"]') as HTMLInputElement;
+    const anyRadioInput = (target.querySelector('input[type="radio"]') || 
+                          target.closest('label')?.querySelector('input[type="radio"]')) as HTMLInputElement;
     if (anyRadioInput) {
       console.log('[FormLib] Found radio input without data-go-to', {
         radioInput: anyRadioInput,
@@ -134,6 +144,9 @@ function handleRadioLabelClick(event: Event, target: Element): void {
   
   // Check/select the radio button
   radioInput.checked = true;
+  
+  // Apply active class styling
+  applyRadioActiveClass(radioInput);
   
   // Trigger the branching logic for this radio input
   const syntheticEvent = new Event('change', { bubbles: true });
@@ -184,6 +197,9 @@ function handleBranchTrigger(event: Event, target: Element): void {
       // For radio buttons, first deactivate all other radio buttons in the same group
       handleRadioGroupSelection(target);
       
+      // Apply active class styling
+      applyRadioActiveClass(target);
+      
       activateBranch(goToValue, target.value);
       // For radio buttons with data-go-to, trigger step_item visibility
       if (goToValue) {
@@ -221,6 +237,41 @@ function handleBranchTrigger(event: Event, target: Element): void {
   if (hasActiveConditions) {
     updateStepVisibility();
   }
+}
+
+/**
+ * Apply active class to radio button and remove from others in the same group
+ */
+function applyRadioActiveClass(selectedRadio: HTMLInputElement): void {
+  const activeClass = getAttrValue(selectedRadio, 'fs-inputactive-class') || 'is-active-inputactive';
+  
+  // Remove active class from other radio buttons in the same group
+  if (selectedRadio.name) {
+    const radioGroup = document.querySelectorAll(`input[type="radio"][name="${selectedRadio.name}"]`);
+    radioGroup.forEach(radio => {
+      const htmlRadio = radio as HTMLInputElement;
+      const radioLabel = htmlRadio.closest('label');
+      if (htmlRadio !== selectedRadio) {
+        htmlRadio.classList.remove(activeClass);
+        if (radioLabel) {
+          radioLabel.classList.remove(activeClass);
+        }
+      }
+    });
+  }
+  
+  // Add active class to the selected radio and its label
+  selectedRadio.classList.add(activeClass);
+  const parentLabel = selectedRadio.closest('label');
+  if (parentLabel) {
+    parentLabel.classList.add(activeClass);
+  }
+  
+  logVerbose(`Applied active class to radio button: ${selectedRadio.name}`, {
+    activeClass,
+    radioClasses: selectedRadio.className,
+    labelClasses: parentLabel?.className
+  });
 }
 
 /**
