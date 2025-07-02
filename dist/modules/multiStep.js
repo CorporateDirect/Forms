@@ -173,6 +173,26 @@ export function showStepItem(stepItemId) {
     logVerbose(`Successfully showed step_item: ${stepItemId}`);
 }
 /**
+ * Hide a specific step_item
+ */
+export function hideStepItem(stepItemId) {
+    logVerbose(`Attempting to hide step_item: ${stepItemId}`);
+    const stepItem = stepItems.find(item => item.id === stepItemId);
+    if (!stepItem) {
+        logVerbose(`Step item not found for hiding: ${stepItemId}`);
+        return;
+    }
+    logVerbose(`Hiding step_item: ${stepItemId}`);
+    // Hide the step_item
+    hideStepCompletely(stepItem.element, `step_item ${stepItemId}`);
+    FormState.setStepVisibility(stepItemId, false);
+    // Clear current step_item tracking if this was the active one
+    if (currentStepItemId === stepItemId) {
+        currentStepItemId = null;
+    }
+    logVerbose(`Successfully hid step_item: ${stepItemId}`);
+}
+/**
  * Set up navigation event listeners
  */
 function setupNavigationListeners(root) {

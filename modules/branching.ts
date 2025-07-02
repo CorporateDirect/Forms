@@ -114,6 +114,9 @@ function handleBranchTrigger(event: Event, target: Element): void {
   // Handle different input types
   if (target instanceof HTMLInputElement) {
     if (target.type === 'radio' && target.checked) {
+      // For radio buttons, first deactivate all other radio buttons in the same group
+      handleRadioGroupSelection(target);
+      
       activateBranch(goToValue, target.value);
       // For radio buttons with data-go-to, trigger step_item visibility
       if (goToValue) {
@@ -151,6 +154,61 @@ function handleBranchTrigger(event: Event, target: Element): void {
   if (hasActiveConditions) {
     updateStepVisibility();
   }
+}
+
+/**
+ * Handle radio button group selection - deactivate other options in the same group
+ */
+function handleRadioGroupSelection(selectedRadio: HTMLInputElement): void {
+  if (!selectedRadio.name) return;
+  
+  logVerbose(`Handling radio group selection for: ${selectedRadio.name}`, {
+    selectedValue: selectedRadio.value,
+    selectedGoTo: getAttrValue(selectedRadio, 'data-go-to')
+  });
+  
+  // Find all radio buttons in the same group
+  const radioGroup = document.querySelectorAll(`input[type="radio"][name="${selectedRadio.name}"]`);
+  
+  radioGroup.forEach(radio => {
+    const htmlRadio = radio as HTMLInputElement;
+    const radioGoTo = getAttrValue(htmlRadio, 'data-go-to');
+    
+    if (htmlRadio !== selectedRadio && radioGoTo) {
+      // Deactivate this radio button's branch
+      logVerbose(`Deactivating radio option: ${radioGoTo}`);
+      deactivateBranch(radioGoTo);
+      
+      // Hide the corresponding step_item
+      if (radioGoTo) {
+        hideStepItem(radioGoTo);
+      }
+    }
+  });
+}
+
+/**
+ * Hide a specific step_item
+ */
+function hideStepItem(stepItemId: string): void {
+  logVerbose(`Hiding step_item: ${stepItemId}`);
+  
+  // Import hideStepItem functionality from multiStep module
+  import('./multiStep.js').then(({ hideStepItem: multiStepHideStepItem }) => {
+    if (multiStepHideStepItem) {
+      multiStepHideStepItem(stepItemId);
+    }
+  }).catch(error => {
+    // If the function doesn't exist, we'll handle it manually
+    logVerbose(`Manual step_item hiding for: ${stepItemId}`);
+    const stepItemElements = document.querySelectorAll(`[data-answer="${stepItemId}"]`);
+    stepItemElements.forEach(element => {
+      const htmlElement = element as HTMLElement;
+      htmlElement.style.display = 'none';
+      htmlElement.style.visibility = 'hidden';
+      htmlElement.classList.add('hidden-step');
+    });
+  });
 }
 
 /**
