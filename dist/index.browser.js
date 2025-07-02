@@ -1060,6 +1060,11 @@ function updateStepVisibility() {
  * Determine if a step should be visible based on active conditions
  */
 function shouldStepBeVisible(stepAnswer, activeConditions) {
+    // Always keep the current parent step visible so user can click Next
+    const currentStepId = FormState.getCurrentStep();
+    if (stepAnswer && stepAnswer === currentStepId) {
+        return true;
+    }
     if (!stepAnswer)
         return true;
     // Check if this step matches any active condition
