@@ -54,10 +54,10 @@ export function initMultiStep(root = document) {
         });
         return stepInfo;
     });
-    // Find all step_item elements within parent steps
+    // Find all step_item elements within parent steps (handle both .step_item and .step-item)
     stepItems = [];
     steps.forEach((parentStep, parentIndex) => {
-        const stepItemElements = parentStep.element.querySelectorAll('.step_item');
+        const stepItemElements = parentStep.element.querySelectorAll('.step_item, .step-item');
         console.log(`[FormLib] Found ${stepItemElements.length} step_items in parent step ${parentIndex} (${parentStep.id})`);
         stepItemElements.forEach((stepItemElement, itemIndex) => {
             const htmlElement = stepItemElement;
