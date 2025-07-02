@@ -251,6 +251,8 @@ export function showStepItem(stepItemId) {
     showStepCompletely(stepItem.element, `step_item ${stepItemId}`);
     updateRequiredFields(stepItem.element, true); // Enable required fields for visible step_item
     FormState.setStepVisibility(stepItemId, true);
+    // Mark this step_item as visited so branching logic knows we've already been here
+    FormState.setStepInfo(stepItemId, { visited: true });
     // Update current step_item tracking
     currentStepItemId = stepItemId;
     console.log(`[FormLib] Successfully showed step_item: ${stepItemId}`, {

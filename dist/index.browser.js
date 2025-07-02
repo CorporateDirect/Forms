@@ -951,29 +951,37 @@ function handleRadioGroupSelection(selectedRadio) {
  */
 function hideStepItem(stepItemId) {
     logVerbose(`Hiding step_item: ${stepItemId}`);
-    // Import hideStepItem functionality from multiStep module
-    import('./multiStep.js').then(({ hideStepItem: multiStepHideStepItem }) => {
-        if (multiStepHideStepItem) {
-            multiStepHideStepItem(stepItemId);
-        }
-    }).catch(error => {
-        // If the function doesn't exist, we'll handle it manually
-        logVerbose(`Manual step_item hiding for: ${stepItemId}`);
-        const stepItemElements = document.querySelectorAll(`[data-answer="${stepItemId}"]`);
-        stepItemElements.forEach(element => {
-            const htmlElement = element;
-            htmlElement.style.display = 'none';
-            htmlElement.style.visibility = 'hidden';
-            htmlElement.classList.add('hidden-step');
-        });
-    });
+    hideStepItemDirect(stepItemId);
+}
+/**
+ * Hide step_item directly without dynamic import (avoids CORS issues on CDN)
+ */
+function hideStepItemDirect(stepItemId) {
+    try {
+        const stepItemElement = document.querySelector(`[data-answer="${stepItemId}"]`);
+        if (!stepItemElement)
+            throw new Error('step_item element not found');
+        // Apply hiding styles (sync with multiStep.hideStepCompletely logic)
+        stepItemElement.style.display = 'none';
+        stepItemElement.style.visibility = 'hidden';
+        stepItemElement.style.opacity = '0';
+        stepItemElement.style.height = '0';
+        stepItemElement.style.overflow = 'hidden';
+        stepItemElement.style.position = 'absolute';
+        stepItemElement.style.left = '-9999px';
+        stepItemElement.classList.add('hidden-step');
+        logVerbose(`Step_item hidden directly: ${stepItemId}`);
+    }
+    catch (error) {
+        console.error('[FormLib] Failed to hide step_item:', error);
+    }
 }
 /**
  * Trigger step_item visibility based on radio button selection
  */
 function triggerStepItemVisibility(stepItemId) {
     logVerbose(`Triggering step_item visibility: ${stepItemId}`);
-    // Show the step_item directly instead of dynamic import
+    // Show the step_item directly without dynamic import
     showStepItemDirect(stepItemId);
 }
 /**
@@ -1054,15 +1062,25 @@ function getNextStep(currentStep) {
         currentStep,
         activeConditions
     });
-    // Find the most relevant active condition
+    /*
+     * Iterate through activeConditions in insertion order and return the first
+     * branch target that:
+     * 1. Has a non-null / non-empty value (i.e. branch is active)
+     * 2. Is NOT the current step we are on (prevents immediate loops)
+     * 3. Has NOT already been visited according to FormState (prevents back-tracking)
+     */
     for (const [target, value] of Object.entries(activeConditions)) {
-        if (value !== null && value !== undefined && value !== '') {
+        const isActive = value !== null && value !== undefined && value !== '';
+        const isCurrent = target === currentStep;
+        const wasVisited = FormState.wasStepVisited(target);
+        logVerbose('Branch candidate', { target, value, isActive, isCurrent, wasVisited });
+        if (isActive && !isCurrent && !wasVisited) {
             logVerbose(`Next step determined by branch: ${target}`);
             return target;
         }
     }
-    // If no active conditions, return null (will fall back to sequential navigation)
-    logVerbose('No active branch conditions, using sequential navigation');
+    // If every active branch target was already visited (or none active), fall back to sequential navigation
+    logVerbose('No suitable active branch target found, using sequential navigation');
     return null;
 }
 /**
@@ -1584,6 +1602,8 @@ function showStepItem(stepItemId) {
     showStepCompletely(stepItem.element, `step_item ${stepItemId}`);
     updateRequiredFields(stepItem.element, true); // Enable required fields for visible step_item
     FormState.setStepVisibility(stepItemId, true);
+    // Mark this step_item as visited so branching logic knows we've already been here
+    FormState.setStepInfo(stepItemId, { visited: true });
     // Update current step_item tracking
     currentStepItemId = stepItemId;
     console.log(`[FormLib] Successfully showed step_item: ${stepItemId}`, {
