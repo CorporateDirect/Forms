@@ -1036,7 +1036,7 @@ function initMultiStep(root = document) {
     // Find all step_item elements within parent steps
     stepItems = [];
     steps.forEach((parentStep, parentIndex) => {
-        const stepItemElements = parentStep.element.querySelectorAll('.step_item');
+        const stepItemElements = parentStep.element.querySelectorAll('.step-item');
         console.log(`[FormLib] Found ${stepItemElements.length} step_items in parent step ${parentIndex} (${parentStep.id})`);
         stepItemElements.forEach((stepItemElement, itemIndex) => {
             const htmlElement = stepItemElement;
