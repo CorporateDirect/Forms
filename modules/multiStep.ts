@@ -547,4 +547,27 @@ export function getMultiStepState(): any {
       number: step.number
     }))
   };
-} 
+}
+
+/**
+ * Debug function to log all registered steps (can be called from console)
+ */
+function debugSteps(): void {
+  logVerbose('=== DEBUG: All Registered Steps ===');
+  steps.forEach((step, index) => {
+    const element = step.element;
+    logVerbose(`Step ${index}:`, {
+      stepId: step.id,
+      dataAnswer: element.getAttribute('data-answer'),
+      elementId: element.getAttribute('id'),
+      index: step.index,
+      visible: element.style.display !== 'none',
+      classes: element.className,
+      element: element
+    });
+  });
+  logVerbose('=== END DEBUG ===');
+}
+
+// Make debug function available globally
+(window as any).debugFormSteps = debugSteps; 

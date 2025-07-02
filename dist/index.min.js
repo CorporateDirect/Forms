@@ -808,6 +808,53 @@ function getBranchingState() {
             .map(([stepId, _]) => stepId)
     };
 }
+/**
+ * Debug function to log current branching state (can be called from console)
+ */
+function debugBranching() {
+    const activeConditions = FormState.getBranchPath().activeConditions;
+    logVerbose('=== DEBUG: Branching State ===');
+    logVerbose('Active Conditions:', activeConditions);
+    // Find all elements with data-go-to
+    const branchTriggers = queryAllByAttr(SELECTORS.GO_TO);
+    logVerbose('All Branch Triggers:');
+    branchTriggers.forEach((trigger, index) => {
+        const goTo = getAttrValue(trigger, 'data-go-to');
+        const htmlTrigger = trigger;
+        let value = '';
+        let checked = false;
+        let elementType = htmlTrigger.tagName;
+        if (isFormInput(trigger)) {
+            const inputValue = getInputValue(trigger);
+            value = Array.isArray(inputValue) ? inputValue.join(', ') : inputValue;
+            if (trigger instanceof HTMLInputElement) {
+                checked = trigger.checked;
+                elementType = trigger.type;
+            }
+        }
+        logVerbose(`Trigger ${index}:`, {
+            element: trigger,
+            goTo: goTo,
+            value: value,
+            checked: checked,
+            type: elementType
+        });
+    });
+    // Find all steps with data-answer
+    const answerSteps = queryAllByAttr(SELECTORS.ANSWER);
+    logVerbose('All Answer Steps:');
+    answerSteps.forEach((step, index) => {
+        const answer = getAttrValue(step, 'data-answer');
+        logVerbose(`Answer Step ${index}:`, {
+            element: step,
+            dataAnswer: answer,
+            visible: step.style.display !== 'none'
+        });
+    });
+    logVerbose('=== END DEBUG ===');
+}
+// Make debug function available globally
+window.debugBranching = debugBranching;
   
   /**
  * Multi-step form navigation module
@@ -1245,6 +1292,27 @@ function getMultiStepState() {
         }))
     };
 }
+/**
+ * Debug function to log all registered steps (can be called from console)
+ */
+function debugSteps() {
+    logVerbose('=== DEBUG: All Registered Steps ===');
+    steps.forEach((step, index) => {
+        const element = step.element;
+        logVerbose(`Step ${index}:`, {
+            stepId: step.id,
+            dataAnswer: element.getAttribute('data-answer'),
+            elementId: element.getAttribute('id'),
+            index: step.index,
+            visible: element.style.display !== 'none',
+            classes: element.className,
+            element: element
+        });
+    });
+    logVerbose('=== END DEBUG ===');
+}
+// Make debug function available globally
+window.debugFormSteps = debugSteps;
   
   /**
  * Form validation module with branch awareness

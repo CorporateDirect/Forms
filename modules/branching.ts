@@ -389,4 +389,58 @@ export function getBranchingState(): any {
       .filter(([_, info]) => info.visible)
       .map(([stepId, _]) => stepId)
   };
-} 
+}
+
+/**
+ * Debug function to log current branching state (can be called from console)
+ */
+function debugBranching(): void {
+  const activeConditions = FormState.getBranchPath().activeConditions;
+  logVerbose('=== DEBUG: Branching State ===');
+  logVerbose('Active Conditions:', activeConditions);
+  
+  // Find all elements with data-go-to
+  const branchTriggers = queryAllByAttr(SELECTORS.GO_TO);
+  logVerbose('All Branch Triggers:');
+  branchTriggers.forEach((trigger, index) => {
+    const goTo = getAttrValue(trigger, 'data-go-to');
+    const htmlTrigger = trigger as HTMLElement;
+    let value = '';
+    let checked = false;
+    let elementType = htmlTrigger.tagName;
+    
+    if (isFormInput(trigger)) {
+      const inputValue = getInputValue(trigger);
+      value = Array.isArray(inputValue) ? inputValue.join(', ') : inputValue;
+      if (trigger instanceof HTMLInputElement) {
+        checked = trigger.checked;
+        elementType = trigger.type;
+      }
+    }
+    
+    logVerbose(`Trigger ${index}:`, {
+      element: trigger,
+      goTo: goTo,
+      value: value,
+      checked: checked,
+      type: elementType
+    });
+  });
+  
+  // Find all steps with data-answer
+  const answerSteps = queryAllByAttr(SELECTORS.ANSWER);
+  logVerbose('All Answer Steps:');
+  answerSteps.forEach((step, index) => {
+    const answer = getAttrValue(step, 'data-answer');
+    logVerbose(`Answer Step ${index}:`, {
+      element: step,
+      dataAnswer: answer,
+      visible: (step as HTMLElement).style.display !== 'none'
+    });
+  });
+  
+  logVerbose('=== END DEBUG ===');
+}
+
+// Make debug function available globally
+(window as any).debugBranching = debugBranching; 
