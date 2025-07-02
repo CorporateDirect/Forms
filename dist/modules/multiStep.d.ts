@@ -14,10 +14,6 @@ export declare function goToStep(stepIndex: number): void;
  */
 export declare function showStep(stepIndex: number): void;
 /**
- * Hide a specific step
- */
-export declare function hideStep(stepIndex: number): void;
-/**
  * Get current step information
  */
 export declare function getCurrentStepInfo(): any;

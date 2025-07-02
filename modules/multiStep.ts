@@ -84,10 +84,24 @@ export function initMultiStep(root: Document | Element = document): void {
     return stepInfo;
   });
 
-  // Hide all steps initially
+  // Hide all steps initially - use more aggressive hiding
   steps.forEach((step, index) => {
-    hideElement(step.element);
-    removeClass(step.element, CSS_CLASSES.ACTIVE_STEP);
+    const element = step.element;
+    // Multiple ways to hide the element to ensure it stays hidden
+    element.style.display = 'none';
+    element.style.visibility = 'hidden';
+    addClass(element, 'hidden-step');
+    removeClass(element, CSS_CLASSES.ACTIVE_STEP);
+    
+    // Set a data attribute to track intended visibility
+    element.setAttribute('data-step-hidden', 'true');
+    
+    logVerbose(`Forcibly hiding step ${index}:`, {
+      stepId: step.id,
+      display: element.style.display,
+      visibility: element.style.visibility,
+      classes: element.className
+    });
   });
 
   // Set up navigation event listeners
@@ -286,29 +300,49 @@ export function showStep(stepIndex: number): void {
   if (stepIndex < 0 || stepIndex >= steps.length) return;
 
   const step = steps[stepIndex];
-  showElement(step.element);
-  addClass(step.element, CSS_CLASSES.ACTIVE_STEP);
+  const element = step.element;
+  
+  // Remove all hiding methods
+  element.style.display = '';
+  element.style.visibility = '';
+  removeClass(element, 'hidden-step');
+  addClass(element, CSS_CLASSES.ACTIVE_STEP);
+  element.removeAttribute('data-step-hidden');
 
   // Update FormState
   FormState.setStepInfo(step.id, { visible: true, visited: true });
-
-  logVerbose(`Step shown: ${step.id} (index: ${stepIndex})`);
+  
+  logVerbose(`Step shown: ${step.id} (index: ${stepIndex})`, {
+    display: element.style.display,
+    visibility: element.style.visibility,
+    classes: element.className
+  });
 }
 
 /**
  * Hide a specific step
  */
-export function hideStep(stepIndex: number): void {
+function hideStep(stepIndex: number): void {
   if (stepIndex < 0 || stepIndex >= steps.length) return;
 
   const step = steps[stepIndex];
-  hideElement(step.element);
-  removeClass(step.element, CSS_CLASSES.ACTIVE_STEP);
+  const element = step.element;
+  
+  // Apply all hiding methods
+  element.style.display = 'none';
+  element.style.visibility = 'hidden';
+  addClass(element, 'hidden-step');
+  removeClass(element, CSS_CLASSES.ACTIVE_STEP);
+  element.setAttribute('data-step-hidden', 'true');
 
   // Update FormState (keep visited status)
   FormState.setStepInfo(step.id, { visible: false });
-
-  logVerbose(`Step hidden: ${step.id} (index: ${stepIndex})`);
+  
+  logVerbose(`Step hidden: ${step.id} (index: ${stepIndex})`, {
+    display: element.style.display,
+    visibility: element.style.visibility,
+    classes: element.className
+  });
 }
 
 /**
