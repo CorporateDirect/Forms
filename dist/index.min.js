@@ -525,8 +525,8 @@ function initBranching(root = document) {
     logVerbose(`Found ${conditionalSteps.length} conditional steps`);
     // Set up event listeners for branching triggers
     setupBranchingListeners(root);
-    // Initialize step visibility based on current state
-    updateStepVisibility();
+    // Don't update step visibility during initialization - let multi-step handle it
+    // updateStepVisibility();
     branchingInitialized = true;
     logVerbose('Branching initialization complete');
 }
@@ -593,8 +593,12 @@ function handleBranchTrigger(event, target) {
             deactivateBranch(goToValue);
         }
     }
-    // Update step visibility after branch change
-    updateStepVisibility();
+    // Only update step visibility if we have active conditions
+    const activeConditions = FormState.getBranchPath().activeConditions;
+    const hasActiveConditions = Object.values(activeConditions).some(value => value !== null && value !== undefined && value !== '');
+    if (hasActiveConditions) {
+        updateStepVisibility();
+    }
 }
 /**
  * Activate a branch path
