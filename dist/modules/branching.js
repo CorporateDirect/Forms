@@ -379,12 +379,43 @@ function hideStepItem(stepItemId) {
  */
 function triggerStepItemVisibility(stepItemId) {
     logVerbose(`Triggering step_item visibility: ${stepItemId}`);
-    // Import showStepItem dynamically to avoid circular dependency
-    import('./multiStep.js').then(({ showStepItem }) => {
-        showStepItem(stepItemId);
-    }).catch(error => {
+    // Show the step_item directly instead of dynamic import
+    showStepItemDirect(stepItemId);
+}
+/**
+ * Show step_item directly without dynamic import
+ */
+function showStepItemDirect(stepItemId) {
+    try {
+        // Find the step_item element
+        const stepItemElement = document.querySelector(`[data-answer="${stepItemId}"]`);
+        if (!stepItemElement) {
+            console.warn(`[FormLib] Step_item not found: ${stepItemId}`);
+            return;
+        }
+        // Make the step_item visible
+        stepItemElement.style.display = '';
+        stepItemElement.style.visibility = 'visible';
+        stepItemElement.style.opacity = '1';
+        // Remove hidden classes
+        stepItemElement.classList.remove('hidden-step', 'hidden-step-item');
+        // Add visible class if it exists
+        if (stepItemElement.classList.contains('step_item')) {
+            stepItemElement.classList.add('visible-step-item');
+        }
+        // Update FormState
+        FormState.setStepInfo(stepItemId, { visible: true });
+        logVerbose(`Successfully showed step_item: ${stepItemId}`, {
+            display: stepItemElement.style.display,
+            visibility: stepItemElement.style.visibility,
+            opacity: stepItemElement.style.opacity,
+            isStepItem: stepItemElement.classList.contains('step_item'),
+            classes: stepItemElement.className
+        });
+    }
+    catch (error) {
         console.warn('[FormLib] Failed to show step_item:', error);
-    });
+    }
 }
 /**
  * Activate a branch path
