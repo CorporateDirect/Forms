@@ -38,7 +38,34 @@ function setupBranchingListeners(root) {
     const cleanup2 = delegateEvent(root, 'input', SELECTORS.GO_TO, handleBranchTrigger);
     // Listen for click events on radio buttons and checkboxes
     const cleanup3 = delegateEvent(root, 'click', SELECTORS.GO_TO, handleBranchTrigger);
-    cleanupFunctions.push(cleanup1, cleanup2, cleanup3);
+    // SPECIAL HANDLING: Listen for clicks on radio button labels (Webflow custom styling)
+    // This handles cases where radio inputs have opacity:0 and are positioned behind labels
+    const cleanup4 = delegateEvent(root, 'click', 'label.radio_field, label.w-radio', handleRadioLabelClick);
+    cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4);
+}
+/**
+ * Handle clicks on radio button labels (for Webflow custom styling)
+ */
+function handleRadioLabelClick(event, target) {
+    logVerbose('Radio label clicked', { target });
+    // Find the associated radio input within this label
+    const radioInput = target.querySelector('input[type="radio"][data-go-to]');
+    if (!radioInput) {
+        logVerbose('No radio input with data-go-to found in clicked label');
+        return;
+    }
+    logVerbose('Found radio input in label', {
+        radioInput,
+        goTo: getAttrValue(radioInput, 'data-go-to'),
+        name: radioInput.name,
+        value: radioInput.value
+    });
+    // Check/select the radio button
+    radioInput.checked = true;
+    // Trigger the branching logic for this radio input
+    const syntheticEvent = new Event('change', { bubbles: true });
+    Object.defineProperty(syntheticEvent, 'target', { value: radioInput });
+    handleBranchTrigger(syntheticEvent, radioInput);
 }
 /**
  * Handle branch trigger events
