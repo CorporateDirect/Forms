@@ -561,23 +561,33 @@ function handleRadioGroupSelection(selectedRadio: HTMLInputElement): void {
  */
 function hideStepItem(stepItemId: string): void {
   logVerbose(`Hiding step_item: ${stepItemId}`);
-  
-  // Import hideStepItem functionality from multiStep module
-  import('./multiStep.js').then(({ hideStepItem: multiStepHideStepItem }) => {
-    if (multiStepHideStepItem) {
-      multiStepHideStepItem(stepItemId);
-    }
-  }).catch(error => {
-    // If the function doesn't exist, we'll handle it manually
-    logVerbose(`Manual step_item hiding for: ${stepItemId}`);
-    const stepItemElements = document.querySelectorAll(`[data-answer="${stepItemId}"]`);
-    stepItemElements.forEach(element => {
-      const htmlElement = element as HTMLElement;
-      htmlElement.style.display = 'none';
-      htmlElement.style.visibility = 'hidden';
-      htmlElement.classList.add('hidden-step');
-    });
-  });
+
+  hideStepItemDirect(stepItemId);
+}
+
+/**
+ * Hide step_item directly without dynamic import (avoids CORS issues on CDN)
+ */
+function hideStepItemDirect(stepItemId: string): void {
+  try {
+    const stepItemElement = document.querySelector(`[data-answer="${stepItemId}"]`) as HTMLElement;
+
+    if (!stepItemElement) throw new Error('step_item element not found');
+
+    // Apply hiding styles (sync with multiStep.hideStepCompletely logic)
+    stepItemElement.style.display = 'none';
+    stepItemElement.style.visibility = 'hidden';
+    stepItemElement.style.opacity = '0';
+    stepItemElement.style.height = '0';
+    stepItemElement.style.overflow = 'hidden';
+    stepItemElement.style.position = 'absolute';
+    stepItemElement.style.left = '-9999px';
+    stepItemElement.classList.add('hidden-step');
+
+    logVerbose(`Step_item hidden directly: ${stepItemId}`);
+  } catch (error) {
+    console.error('[FormLib] Failed to hide step_item:', error);
+  }
 }
 
 /**
@@ -586,7 +596,7 @@ function hideStepItem(stepItemId: string): void {
 function triggerStepItemVisibility(stepItemId: string): void {
   logVerbose(`Triggering step_item visibility: ${stepItemId}`);
   
-  // Show the step_item directly instead of dynamic import
+  // Show the step_item directly without dynamic import
   showStepItemDirect(stepItemId);
 }
 
