@@ -126,15 +126,24 @@ export function initMultiStep(root = document) {
  * Completely hide a step or step_item using multiple methods
  */
 function hideStepCompletely(element, description) {
-    element.style.display = 'none';
+    element.style.display = 'none !important';
     element.style.visibility = 'hidden';
+    element.style.opacity = '0';
+    element.style.height = '0';
+    element.style.overflow = 'hidden';
+    element.style.position = 'absolute';
+    element.style.left = '-9999px';
     addClass(element, 'hidden-step');
+    addClass(element, CSS_CLASSES.HIDDEN_STEP_ITEM);
     removeClass(element, CSS_CLASSES.ACTIVE_STEP);
     element.setAttribute('data-step-hidden', 'true');
-    logVerbose(`Forcibly hiding ${description}:`, {
+    console.log(`[FormLib] Forcibly hiding ${description}:`, {
         display: element.style.display,
         visibility: element.style.visibility,
-        classes: element.className
+        opacity: element.style.opacity,
+        height: element.style.height,
+        classes: element.className,
+        dataAnswer: getAttrValue(element, 'data-answer')
     });
 }
 /**
@@ -143,13 +152,21 @@ function hideStepCompletely(element, description) {
 function showStepCompletely(element, description) {
     element.style.display = '';
     element.style.visibility = '';
+    element.style.opacity = '';
+    element.style.height = '';
+    element.style.overflow = '';
+    element.style.position = '';
+    element.style.left = '';
     removeClass(element, 'hidden-step');
+    removeClass(element, CSS_CLASSES.HIDDEN_STEP_ITEM);
     addClass(element, CSS_CLASSES.ACTIVE_STEP);
     element.removeAttribute('data-step-hidden');
-    logVerbose(`Showing ${description}:`, {
+    console.log(`[FormLib] Showing ${description}:`, {
         display: element.style.display,
         visibility: element.style.visibility,
-        classes: element.className
+        opacity: element.style.opacity,
+        classes: element.className,
+        dataAnswer: getAttrValue(element, 'data-answer')
     });
 }
 /**
@@ -180,18 +197,25 @@ export function showStepItem(stepItemId) {
         return;
     }
     logVerbose(`Showing step_item ${stepItemId} in parent step ${stepItem.parentStepIndex}`);
-    // Hide all step_items in the parent step
+    console.log(`[FormLib] Hiding all step_items in parent step ${stepItem.parentStepIndex}`);
+    // Hide ALL step_items in the parent step first
     const allStepItemsInParent = stepItems.filter(item => item.parentStepIndex === stepItem.parentStepIndex);
+    console.log(`[FormLib] Found ${allStepItemsInParent.length} step_items to hide in parent step`);
     allStepItemsInParent.forEach(item => {
+        console.log(`[FormLib] Hiding step_item: ${item.id} (data-answer="${getAttrValue(item.element, 'data-answer')}")`);
         hideStepCompletely(item.element, `step_item ${item.id}`);
         FormState.setStepVisibility(item.id, false);
     });
+    console.log(`[FormLib] Now showing target step_item: ${stepItemId}`);
     // Show the target step_item
     showStepCompletely(stepItem.element, `step_item ${stepItemId}`);
     FormState.setStepVisibility(stepItemId, true);
     // Update current step_item tracking
     currentStepItemId = stepItemId;
-    logVerbose(`Successfully showed step_item: ${stepItemId}`);
+    console.log(`[FormLib] Successfully showed step_item: ${stepItemId}`, {
+        currentStepItemId,
+        visibleStepItems: allStepItemsInParent.filter(item => item.id === stepItemId).length
+    });
 }
 /**
  * Hide a specific step_item

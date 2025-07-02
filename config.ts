@@ -92,6 +92,7 @@ export const DEFAULTS = {
 export const CSS_CLASSES = {
   ACTIVE_STEP: 'active-step',
   HIDDEN_STEP: 'hidden-step',
+  HIDDEN_STEP_ITEM: 'hidden-step-item',
   ERROR_FIELD: 'error-field',
   ERROR_MESSAGE: 'error-message',
   DISABLED: 'disabled'

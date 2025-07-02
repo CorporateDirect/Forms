@@ -62,6 +62,7 @@ export declare const DEFAULTS: {
 export declare const CSS_CLASSES: {
     readonly ACTIVE_STEP: "active-step";
     readonly HIDDEN_STEP: "hidden-step";
+    readonly HIDDEN_STEP_ITEM: "hidden-step-item";
     readonly ERROR_FIELD: "error-field";
     readonly ERROR_MESSAGE: "error-message";
     readonly DISABLED: "disabled";
