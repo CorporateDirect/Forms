@@ -62,6 +62,8 @@ export function initBranching(root: Document | Element = document): void {
  * Set up event listeners for branching logic
  */
 function setupBranchingListeners(root: Document | Element): void {
+  console.log('[FormLib] Setting up branching event listeners on:', root);
+
   // Listen for changes on elements with data-go-to
   const cleanup1 = delegateEvent(
     root,
@@ -69,6 +71,7 @@ function setupBranchingListeners(root: Document | Element): void {
     SELECTORS.GO_TO,
     handleBranchTrigger
   );
+  console.log('[FormLib] Set up CHANGE listener for:', SELECTORS.GO_TO);
 
   // Listen for input events (for real-time branching)
   const cleanup2 = delegateEvent(
@@ -77,6 +80,7 @@ function setupBranchingListeners(root: Document | Element): void {
     SELECTORS.GO_TO,
     handleBranchTrigger
   );
+  console.log('[FormLib] Set up INPUT listener for:', SELECTORS.GO_TO);
 
   // Listen for click events on radio buttons and checkboxes
   const cleanup3 = delegateEvent(
@@ -85,6 +89,7 @@ function setupBranchingListeners(root: Document | Element): void {
     SELECTORS.GO_TO,
     handleBranchTrigger
   );
+  console.log('[FormLib] Set up CLICK listener for:', SELECTORS.GO_TO);
 
   // COMPREHENSIVE RADIO BUTTON HANDLING for custom styling
   // Handle clicks on various parts of custom radio button structures
@@ -113,8 +118,13 @@ function setupBranchingListeners(root: Document | Element): void {
     'label div'
   ];
 
+  console.log('[FormLib] Setting up comprehensive radio button listeners for selectors:', radioSelectors);
+
   // Set up comprehensive click handling
-  radioSelectors.forEach(selector => {
+  radioSelectors.forEach((selector, index) => {
+    const elementsFound = root.querySelectorAll(selector);
+    console.log(`[FormLib] Selector ${index} "${selector}" found ${elementsFound.length} elements`);
+    
     const cleanup = delegateEvent(
       root,
       'click',
@@ -131,8 +141,36 @@ function setupBranchingListeners(root: Document | Element): void {
     'label.radio_field, label.w-radio, [data-go-to]',
     handleRadioKeydown
   );
+  console.log('[FormLib] Set up KEYDOWN listener for radio elements');
 
-  cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup5);
+  // ADD GLOBAL CLICK LISTENER for debugging
+  const globalClickCleanup = delegateEvent(
+    root,
+    'click',
+    '*',
+    (event: Event, target: Element) => {
+      const htmlTarget = target as HTMLElement;
+      if (htmlTarget.tagName === 'INPUT' || 
+          htmlTarget.className.includes('radio') || 
+          htmlTarget.closest('label') ||
+          getAttrValue(target, 'data-go-to')) {
+        console.log('[FormLib] GLOBAL CLICK detected on potentially relevant element:', {
+          target,
+          tagName: htmlTarget.tagName,
+          className: htmlTarget.className,
+          id: htmlTarget.id,
+          dataGoTo: getAttrValue(target, 'data-go-to'),
+          isInput: htmlTarget.tagName === 'INPUT',
+          inputType: htmlTarget.tagName === 'INPUT' ? (htmlTarget as HTMLInputElement).type : null,
+          closestLabel: htmlTarget.closest('label'),
+          event: event
+        });
+      }
+    }
+  );
+
+  cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup5, globalClickCleanup);
+  console.log('[FormLib] Total event listeners set up:', cleanupFunctions.length);
 }
 
 /**
