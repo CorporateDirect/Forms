@@ -1,15 +1,254 @@
 js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1486 Google Maps JavaScript API has been loaded directly without loading=async. This can result in suboptimal performance. For best-practice loading patterns please see https://goo.gle/js-api-loading
 Uca @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1486
-google.maps.Load @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:14
-(anonymous) @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1730
-(anonymous) @ js?key=AIzaSyAp2G9WY45FlgeJEWlY1hdOm_pM3zR2E5E&libraries=places:1730
-index.min.js:804 Uncaught SyntaxError: Identifier 'cleanupFunctions' has already been declared
+index.min.js:106 [FormLib] [14:21:09] FormState initialized
+index.min.js:106 [FormLib] [14:21:09] FormLibrary instance created
+index.min.js:106 [FormLib] [14:21:09] FormLib attached to window for debugging
 realshield:181 Uncaught ReferenceError: radioGroups is not defined
     at realshield:181:5
     at NodeList.forEach (<anonymous>)
     at realshield:174:52
-(anonymous) @ realshield:181
-(anonymous) @ realshield:174
+index.min.js:106 [FormLib] [14:21:09] Auto-initializing FormLibrary on DOM ready
+index.min.js:103 [FormLib] [14:21:09] Initializing FormLibrary Object
+index.min.js:103 [FormLib] [14:21:09] Form detection results Object
+index.min.js:106 [FormLib] [14:21:09] Initializing error handling
+index.min.js:106 [FormLib] [14:21:09] Error handling errorsInitialized for 85 fields
+index.min.js:106 [FormLib] [14:21:09] Initializing form validation
+index.min.js:106 [FormLib] [14:21:09] Found 219 form inputs
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: First-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Middle-Initial Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Last-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: email-address Array(3)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: address Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: City Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Country Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: State Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Postal-Code Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Phone-Number Array(3)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-1 Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-2 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-3 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Extension-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Holding-Company-State Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Foreign-Qualification Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Foreign-Qualification Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Taxed-As Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Taxed-As Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Taxed-As Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Taxed-As Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Owner-Profile Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Owner-Profile Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Owner-Profile Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Owner-Profile Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Owner-Profile Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Owner-Profile Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-individual-first-name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-individual-middle-name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-individual-last-name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-individual-email-address Array(3)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-individual-address Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: City Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-individual-country Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-individual-region Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-individual-postal-code Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-individual-phone-number Array(3)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-entity-name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-member-manager-name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-trust-name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: member-1-trustee-1-name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-1-Trustee-2-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-1-Trustee-3-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: First-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Middle-Initial Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Last-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: email-address Array(3)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: address Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: City Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Country Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: State Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Postal-Code Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Country-Code Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Phone-Number Array(3)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-2-Entity-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-2-Member-Manager-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-2-Trust-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-2-Trustee-1-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-2-Trustee-2-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-2-Trustee-3-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: First-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Middle-Initial Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Last-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: email-address Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: address Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: City Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Country Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: State Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Postal-Code Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Phone-Number Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-3-Entity-name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-3-Member-Manager-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-3-Trust-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-3-Trustee-1-Name Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-3-Trustee-2-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-3-Trustee-3-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: First-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Middle-Initial Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Last-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: email-address Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: address Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: City Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Country Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: State Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Postal-Code Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Phone-Number Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-4-Entity-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-4-Member-Manager-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-4-Trust-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-4-Trustee-1-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-4-Trustee-2-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Member-4-Trustee-3-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: LLC-Management-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: LLC-Management-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: First-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Middle-Initial Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Last-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: email-address Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: address Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: City Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Country Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: State Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Postal-Code Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Phone-Number Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-1-Entity-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-1-Member-Manager-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-1-Trust-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-1-Trustee-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-1-Trustee-2 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-1-Trustee-3 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: First-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Middle-Initial Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Last-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: email-address Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: address Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: City Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Country Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: State Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Postal-Code Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Phone-Number Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-2-Entity-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-2-Member-Manager-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-2-Trust-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-2-Trustee-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-2-Trustee-2 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-2-Trustee-3 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: First-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Middle-Initial Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Last-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: email-address Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: address Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: City Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Country Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: State Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Postal-Code Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Phone-Number Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Entity-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Member-Manager-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Trust-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Trustee-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Trustee-2 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Trustee-3 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-Type Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: First-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Middle-Initial Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Last-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: email-address Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: address Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: City Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Country Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: State Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Postal-Code Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Contact-Phone-Number Array(2)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Entity-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Member-Manager-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Trust-Name Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Trustee-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Trustee-2 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Manager-3-Trustee-3 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Child-Entity-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-2 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-3 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Child-Entity-2 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-2 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-3 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Child-Entity-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-1 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-2 Array(1)
+index.min.js:103 [FormLib] [14:21:09] Validation rules set for field: Name-Choice-3 Array(1)
+index.min.js:106 [FormLib] [14:21:09] Validation initialization complete
+index.min.js:106 [FormLib] [14:21:09] Initializing multi-step navigation
+index.min.js:106 [FormLib] [14:21:09] Found 28 steps
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-1 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-2 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-3 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-4 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-5 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-6 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-7 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-8 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-9 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-10 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-11 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-12 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-12 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-14 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-15 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-16 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-17 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-18 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-19 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-20 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-21 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-22 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-23 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-24 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-25 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-26 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-27 Object
+index.min.js:103 [FormLib] [14:21:09] Step info updated: step-28 Object
+index.min.js:103 [FormLib] [14:21:09] FormLibrary initialization failed ReferenceError: currentStepIndex is not defined
+    at goToStep (index.min.js:950:31)
+    at initMultiStep (index.min.js:847:9)
+    at FormLibrary.init (index.min.js:2193:17)
+    at HTMLDocument.autoInit (index.min.js:2323:21)
+index.min.js:2204 Uncaught ReferenceError: currentStepIndex is not defined
+    at goToStep (index.min.js:950:31)
+    at initMultiStep (index.min.js:847:9)
+    at FormLibrary.init (index.min.js:2193:17)
+    at HTMLDocument.autoInit (index.min.js:2323:21)
 inspector.b9415ea5.js:12 Could not access stylesheet rules: SecurityError: Failed to read the 'cssRules' property from 'CSSStyleSheet': Cannot access rules
     at inspector.b9415ea5.js:12:57303
     at Array.forEach (<anonymous>)
@@ -22,24 +261,6 @@ inspector.b9415ea5.js:12 Could not access stylesheet rules: SecurityError: Faile
     at u (inspector.b9415ea5.js:1:705)
     at d (inspector.b9415ea5.js:1:809)
 (anonymous) @ inspector.b9415ea5.js:12
-n @ inspector.b9415ea5.js:12
-g @ inspector.b9415ea5.js:12
-1MLsW.@reduxjs/toolkit @ inspector.b9415ea5.js:12
-u @ inspector.b9415ea5.js:1
-d @ inspector.b9415ea5.js:1
-fLzap../distance @ inspector.b9415ea5.js:1
-u @ inspector.b9415ea5.js:1
-d @ inspector.b9415ea5.js:1
-fnXog.react @ inspector.b9415ea5.js:1
-u @ inspector.b9415ea5.js:1
-d @ inspector.b9415ea5.js:1
-6Zw46.react/jsx-runtime @ inspector.b9415ea5.js:1
-u @ inspector.b9415ea5.js:1
-d @ inspector.b9415ea5.js:1
-9glGq.react/jsx-runtime @ inspector.b9415ea5.js:1
-u @ inspector.b9415ea5.js:1
-fvzgQ.63e184fe9ed239b8 @ inspector.b9415ea5.js:1
-(anonymous) @ inspector.b9415ea5.js:1
 ads.914af30a.js:1 Ads initialization already in progress or completed
 ads.914af30a.js:1 Ads initialization already in progress or completed
 ads.914af30a.js:1 Ads initialization already in progress or completed
@@ -55,15 +276,6 @@ inspector.b9415ea5.js:1 Error: Minified React error #31; visit https://reactjs.o
     at lw (inspector.b9415ea5.js:1:105378)
     at C (inspector.b9415ea5.js:1:141367)
 s7 @ inspector.b9415ea5.js:1
-r.callback @ inspector.b9415ea5.js:1
-nW @ inspector.b9415ea5.js:1
-oX @ inspector.b9415ea5.js:1
-e @ inspector.b9415ea5.js:1
-(anonymous) @ inspector.b9415ea5.js:1
-lR @ inspector.b9415ea5.js:1
-lw @ inspector.b9415ea5.js:1
-C @ inspector.b9415ea5.js:1
-T @ inspector.b9415ea5.js:1
 inspector.b9415ea5.js:1 Uncaught Error: Minified React error #31; visit https://reactjs.org/docs/error-decoder.html?invariant=31&args[]=%5Bobject%20Promise%5D for the full message or use the non-minified dev environment for full errors and additional helpful warnings.
     at n0 (inspector.b9415ea5.js:1:65377)
     at l (inspector.b9415ea5.js:1:70370)
@@ -75,22 +287,10 @@ inspector.b9415ea5.js:1 Uncaught Error: Minified React error #31; visit https://
     at lC (inspector.b9415ea5.js:1:106823)
     at lw (inspector.b9415ea5.js:1:105378)
     at C (inspector.b9415ea5.js:1:141367)
-n0 @ inspector.b9415ea5.js:1
-l @ inspector.b9415ea5.js:1
-ol @ inspector.b9415ea5.js:1
-i @ inspector.b9415ea5.js:1
-lM @ inspector.b9415ea5.js:1
-(anonymous) @ inspector.b9415ea5.js:1
-lO @ inspector.b9415ea5.js:1
-lC @ inspector.b9415ea5.js:1
-lw @ inspector.b9415ea5.js:1
-C @ inspector.b9415ea5.js:1
-T @ inspector.b9415ea5.js:1
 ads.914af30a.js:1 Attempting to initialize AdUnit
 ads.914af30a.js:1 AdUnit initialized successfully
 ads.914af30a.js:1 Ads initialized successfully for: https://corporate-formations.webflow.io/formations/realshield
 ads.914af30a.js:1 Ads initialization already in progress or completed
-v1?ray=958ec12b1fc5fc54&lang=auto:1 Request for the Private Access Token challenge.
-v1?ray=958ec12b1fc5fc54&lang=auto:1 
-auto/:1 The resource https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/cmg/1 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.
+v1?ray=958ec9b79af7de86&lang=auto:1 
+v1?ray=958ec9b79af7de86&lang=auto:1 Request for the Private Access Token challenge.
 auto/:1 The resource https://challenges.cloudflare.com/cdn-cgi/challenge-platform/h/g/cmg/1 was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally.

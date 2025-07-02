@@ -28,27 +28,17 @@ function cleanModuleCode(code, modulePrefix) {
   // Remove sourcemap comments
   code = code.replace(/\/\/# sourceMappingURL=.*$/gm, '');
   
-  // Rename conflicting variables with module prefix
+  // Only rename the specific conflicting variables that are module-level declarations
   if (modulePrefix) {
-    // Common conflicting variables found in modules
-    const conflictingVars = [
-      'initialized',
-      'cleanupFunctions',
-      'stepElements',
-      'currentStep',
-      'validationRules',
-      'errorElements',
-      'summaryFields'
-    ];
+    // Only rename let/const declarations at the module level, not all usages
+    code = code.replace(/^let initialized = /gm, `let ${modulePrefix}Initialized = `);
+    code = code.replace(/^const initialized = /gm, `const ${modulePrefix}Initialized = `);
+    code = code.replace(/^let cleanupFunctions = /gm, `let ${modulePrefix}CleanupFunctions = `);
+    code = code.replace(/^const cleanupFunctions = /gm, `const ${modulePrefix}CleanupFunctions = `);
     
-    conflictingVars.forEach(varName => {
-      // Replace let/const declarations
-      code = code.replace(new RegExp(`let ${varName}`, 'g'), `let ${modulePrefix}${varName.charAt(0).toUpperCase() + varName.slice(1)}`);
-      code = code.replace(new RegExp(`const ${varName}`, 'g'), `const ${modulePrefix}${varName.charAt(0).toUpperCase() + varName.slice(1)}`);
-      
-      // Replace variable usage (but be careful not to replace in strings or comments)
-      code = code.replace(new RegExp(`\\b${varName}\\b`, 'g'), `${modulePrefix}${varName.charAt(0).toUpperCase() + varName.slice(1)}`);
-    });
+    // Update references to the renamed variables
+    code = code.replace(/\binitialized\b/g, `${modulePrefix}Initialized`);
+    code = code.replace(/\bcleanupFunctions\b/g, `${modulePrefix}CleanupFunctions`);
   }
   
   // Remove any trailing empty lines

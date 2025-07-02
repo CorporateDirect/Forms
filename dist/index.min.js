@@ -625,10 +625,10 @@ function deactivateBranch(target) {
 /**
  * Get the next step based on current branching logic
  */
-function getNextStep(branchingCurrentStep) {
+function getNextStep(currentStep) {
     const activeConditions = FormState.getBranchPath().activeConditions;
     logVerbose('Evaluating next step', {
-        branchingCurrentStep,
+        currentStep,
         activeConditions
     });
     // Find the most relevant active condition
@@ -803,7 +803,7 @@ function getBranchingState() {
 let multiStepInitialized = false;
 let multiStepCleanupFunctions = [];
 let steps = [];
-let multiStepCurrentStepIndex = 0;
+let currentStepIndex = 0;
 /**
  * Initialize multi-step functionality
  */
@@ -814,10 +814,10 @@ function initMultiStep(root = document) {
     }
     logVerbose('Initializing multi-step navigation');
     // Find all step elements
-    const multiStepStepElements = queryAllByAttr(SELECTORS.STEP, root);
-    logVerbose(`Found ${multiStepStepElements.length} steps`);
+    const stepElements = queryAllByAttr(SELECTORS.STEP, root);
+    logVerbose(`Found ${stepElements.length} steps`);
     // Build step array
-    steps = Array.from(multiStepStepElements).map((element, index) => {
+    steps = Array.from(stepElements).map((element, index) => {
         const htmlElement = element;
         const stepId = getAttrValue(element, 'data-answer') ||
             getAttrValue(element, 'id') ||
@@ -870,8 +870,8 @@ function handleNextClick(event, target) {
     event.preventDefault();
     logVerbose('Next button clicked');
     // Validate current step before proceeding
-    const multiStepCurrentStep = getCurrentStep();
-    if (!multiStepCurrentStep)
+    const currentStep = getCurrentStep();
+    if (!currentStep)
         return;
     // Check if current step has validation requirements
     const isValid = validateCurrentStep();
@@ -880,7 +880,7 @@ function handleNextClick(event, target) {
         return;
     }
     // Determine next step (considering branching logic)
-    const nextStepId = getNextStep(multiStepCurrentStep.id);
+    const nextStepId = getNextStep(currentStep.id);
     if (nextStepId) {
         // Branch-determined next step
         const nextStepIndex = findStepIndexById(nextStepId);
@@ -967,7 +967,7 @@ function goToStep(stepIndex) {
     // Update navigation button states
     updateNavigationButtons();
     logVerbose(`Step navigation complete`, {
-        multiStepCurrentStep: newStep.id,
+        currentStep: newStep.id,
         currentIndex: stepIndex
     });
 }
@@ -1098,11 +1098,11 @@ function updateNavigationButtons() {
  * Validate current step (placeholder - will be enhanced by validation module)
  */
 function validateCurrentStep() {
-    const multiStepCurrentStep = getCurrentStep();
-    if (!multiStepCurrentStep)
+    const currentStep = getCurrentStep();
+    if (!currentStep)
         return true;
     // Basic validation - check required fields
-    const requiredInputs = multiStepCurrentStep.element.querySelectorAll('[required]');
+    const requiredInputs = currentStep.element.querySelectorAll('[required]');
     for (const input of requiredInputs) {
         const htmlInput = input;
         if (!htmlInput.value.trim()) {
@@ -1135,9 +1135,9 @@ function validateAllVisibleSteps() {
  * Get current step information
  */
 function getCurrentStepInfo() {
-    const multiStepCurrentStep = getCurrentStep();
+    const currentStep = getCurrentStep();
     return {
-        step: multiStepCurrentStep,
+        step: currentStep,
         index: currentStepIndex,
         totalSteps: steps.length,
         isFirstStep: currentStepIndex === 0,
@@ -1834,7 +1834,7 @@ function getErrorState() {
  */
 let summaryInitialized = false;
 let summaryCleanupFunctions = [];
-let summarySummaryFields = [];
+let summaryFields = [];
 /**
  * Initialize summary functionality
  */
@@ -1881,7 +1881,7 @@ function setupSummaryFields(summaryElements) {
             subtype,
             number
         };
-        summarySummaryFields.push(summaryField);
+        summaryFields.push(summaryField);
         logVerbose('Summary field configured', {
             fieldNames,
             joinType,
@@ -1923,7 +1923,7 @@ function handleFieldChange(event, target) {
  * Update summaries that include a specific field
  */
 function updateSummariesForField(fieldName) {
-    summarySummaryFields.forEach(summaryField => {
+    summaryFields.forEach(summaryField => {
         if (summaryField.fieldNames.includes(fieldName)) {
             updateSummaryField(summaryField);
         }
@@ -1940,7 +1940,7 @@ function updateSummary() {
  * Update all summary fields (internal)
  */
 function updateAllSummaries() {
-    summarySummaryFields.forEach(summaryField => {
+    summaryFields.forEach(summaryField => {
         updateSummaryField(summaryField);
     });
 }
@@ -2003,7 +2003,7 @@ function updateSummaryElement(element, value) {
  */
 function getSummaryByCategory(type, subtype, number) {
     const matchingSummaries = [];
-    summarySummaryFields.forEach(summaryField => {
+    summaryFields.forEach(summaryField => {
         const matches = ((!type || summaryField.type === type) &&
             (!subtype || summaryField.subtype === subtype) &&
             (!number || summaryField.number === number));
@@ -2048,7 +2048,7 @@ function clearSummary(fieldNames) {
  */
 function getAllSummaryValues() {
     const summaryValues = {};
-    summarySummaryFields.forEach((summaryField, index) => {
+    summaryFields.forEach((summaryField, index) => {
         const key = summaryField.type && summaryField.subtype && summaryField.number
             ? `${summaryField.type}-${summaryField.subtype}-${summaryField.number}`
             : `summary-${index}`;
@@ -2082,7 +2082,7 @@ function addCustomSummary(element, fieldNames, joinType = 'space', type, subtype
         subtype,
         number
     };
-    summarySummaryFields.push(summaryField);
+    summaryFields.push(summaryField);
     updateSummaryField(summaryField);
     logVerbose('Custom summary field added', {
         fieldNames,
@@ -2098,8 +2098,8 @@ function addCustomSummary(element, fieldNames, joinType = 'space', type, subtype
 function getSummaryState() {
     return {
         summaryInitialized,
-        totalSummaryFields: summarySummaryFields.length,
-        summarySummaryFields: summarySummaryFields.map(field => ({
+        totalSummaryFields: summaryFields.length,
+        summaryFields: summaryFields.map(field => ({
             fieldNames: field.fieldNames,
             joinType: field.joinType,
             type: field.type,
@@ -2119,11 +2119,11 @@ function resetSummary() {
     summaryCleanupFunctions.forEach(cleanup => cleanup());
     summaryCleanupFunctions = [];
     // Clear all summary fields
-    summarySummaryFields.forEach(summaryField => {
+    summaryFields.forEach(summaryField => {
         updateSummaryElement(summaryField.element, '');
     });
     // Reset summary fields array
-    summarySummaryFields = [];
+    summaryFields = [];
     summaryInitialized = false;
     logVerbose('Summary reset complete');
 }
