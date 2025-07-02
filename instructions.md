@@ -42,16 +42,21 @@ Because this project is modular, and it utilizes webflow, I will require specifi
 
  7. We are a team. Let's move step, by step, to building and testing this functionailty. I would like to go step-by-step through our functionality building each feature, testing, providing feedback, adjusting (if needed) and verifying before we move onto a new step. 
 
- 8. tryformly.com is an example library with similar functionality. Review their docs to get an understanding of how they are building their library. I would use them, but their functionality is limited and it's an unmaintained project. 
+8. tryformly.com is an example library with similar functionality. Review their docs to get an understanding of how they are building their library. I would use them, but their functionality is limited and it's an unmaintained project. 
 
- 9. Ensure that as we build, console logs are added to the code so that when we test, we have verbose logs of what is occuring so we can ensure funcitonality is accurate. 
+9. Ensure that as we build, console logs are added to the code so that when we test, we have verbose logs of what is occuring so we can ensure funcitonality is accurate. 
 
- 10. We will use a file "console-logs.txt" where I will paste the full console from each test so that you can have maximum visibilty into what's occuring with the form as we test.
+10. We will use a file "console-logs.txt" where I will paste the full console from each test so that you can have maximum visibilty into what's occuring with the form as we test.
 
- 11. I will upload a file "index.html" which I will add our exported webflow code so that you can look at the structure and nature of the form so that we can apply functionality. 
+11. I will upload a file "index.html" which I will add our exported webflow code so that you can look at the structure and nature of the form so that we can apply functionality. 
 
- 12. It is important that what we build follows our guidelines that this code must be able to be applied across multiple projects, and websites so the functinality that we build needs to be modular, repeatable and easy for the end user to program in webflow.
+12. It is important that what we build follows our guidelines that this code must be able to be applied across multiple projects, and websites so the functinality that we build needs to be modular, repeatable and easy for the end user to program in webflow.
 
+13. On every commit, please output the newest jsdelivry URL using a version that is development friendly (using the commit for a unique url)
+
+14. @index.html is added for context. this is from a webflow project export where the acutal script will be used. Do not add any code to this file! If there is a need to modify html, please let me know and I will update it in webflow, then I will export the newest html and add it here. 
+
+15. before each commit, the URL that we use for jsdelivr must always use a minified form.
 
 
  ## Data Attributes
@@ -101,9 +106,9 @@ Because this project is modular, and it utilizes webflow, I will require specifi
  [data-step-number=""]: defines an order to a step if branch logic is being used and you have multiple branches to define a particular group of data. For example, if we have three steps with of [data-step-type="manager"] and we need to know how to order them in a summary, we could number them, the first "manager" would have [data-step-number="1"], the second "manager" would have [data-step-number="2"], etc. 
 
 
-
  ### Summary Component
 
+### Summary Data Fields
  [data-form-summary=""]: Defines the step wrapper with the summary. 
 
  [data-step-field-name=""]: Defines a unique field input name that will be used in the summary.
@@ -116,10 +121,19 @@ Because this project is modular, and it utilizes webflow, I will require specifi
 
  [data-join=""]: allows a user to dictate formatting when a [data-summary-field] has two or more values.
 
-#### Summary Categorization
+#### Summary component and categorization structure
 To create segments for dynamic summaries, it's important that we create a data-attiribute to define the type and subtype and what data-step the values originate. 
 
-[=]
+[data-summary-type=""]: Defines the summary output of a particular step's [data-step-type=""]
+
+[data-summary-subtype=""]: Defines the summary output of a particular step's [data-step-subtype=""]
+
+[data-summary-number=""]: Defines the summary output of a particular step's [data-step-number=""]
+
+For example, if a step has [data-step-type="manager"], [data-step-subtype="assistant"] and [data-step-number="1"] we will know what step inputs we should add to the summary with the corresponding [data-summary-type="manager"], [data-summary-subtype="assistant"], and [data-summary-number="1"].
+
+
+
 
 
  

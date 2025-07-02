@@ -489,12 +489,8 @@ export function showStep(stepIndex) {
         return;
     const step = steps[stepIndex];
     const element = step.element;
-    // Remove all hiding methods
-    element.style.display = '';
-    element.style.visibility = '';
-    removeClass(element, 'hidden-step');
-    addClass(element, CSS_CLASSES.ACTIVE_STEP);
-    element.removeAttribute('data-step-hidden');
+    // Use showStepCompletely to properly clear all hiding styles
+    showStepCompletely(element, `parent step ${stepIndex} (${step.id})`);
     // Update FormState
     FormState.setStepInfo(step.id, { visible: true, visited: true });
     // IMPORTANT: Keep step_items hidden when showing parent step
@@ -519,12 +515,8 @@ function hideStep(stepIndex) {
         return;
     const step = steps[stepIndex];
     const element = step.element;
-    // Apply all hiding methods
-    element.style.display = 'none';
-    element.style.visibility = 'hidden';
-    addClass(element, 'hidden-step');
-    removeClass(element, CSS_CLASSES.ACTIVE_STEP);
-    element.setAttribute('data-step-hidden', 'true');
+    // Use hideStepCompletely to properly hide the step (but not as aggressively as step_items)
+    hideStepCompletely(element, `parent step ${stepIndex} (${step.id})`);
     // Update FormState (keep visited status)
     FormState.setStepInfo(step.id, { visible: false });
     logVerbose(`Step hidden: ${step.id} (index: ${stepIndex})`, {
