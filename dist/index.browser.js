@@ -1775,8 +1775,16 @@ function goToStep(stepIndex) {
     currentStepIndex = stepIndex;
     // Show new step
     showStep(stepIndex);
-    // Scroll the newly shown step into view to guarantee content is visible
-    newStep.element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Scroll to the first visible content within the step
+    const firstVisibleContent = newStep.element.querySelector('.radio_component, .multi-form_form-content, .step_wrapper, h1, h2, h3');
+    if (firstVisibleContent) {
+        firstVisibleContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        logVerbose(`Scrolled to first visible content in step ${stepIndex}`, { element: firstVisibleContent });
+    }
+    else {
+        // Fallback to step element itself
+        newStep.element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     // Update FormState
     FormState.setCurrentStep(newStep.id);
     // Update navigation button states
@@ -1798,9 +1806,16 @@ function showStep(stepIndex) {
     showStepCompletely(element, `parent step ${stepIndex} (${step.id})`);
     // Update FormState
     FormState.setStepInfo(step.id, { visible: true, visited: true });
-    // IMPORTANT: Keep step_items hidden when showing parent step
-    // Only show step_items when explicitly triggered by radio button clicks
+    // IMPORTANT: Hide conditional step_items but keep main step content visible
+    // Check if this step has both main content and conditional step_items
     const stepItemsInThisStep = stepItems.filter(item => item.parentStepIndex === stepIndex);
+    const hasMainContent = element.querySelector('.radio_component, .multi-form_form-content');
+    logVerbose(`Step ${stepIndex} analysis`, {
+        stepId: step.id,
+        hasMainContent: !!hasMainContent,
+        stepItemCount: stepItemsInThisStep.length,
+        stepItemIds: stepItemsInThisStep.map(item => item.id)
+    });
     stepItemsInThisStep.forEach(stepItem => {
         hideStepCompletely(stepItem.element, `step_item ${stepItem.id} (keeping hidden on parent step show)`);
         FormState.setStepVisibility(stepItem.id, false);
@@ -1809,7 +1824,8 @@ function showStep(stepIndex) {
         display: element.style.display,
         visibility: element.style.visibility,
         classes: element.className,
-        stepItemsHidden: stepItemsInThisStep.length
+        stepItemsHidden: stepItemsInThisStep.length,
+        hasMainContent: !!hasMainContent
     });
 }
 /**
