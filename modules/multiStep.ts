@@ -662,6 +662,17 @@ export function showStep(stepIndex: number): void {
   // Use showStepCompletely to properly clear all hiding styles
   showStepCompletely(element, `parent step ${stepIndex} (${step.id})`);
 
+  // Ensure main step content (radio buttons, form content) is visible
+  const mainContentElements = element.querySelectorAll('.radio_component, .multi-form_form-content:not(.step_item .multi-form_form-content), .step_wrapper:not(.step_item .step_wrapper)');
+  mainContentElements.forEach(contentElement => {
+    const htmlElement = contentElement as HTMLElement;
+    htmlElement.style.display = '';
+    htmlElement.style.visibility = '';
+    removeClass(htmlElement, 'hidden-step');
+    removeClass(htmlElement, 'hidden-step-item');
+  });
+  logVerbose(`Made ${mainContentElements.length} main content elements visible in step ${stepIndex}`);
+
   // Update FormState
   FormState.setStepInfo(step.id, { visible: true, visited: true });
   
@@ -673,6 +684,8 @@ export function showStep(stepIndex: number): void {
   logVerbose(`Step ${stepIndex} analysis`, {
     stepId: step.id,
     hasMainContent: !!hasMainContent,
+    mainContentSelector: hasMainContent ? hasMainContent.className : 'none',
+    mainContentVisible: hasMainContent ? (hasMainContent as HTMLElement).style.display !== 'none' : false,
     stepItemCount: stepItemsInThisStep.length,
     stepItemIds: stepItemsInThisStep.map(item => item.id)
   });
