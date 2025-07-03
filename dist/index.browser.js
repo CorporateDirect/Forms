@@ -1550,6 +1550,19 @@ function showStepItem(stepItemId) {
     console.log(`[FormLib] Now showing target step_item: ${stepItemId}`);
     // Show the target step_item
     showStepCompletely(stepItem.element, `step_item ${stepItemId}`);
+    // Ensure parent containers are also visible
+    let parentElement = stepItem.element.parentElement;
+    while (parentElement && !parentElement.classList.contains('multi-form_step')) {
+        if (parentElement.classList.contains('step_wrapper')) {
+            // Make sure step_wrapper is visible
+            parentElement.style.display = '';
+            parentElement.style.visibility = '';
+            removeClass(parentElement, 'hidden-step');
+            removeClass(parentElement, 'hidden-step-item');
+            logVerbose(`Made parent step_wrapper visible for step_item: ${stepItemId}`);
+        }
+        parentElement = parentElement.parentElement;
+    }
     updateRequiredFields(stepItem.element, true); // Enable required fields for visible step_item
     FormState.setStepVisibility(stepItemId, true);
     // Mark this step_item as visited so branching logic knows we've already been here
@@ -1775,8 +1788,18 @@ function goToStep(stepIndex) {
     currentStepIndex = stepIndex;
     // Show new step
     showStep(stepIndex);
-    // Scroll to the first visible content within the step
-    const firstVisibleContent = newStep.element.querySelector('.radio_component, .multi-form_form-content, .step_wrapper, h1, h2, h3');
+    // If we have an active step_item, scroll to it instead of main step content
+    let firstVisibleContent = null;
+    if (currentStepItemId) {
+        const activeStepItem = newStep.element.querySelector(`[data-answer="${currentStepItemId}"]`);
+        if (activeStepItem && !activeStepItem.classList.contains('hidden-step') && !activeStepItem.classList.contains('hidden-step-item')) {
+            firstVisibleContent = activeStepItem.querySelector('.multi-form_form-content, h1, h2, h3') || activeStepItem;
+        }
+    }
+    // Fallback to main step content
+    if (!firstVisibleContent) {
+        firstVisibleContent = newStep.element.querySelector('.radio_component, .multi-form_form-content:not(.hidden-step):not(.hidden-step-item), .step_wrapper:not(.hidden-step):not(.hidden-step-item), h1, h2, h3');
+    }
     if (firstVisibleContent) {
         firstVisibleContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
         logVerbose(`Scrolled to first visible content in step ${stepIndex}`, { element: firstVisibleContent });
