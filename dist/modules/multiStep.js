@@ -333,7 +333,7 @@ function setupNavigationListeners(root) {
  */
 function handleNextClick(event, target) {
     event.preventDefault();
-    logVerbose('Next button clicked');
+    console.log('[FormLib] NEXT BUTTON: Next button clicked');
     // Validate current step before proceeding
     const currentStep = getCurrentStep();
     if (!currentStep)
@@ -342,12 +342,12 @@ function handleNextClick(event, target) {
     if (currentStepItemId) {
         const stepItem = stepItems.find(item => item.id === currentStepItemId);
         if (stepItem && !validateStepElement(stepItem.element)) {
-            logVerbose('Step item validation failed, staying on current step');
+            console.warn('[FormLib] NEXT BUTTON: Step item validation failed, staying on current step');
             return;
         }
     }
     else if (!validateStepElement(currentStep.element)) {
-        logVerbose('Step validation failed, staying on current step');
+        console.warn('[FormLib] NEXT BUTTON: Step validation failed, staying on current step');
         return;
     }
     // Determine next step using branching logic
@@ -367,12 +367,14 @@ function handleNextClick(event, target) {
     if (!nextStepId) {
         // Use branching logic to determine next step
         nextStepId = getNextStep(currentStep.id);
-        logVerbose(`Branching logic determined next step: ${nextStepId}`);
+        console.log(`[FormLib] NEXT BUTTON: Branching logic determined next step: ${nextStepId}`);
     }
     if (nextStepId) {
+        console.log(`[FormLib] NEXT BUTTON: Navigating to: ${nextStepId}`);
         goToStepById(nextStepId);
     }
     else {
+        console.log(`[FormLib] NEXT BUTTON: Using sequential navigation`);
         goToNextStep();
     }
 }
@@ -423,30 +425,31 @@ function handleSubmitClick(event, target) {
  * Go to a step by ID (works for both parent steps and step_items)
  */
 export function goToStepById(stepId) {
-    logVerbose(`Attempting to navigate to step: ${stepId}`);
-    // First check if it's a parent step
-    const parentStepIndex = findStepIndexById(stepId);
-    if (parentStepIndex !== -1) {
-        logVerbose(`Found parent step: ${stepId} at index ${parentStepIndex}`);
-        currentStepItemId = null; // Clear step item tracking
-        goToStep(parentStepIndex);
-        return;
-    }
-    // Check if it's a step_item
+    console.log(`[FormLib] NAVIGATION: Attempting to navigate to step: ${stepId}`);
+    // First check if it's a step_item
     const stepItem = stepItems.find(item => item.id === stepId);
     if (stepItem) {
-        logVerbose(`Found step_item: ${stepId} in parent step ${stepItem.parentStepIndex}`);
+        console.log(`[FormLib] NAVIGATION: Found step_item: ${stepId} in parent step ${stepItem.parentStepIndex}`);
         // Navigate to the parent step first
         if (stepItem.parentStepIndex !== undefined) {
+            console.log(`[FormLib] NAVIGATION: Going to parent step ${stepItem.parentStepIndex} first, then showing step_item ${stepId}`);
             goToStep(stepItem.parentStepIndex);
             // Then show the specific step_item
             showStepItem(stepId);
         }
         return;
     }
-    console.warn(`[FormLib] Step not found: ${stepId}`);
-    logVerbose(`Step not found`, {
-        targetStepId: stepId,
+    // Then check if it's a parent step (only if not a step_item)
+    const parentStepIndex = findStepIndexById(stepId);
+    if (parentStepIndex !== -1) {
+        console.log(`[FormLib] NAVIGATION: Found parent step: ${stepId} at index ${parentStepIndex}`);
+        console.log(`[FormLib] NAVIGATION: This is a parent step - will show main content and hide step_items`);
+        currentStepItemId = null; // Clear step item tracking
+        goToStep(parentStepIndex);
+        return;
+    }
+    console.error(`[FormLib] NAVIGATION ERROR: Step not found: ${stepId}`);
+    console.log(`[FormLib] NAVIGATION: Available options:`, {
         availableParentSteps: steps.map(s => s.id),
         availableStepItems: stepItems.map(s => s.id)
     });
@@ -556,15 +559,27 @@ export function showStep(stepIndex) {
     // Use showStepCompletely to properly clear all hiding styles
     showStepCompletely(element, `parent step ${stepIndex} (${step.id})`);
     // Ensure main step content (radio buttons, form content) is visible
-    const mainContentElements = element.querySelectorAll('.radio_component, .multi-form_form-content:not(.step_item .multi-form_form-content), .step_wrapper:not(.step_item .step_wrapper)');
+    const mainContentElements = element.querySelectorAll('.radio_component, .multi-form_form-content:not(.step_item .multi-form_form-content), .step_wrapper:not(.step_item .step_wrapper), .item_wrapper');
+    console.log(`[FormLib] STEP SHOW: Found ${mainContentElements.length} main content elements in step ${stepIndex}:`, Array.from(mainContentElements).map(el => ({
+        tagName: el.tagName,
+        className: el.className,
+        id: el.id,
+        dataAnswer: el.getAttribute('data-answer'),
+        display: el.style.display,
+        visibility: el.style.visibility
+    })));
     mainContentElements.forEach(contentElement => {
         const htmlElement = contentElement;
         htmlElement.style.display = '';
         htmlElement.style.visibility = '';
         removeClass(htmlElement, 'hidden-step');
         removeClass(htmlElement, 'hidden-step-item');
+        console.log(`[FormLib] STEP SHOW: Made visible:`, {
+            element: htmlElement,
+            className: htmlElement.className,
+            dataAnswer: htmlElement.getAttribute('data-answer')
+        });
     });
-    logVerbose(`Made ${mainContentElements.length} main content elements visible in step ${stepIndex}`);
     // Update FormState
     FormState.setStepInfo(step.id, { visible: true, visited: true });
     // IMPORTANT: Hide conditional step_items but keep main step content visible
