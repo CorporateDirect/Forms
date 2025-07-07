@@ -4,6 +4,9 @@
 
 import { DEFAULTS } from '../config.js';
 
+// Simple query cache to improve performance
+const queryCache = new Map<string, Element | NodeListOf<Element> | null>();
+
 /**
  * Enhanced logging with consistent formatting
  */
@@ -21,16 +24,43 @@ export function logVerbose(message: string, data?: unknown): void {
 }
 
 /**
- * Query all elements by data attribute
+ * Clear query cache (useful for dynamic content)
+ */
+export function clearQueryCache(): void {
+  queryCache.clear();
+}
+
+/**
+ * Query all elements by data attribute with caching
  */
 export function queryAllByAttr(selector: string, root: Document | Element = document): NodeListOf<Element> {
+  // Only cache document-level queries to avoid stale references
+  if (root === document) {
+    const cacheKey = `all:${selector}`;
+    if (queryCache.has(cacheKey)) {
+      return queryCache.get(cacheKey) as NodeListOf<Element>;
+    }
+    const result = root.querySelectorAll(selector);
+    queryCache.set(cacheKey, result);
+    return result;
+  }
   return root.querySelectorAll(selector);
 }
 
 /**
- * Query single element by data attribute
+ * Query single element by data attribute with caching
  */
 export function queryByAttr(selector: string, root: Document | Element = document): Element | null {
+  // Only cache document-level queries to avoid stale references
+  if (root === document) {
+    const cacheKey = `single:${selector}`;
+    if (queryCache.has(cacheKey)) {
+      return queryCache.get(cacheKey) as Element | null;
+    }
+    const result = root.querySelector(selector);
+    queryCache.set(cacheKey, result);
+    return result;
+  }
   return root.querySelector(selector);
 }
 

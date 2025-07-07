@@ -266,51 +266,73 @@ export function validateField(fieldName: string): boolean {
 }
 
 /**
+ * Enhanced validation patterns for common use cases
+ */
+const VALIDATION_PATTERNS = {
+  email: /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
+  phone: /^[\+]?[1-9][\d]{0,15}$/, // International format
+  phoneUS: /^(\+1\s?)?(\([0-9]{3}\)|[0-9]{3})[\s\-]?[0-9]{3}[\s\-]?[0-9]{4}$/, // US format
+  url: /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/,
+  zipCode: /^\d{5}(-\d{4})?$/, // US ZIP code
+  zipCodeCA: /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/, // Canadian postal code
+  creditCard: /^(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13}|3[0-9]{13}|6(?:011|5[0-9]{2})[0-9]{12})$/, // Major credit cards
+  ssn: /^\d{3}-?\d{2}-?\d{4}$/, // US SSN
+  strongPassword: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/ // Strong password
+} as const;
+
+/**
  * Validate a single rule
  */
 function validateRule(value: string | string[], rule: ValidationRule): { isValid: boolean; message?: string } {
   switch (rule.type) {
     case 'required':
       return { 
-        isValid: Array.isArray(value) ? value.length > 0 : !!value, 
+        isValid: Array.isArray(value) ? value.length > 0 : !!value && String(value).trim() !== '', 
         message: rule.message 
       };
     case 'email':
-      // Basic email regex
+      // Enhanced email validation
       return { 
-        isValid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value)), 
-        message: rule.message 
+        isValid: VALIDATION_PATTERNS.email.test(String(value)), 
+        message: rule.message || 'Please enter a valid email address'
       };
     case 'phone':
-      // Basic phone regex (10 digits)
+      // Enhanced phone validation with multiple formats
+      const phoneValue = String(value).replace(/[\s\-\(\)]/g, ''); // Remove formatting
+      const isValidPhone = VALIDATION_PATTERNS.phone.test(phoneValue) || VALIDATION_PATTERNS.phoneUS.test(String(value));
       return { 
-        isValid: /^\d{10}$/.test(String(value)), 
-        message: rule.message 
+        isValid: isValidPhone, 
+        message: rule.message || 'Please enter a valid phone number'
       };
     case 'min':
       if (typeof rule.value !== 'number') return { isValid: true };
       return { 
         isValid: String(value).length >= rule.value, 
-        message: rule.message 
+        message: rule.message || `Minimum ${rule.value} characters required`
       };
     case 'max':
       if (typeof rule.value !== 'number') return { isValid: true };
       return { 
         isValid: String(value).length <= rule.value, 
-        message: rule.message 
+        message: rule.message || `Maximum ${rule.value} characters allowed`
       };
     case 'pattern':
       if (!(rule.value instanceof RegExp)) return { isValid: true };
       return { 
         isValid: rule.value.test(String(value)), 
-        message: rule.message 
+        message: rule.message || 'Please enter a valid format'
       };
     case 'custom':
       if (!rule.validator) return { isValid: true };
-      return { 
-        isValid: rule.validator(value), 
-        message: rule.message 
-      };
+      try {
+        return { 
+          isValid: rule.validator(value), 
+          message: rule.message || 'Invalid value'
+        };
+      } catch (error) {
+        logVerbose('Error in custom validator', { error, rule });
+        return { isValid: false, message: 'Validation error occurred' };
+      }
     default:
       return { isValid: true };
   }

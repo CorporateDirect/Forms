@@ -6,6 +6,7 @@
  */
 import { SELECTORS } from './config.js';
 import { logVerbose } from './modules/utils.js';
+import { clearQueryCache } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
 // Import all modules
 import { initBranching, resetBranching, getNextStep, getBranchingState } from './modules/branching.js';
@@ -101,6 +102,8 @@ class FormLibrary {
         }
         // Clear FormState
         FormState.clear();
+        // Clear query cache to prevent memory leaks
+        clearQueryCache();
         this.initialized = false;
         logVerbose('FormLibrary destruction complete');
     }

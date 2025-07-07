@@ -70,6 +70,50 @@ function handleRadioLabelClick(event, target) {
     }
 }
 /**
+ * Evaluate condition string against active conditions
+ */
+function evaluateCondition(condition, activeConditions) {
+    if (!condition || typeof condition !== 'string') {
+        logVerbose('Invalid condition provided', { condition });
+        return false;
+    }
+    try {
+        // Simple condition evaluation - can be enhanced for complex logic
+        // For now, just check if the condition key exists in activeConditions
+        const trimmedCondition = condition.trim();
+        // Handle multiple conditions separated by commas (OR logic)
+        if (trimmedCondition.includes(',')) {
+            const conditions = trimmedCondition.split(',').map(c => c.trim());
+            return conditions.some(cond => !!activeConditions[cond]);
+        }
+        // Handle multiple conditions separated by ampersand (AND logic)
+        if (trimmedCondition.includes('&')) {
+            const conditions = trimmedCondition.split('&').map(c => c.trim());
+            return conditions.every(cond => !!activeConditions[cond]);
+        }
+        // Single condition
+        return !!activeConditions[trimmedCondition];
+    }
+    catch (error) {
+        logVerbose('Error evaluating condition', { condition, error });
+        return false;
+    }
+}
+/**
+ * Validate data-go-to attribute value
+ */
+function validateGoToValue(goToValue) {
+    if (!goToValue)
+        return false;
+    // Check for valid step ID format (alphanumeric, hyphens, underscores)
+    const validStepIdPattern = /^[a-zA-Z0-9_-]+$/;
+    if (!validStepIdPattern.test(goToValue)) {
+        logVerbose('Invalid data-go-to value format', { goToValue });
+        return false;
+    }
+    return true;
+}
+/**
  * Handle branch trigger events
  */
 function handleBranchTrigger(event, target) {
@@ -77,6 +121,11 @@ function handleBranchTrigger(event, target) {
         return;
     }
     const goToValue = getAttrValue(target, 'data-go-to');
+    // Validate go-to value before proceeding
+    if (goToValue && !validateGoToValue(goToValue)) {
+        logVerbose('Skipping branch trigger due to invalid data-go-to value', { goToValue });
+        return;
+    }
     const inputValue = getInputValue(target);
     logVerbose('Branch trigger activated', {
         element: target,
@@ -89,52 +138,62 @@ function handleBranchTrigger(event, target) {
     if (fieldName) {
         FormState.setField(fieldName, inputValue);
     }
-    // Handle different input types
-    if (target instanceof HTMLInputElement) {
-        if (target.type === 'radio' && target.checked) {
-            if (!goToValue) {
-                logVerbose('Radio button has no data-go-to attribute, skipping navigation');
-                return;
-            }
-            // Handle radio group selection
-            handleRadioGroupSelection(target);
-            // Apply active class styling
-            applyRadioActiveClass(target);
-            // Activate branch and show step item
-            activateBranch(goToValue, target.value);
-            triggerStepItemVisibility(goToValue);
-        }
-        else if (target.type === 'checkbox') {
-            if (target.checked) {
+    // Handle different input types with better error handling
+    try {
+        if (target instanceof HTMLInputElement) {
+            if (target.type === 'radio' && target.checked) {
+                if (!goToValue) {
+                    logVerbose('Radio button has no data-go-to attribute, skipping navigation');
+                    return;
+                }
+                // Handle radio group selection
+                handleRadioGroupSelection(target);
+                // Apply active class styling
+                applyRadioActiveClass(target);
+                // Activate branch and show step item
                 activateBranch(goToValue, target.value);
+                triggerStepItemVisibility(goToValue);
             }
-            else {
-                deactivateBranch(goToValue);
+            else if (target.type === 'checkbox') {
+                if (goToValue) {
+                    if (target.checked) {
+                        activateBranch(goToValue, target.value);
+                    }
+                    else {
+                        deactivateBranch(goToValue);
+                    }
+                }
+            }
+            else if (target.type !== 'radio' && target.type !== 'checkbox') {
+                // Text inputs, selects, etc.
+                if (goToValue) {
+                    if (inputValue) {
+                        activateBranch(goToValue, inputValue);
+                    }
+                    else {
+                        deactivateBranch(goToValue);
+                    }
+                }
             }
         }
-        else if (target.type !== 'radio' && target.type !== 'checkbox') {
-            // Text inputs, selects, etc.
-            if (inputValue) {
-                activateBranch(goToValue, inputValue);
-            }
-            else {
-                deactivateBranch(goToValue);
+        else {
+            // Select elements and textareas
+            if (goToValue) {
+                if (inputValue) {
+                    activateBranch(goToValue, inputValue);
+                }
+                else {
+                    deactivateBranch(goToValue);
+                }
             }
         }
     }
-    else {
-        // Select elements and textareas
-        if (inputValue) {
-            activateBranch(goToValue, inputValue);
-        }
-        else {
-            deactivateBranch(goToValue);
-        }
+    catch (error) {
+        logVerbose('Error handling branch trigger', { error, element: target });
     }
     // Update step visibility if we have active conditions
     const activeConditions = FormState.getBranchPath().activeConditions;
-    const hasActiveConditions = Object.values(activeConditions).some(value => value !== null && value !== undefined && value !== '');
-    if (hasActiveConditions) {
+    if (Object.keys(activeConditions).length > 0) {
         updateStepVisibility();
     }
 }
@@ -269,11 +328,6 @@ function shouldStepBeVisible(stepAnswer, activeConditions) {
     }
     // Default to not visible if it has conditions but none are met
     return false;
-}
-function evaluateCondition(showIf, activeConditions) {
-    // This is a simple implementation. You can extend it to support more complex conditions.
-    // For now, it checks if the 'showIf' value exists as a key in activeConditions.
-    return activeConditions.hasOwnProperty(showIf);
 }
 /**
  * Clear fields from inactive branches

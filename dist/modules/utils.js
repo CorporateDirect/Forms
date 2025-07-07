@@ -2,6 +2,8 @@
  * Utility functions for the form functionality library
  */
 import { DEFAULTS } from '../config.js';
+// Simple query cache to improve performance
+const queryCache = new Map();
 /**
  * Enhanced logging with consistent formatting
  */
@@ -18,15 +20,41 @@ export function logVerbose(message, data) {
     }
 }
 /**
- * Query all elements by data attribute
+ * Clear query cache (useful for dynamic content)
+ */
+export function clearQueryCache() {
+    queryCache.clear();
+}
+/**
+ * Query all elements by data attribute with caching
  */
 export function queryAllByAttr(selector, root = document) {
+    // Only cache document-level queries to avoid stale references
+    if (root === document) {
+        const cacheKey = `all:${selector}`;
+        if (queryCache.has(cacheKey)) {
+            return queryCache.get(cacheKey);
+        }
+        const result = root.querySelectorAll(selector);
+        queryCache.set(cacheKey, result);
+        return result;
+    }
     return root.querySelectorAll(selector);
 }
 /**
- * Query single element by data attribute
+ * Query single element by data attribute with caching
  */
 export function queryByAttr(selector, root = document) {
+    // Only cache document-level queries to avoid stale references
+    if (root === document) {
+        const cacheKey = `single:${selector}`;
+        if (queryCache.has(cacheKey)) {
+            return queryCache.get(cacheKey);
+        }
+        const result = root.querySelector(selector);
+        queryCache.set(cacheKey, result);
+        return result;
+    }
     return root.querySelector(selector);
 }
 /**

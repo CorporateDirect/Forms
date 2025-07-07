@@ -6,11 +6,15 @@
  */
 export declare function logVerbose(message: string, data?: unknown): void;
 /**
- * Query all elements by data attribute
+ * Clear query cache (useful for dynamic content)
+ */
+export declare function clearQueryCache(): void;
+/**
+ * Query all elements by data attribute with caching
  */
 export declare function queryAllByAttr(selector: string, root?: Document | Element): NodeListOf<Element>;
 /**
- * Query single element by data attribute
+ * Query single element by data attribute with caching
  */
 export declare function queryByAttr(selector: string, root?: Document | Element): Element | null;
 /**
