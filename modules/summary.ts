@@ -355,22 +355,20 @@ export function addCustomSummary(
 }
 
 /**
- * Get summary state for debugging
+ * Get current summary state for debugging
  */
-export function getSummaryState(): any {
-  return {
-    initialized,
-    totalSummaryFields: summaryFields.length,
-    summaryFields: summaryFields.map(field => ({
-      fieldNames: field.fieldNames,
-      joinType: field.joinType,
-      type: field.type,
-      subtype: field.subtype,
-      number: field.number,
-      currentValue: field.element.textContent || ''
-    })),
-    formStateData: FormState.getAll()
-  };
+export function getSummaryState(): Record<string, unknown> {
+  const state: Record<string, { hasContent: boolean }> = {};
+  summaryFields.forEach((summaryField, index) => {
+    const key = summaryField.type && summaryField.subtype && summaryField.number
+      ? `${summaryField.type}-${summaryField.subtype}-${summaryField.number}`
+      : `summary-${index}`;
+    
+    state[key] = {
+      hasContent: (summaryField.element.textContent || '').trim().length > 0
+    };
+  });
+  return state;
 }
 
 /**

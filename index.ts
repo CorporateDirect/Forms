@@ -5,7 +5,7 @@
  * supporting single-step, multi-step, and branching forms.
  */
 
-import { SELECTORS, DEFAULTS } from './config.js';
+import { SELECTORS } from './config.js';
 import { logVerbose } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
 
@@ -137,7 +137,7 @@ class FormLibrary {
   /**
    * Get current form state for debugging
    */
-  public getState(): any {
+  public getState(): Record<string, unknown> {
     return {
       initialized: this.initialized,
       formState: FormState.getDebugInfo(),
@@ -173,8 +173,6 @@ class FormLibrary {
     return isValid;
   }
 
-
-
   /**
    * Reset form to initial state
    */
@@ -208,14 +206,14 @@ class FormLibrary {
   /**
    * Get form data
    */
-  public getFormData(): any {
+  public getFormData(): Record<string, unknown> {
     return FormState.getAll();
   }
 
   /**
    * Set form data
    */
-  public setFormData(data: Record<string, any>): void {
+  public setFormData(data: Record<string, unknown>): void {
     Object.entries(data).forEach(([key, value]) => {
       FormState.setField(key, value);
     });
@@ -289,6 +287,10 @@ if (typeof window !== 'undefined') {
 
 // Make FormLib available globally for testing
 if (typeof window !== 'undefined') {
-  (window as any).FormLib = FormLib;
+  (window as CustomWindow).FormLib = FormLib;
   logVerbose('FormLib attached to window for debugging');
+}
+
+interface CustomWindow extends Window {
+  FormLib?: unknown;
 } 

@@ -6,6 +6,7 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
+    "lint": "eslint . --ext .ts",
     "build": "tsc",
     "build:browser": "tsc && node build-browser.js",
     "build:prod": "tsc && node build-browser.js && terser dist/index.browser.js --compress --mangle --output dist/index.min.js",
@@ -25,6 +26,9 @@
   "author": "Form Functionality Library",
   "license": "MIT",
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.36.0",
+    "@typescript-eslint/parser": "^8.36.0",
+    "eslint": "^9.30.1",
     "terser": "^5.43.1",
     "typescript": "^5.3.3"
   },

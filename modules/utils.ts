@@ -7,7 +7,7 @@ import { DEFAULTS } from '../config.js';
 /**
  * Enhanced logging with consistent formatting
  */
-export function logVerbose(message: string, data?: any): void {
+export function logVerbose(message: string, data?: unknown): void {
   if (!DEFAULTS.DEBUG) return;
   
   const timestamp = new Date().toISOString().split('T')[1].split('.')[0];
@@ -118,7 +118,7 @@ export function isVisible(element: HTMLElement): boolean {
 /**
  * Debounce function calls
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => void>(
   func: T,
   delay: number
 ): (...args: Parameters<T>) => void {
@@ -133,15 +133,15 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Get form data as object
  */
-export function getFormData(form: HTMLFormElement): Record<string, any> {
+export function getFormData(form: HTMLFormElement): Record<string, unknown> {
   const formData = new FormData(form);
-  const data: Record<string, any> = {};
+  const data: Record<string, unknown> = {};
   
   for (const [key, value] of formData.entries()) {
     if (data[key]) {
       // Handle multiple values (checkboxes, multi-select)
       if (Array.isArray(data[key])) {
-        data[key].push(value);
+        (data[key] as unknown[]).push(value);
       } else {
         data[key] = [data[key], value];
       }

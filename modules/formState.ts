@@ -5,7 +5,7 @@
 import { logVerbose } from './utils.js';
 
 export interface FormStateData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface StepInfo {
@@ -20,7 +20,7 @@ export interface BranchPath {
   currentStep: string;
   previousSteps: string[];
   skippedSteps: string[];
-  activeConditions: Record<string, any>;
+  activeConditions: Record<string, unknown>;
 }
 
 class FormStateManager {
@@ -51,7 +51,7 @@ class FormStateManager {
   /**
    * Set field value
    */
-  public setField(name: string, value: any): void {
+  public setField(name: string, value: unknown): void {
     const oldValue = this.data[name];
     this.data[name] = value;
     
@@ -67,7 +67,7 @@ class FormStateManager {
   /**
    * Get field value
    */
-  public getField(name: string): any {
+  public getField(name: string): unknown {
     return this.data[name];
   }
 
@@ -99,7 +99,7 @@ class FormStateManager {
    * Clear specific fields (used when branching changes)
    */
   public clearFields(fieldNames: string[]): void {
-    const clearedFields: Record<string, any> = {};
+    const clearedFields: Record<string, unknown> = {};
     
     fieldNames.forEach(name => {
       if (this.data[name] !== undefined) {
@@ -194,7 +194,7 @@ class FormStateManager {
   /**
    * Set active condition
    */
-  public setActiveCondition(key: string, value: any): void {
+  public setActiveCondition(key: string, value: unknown): void {
     this.branchPath.activeConditions[key] = value;
     logVerbose(`Active condition set: ${key}`, value);
   }
@@ -202,14 +202,14 @@ class FormStateManager {
   /**
    * Get active condition
    */
-  public getActiveCondition(key: string): any {
+  public getActiveCondition(key: string): unknown {
     return this.branchPath.activeConditions[key];
   }
 
   /**
    * Get fields by step type/subtype/number
    */
-  public getFieldsByStep(type?: string, subtype?: string, number?: string): FormStateData {
+  public getFieldsByStep(): FormStateData {
     const result: FormStateData = {};
     
     // For now, return all fields that match the criteria
@@ -225,7 +225,7 @@ class FormStateManager {
   /**
    * Handle field change events
    */
-  private onFieldChange(name: string, newValue: any, oldValue: any): void {
+  private onFieldChange(name: string, newValue: unknown, oldValue: unknown): void {
     // This can be used to trigger dependent field updates, validation, etc.
     // For now, just log the change
     if (newValue !== oldValue) {
@@ -266,7 +266,7 @@ class FormStateManager {
   /**
    * Get debug information
    */
-  public getDebugInfo(): any {
+  public getDebugInfo(): Record<string, unknown> {
     return {
       data: this.data,
       steps: this.steps,
