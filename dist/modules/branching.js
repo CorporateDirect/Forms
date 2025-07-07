@@ -4,7 +4,6 @@
 import { SELECTORS } from '../config.js';
 import { logVerbose, queryAllByAttr, queryByAttr, getAttrValue, delegateEvent, getInputValue, isFormInput } from './utils.js';
 import { FormState } from './formState.js';
-import { showStepItem as multiStepShowStepItem, hideStepItem as multiStepHideStepItem } from './multiStep.js';
 let initialized = false;
 let cleanupFunctions = [];
 /**
@@ -16,16 +15,8 @@ export function initBranching(root = document) {
         resetBranching();
     }
     logVerbose('Initializing branching logic');
-    // Find all elements with branching triggers
-    const branchTriggers = queryAllByAttr(SELECTORS.GO_TO, root);
-    logVerbose(`Found ${branchTriggers.length} branch triggers`);
-    // Find all conditional steps
-    const conditionalSteps = queryAllByAttr(SELECTORS.ANSWER, root);
-    logVerbose(`Found ${conditionalSteps.length} conditional steps`);
     // Set up event listeners for branching triggers
     setupBranchingListeners(root);
-    // Don't update step visibility during initialization - let multi-step handle it
-    // updateStepVisibility();
     initialized = true;
     logVerbose('Branching initialization complete');
 }
@@ -33,319 +24,65 @@ export function initBranching(root = document) {
  * Set up event listeners for branching logic
  */
 function setupBranchingListeners(root) {
-    console.log('[FormLib] Setting up branching event listeners on:', root);
-    // Listen for changes on elements with data-go-to
+    // Main event listener for form inputs with data-go-to
     const cleanup1 = delegateEvent(root, 'change', SELECTORS.GO_TO, handleBranchTrigger);
-    console.log('[FormLib] Set up CHANGE listener for:', SELECTORS.GO_TO);
-    // Listen for input events (for real-time branching)
+    // Input events for real-time branching
     const cleanup2 = delegateEvent(root, 'input', SELECTORS.GO_TO, handleBranchTrigger);
-    console.log('[FormLib] Set up INPUT listener for:', SELECTORS.GO_TO);
-    // Listen for click events on radio buttons and checkboxes
+    // Click events for radio buttons and checkboxes
     const cleanup3 = delegateEvent(root, 'click', SELECTORS.GO_TO, handleBranchTrigger);
-    console.log('[FormLib] Set up CLICK listener for:', SELECTORS.GO_TO);
-    // COMPREHENSIVE RADIO BUTTON HANDLING for custom styling
-    // Prioritize the most specific visual radio elements first
-    const radioSelectors = [
-        // HIGHEST PRIORITY: Visual radio button elements (what users actually click)
-        '.radio_button-skip-step',
-        '.w-form-formradioinput',
-        '.w-radio-input',
-        // SECONDARY: Entire radio field wrapper
-        '.radio_field',
-        'label.radio_field',
-        // Webflow radio wrappers
-        '.w-radio',
-        'label.w-radio',
-        // Any element with data-go-to attribute (for direct targeting)
-        '[data-go-to]',
-        // Direct radio input elements (fallback)
-        'input[type="radio"][data-go-to]',
-        // Radio components and containers
-        '.radio_component',
-        '.radio-component',
-        '.form_radio',
-        '.form-radio',
-        // Radio button parts and labels (for nested structures)
-        '.radio_label',
-        '.w-form-label',
-        '.radio_button',
-        '.radio-button',
-        // Spans and divs inside radio fields
-        '.radio_field span',
-        '.radio_field div',
-        'label.radio_field span',
-        'label.radio_field div'
-    ];
-    console.log('[FormLib] Setting up comprehensive radio button listeners for selectors:', radioSelectors);
-    // Set up comprehensive click handling
-    radioSelectors.forEach((selector, index) => {
-        const elementsFound = root.querySelectorAll(selector);
-        console.log(`[FormLib] Selector ${index} "${selector}" found ${elementsFound.length} elements`);
-        const cleanup = delegateEvent(root, 'click', selector, handleUniversalRadioClick);
-        cleanupFunctions.push(cleanup);
-    });
-    // Also listen for keyboard events (Enter/Space on focused elements)
-    const cleanup5 = delegateEvent(root, 'keydown', 'label.radio_field, label.w-radio, [data-go-to]', handleRadioKeydown);
-    console.log('[FormLib] Set up KEYDOWN listener for radio elements');
-    // ADD GLOBAL CLICK LISTENER for debugging
-    const globalClickCleanup = delegateEvent(root, 'click', '*', (event, target) => {
-        const htmlTarget = target;
-        if (htmlTarget.tagName === 'INPUT' ||
-            htmlTarget.className.includes('radio') ||
-            htmlTarget.closest('label') ||
-            getAttrValue(target, 'data-go-to')) {
-            // Try to find the radio input in multiple ways
-            let dataGoToValue = getAttrValue(target, 'data-go-to');
-            let radioInput = null;
-            // Method 1: Direct click on radio input
-            if (htmlTarget.tagName === 'INPUT' && htmlTarget.type === 'radio') {
-                radioInput = htmlTarget;
-                dataGoToValue = getAttrValue(radioInput, 'data-go-to');
-            }
-            // Method 2: Click on label - find radio input inside
-            else if (htmlTarget.tagName === 'LABEL' && !dataGoToValue) {
-                radioInput = htmlTarget.querySelector('input[type="radio"]');
-                if (radioInput) {
-                    dataGoToValue = getAttrValue(radioInput, 'data-go-to');
-                }
-            }
-            // Method 3: Click on visual radio elements (.radio_button-skip-step, etc.)
-            else if (!dataGoToValue && (htmlTarget.classList.contains('radio_button-skip-step') ||
-                htmlTarget.classList.contains('w-form-formradioinput') ||
-                htmlTarget.classList.contains('w-radio-input'))) {
-                const parentLabel = htmlTarget.closest('label');
-                if (parentLabel) {
-                    radioInput = parentLabel.querySelector('input[type="radio"]');
-                    if (radioInput) {
-                        dataGoToValue = getAttrValue(radioInput, 'data-go-to');
-                    }
-                }
-            }
-            // Method 4: Click on span or other element inside label - traverse up to find label
-            else if (!dataGoToValue) {
-                const parentLabel = htmlTarget.closest('label');
-                if (parentLabel) {
-                    radioInput = parentLabel.querySelector('input[type="radio"]');
-                    if (radioInput) {
-                        dataGoToValue = getAttrValue(radioInput, 'data-go-to');
-                    }
-                }
-            }
-            console.log('[FormLib] GLOBAL CLICK detected on potentially relevant element:', {
-                target,
-                tagName: htmlTarget.tagName,
-                className: htmlTarget.className,
-                id: htmlTarget.id,
-                dataGoTo: dataGoToValue,
-                isInput: htmlTarget.tagName === 'INPUT',
-                inputType: htmlTarget.tagName === 'INPUT' ? htmlTarget.type : null,
-                closestLabel: htmlTarget.closest('label'),
-                closestLabelClasses: htmlTarget.closest('label')?.className,
-                radioInput: radioInput,
-                radioInputDataGoTo: radioInput ? getAttrValue(radioInput, 'data-go-to') : null,
-                radioInputName: radioInput ? radioInput.name : null,
-                radioInputValue: radioInput ? radioInput.value : null,
-                searchMethod: radioInput ? (htmlTarget.tagName === 'INPUT' ? 'Direct input click' :
-                    htmlTarget.tagName === 'LABEL' ? 'Label click' :
-                        'Traversed up to label') : 'Not found',
-                event: event
-            });
-            // If we found a radio input with data-go-to, trigger the branching logic
-            if (radioInput && dataGoToValue) {
-                console.log('[FormLib] Triggering branching logic from global click detection');
-                // Check the radio button
-                radioInput.checked = true;
-                // Apply active class styling
-                applyRadioActiveClass(radioInput);
-                // Create synthetic change event and trigger branching
-                const syntheticEvent = new Event('change', { bubbles: true });
-                Object.defineProperty(syntheticEvent, 'target', { value: radioInput });
-                handleBranchTrigger(syntheticEvent, radioInput);
-            }
-        }
-    });
-    cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup5, globalClickCleanup);
-    console.log('[FormLib] Total event listeners set up:', cleanupFunctions.length);
+    // Enhanced radio button support for custom styling
+    const cleanup4 = delegateEvent(root, 'click', 'label.radio_field, .w-radio, .radio_button-skip-step, .w-form-formradioinput, .w-radio-input', handleRadioLabelClick);
+    cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4);
 }
 /**
- * Universal handler for radio button clicks (handles all custom styling scenarios)
+ * Handle clicks on radio button labels and visual elements
  */
-function handleUniversalRadioClick(event, target) {
-    console.log('[FormLib] Universal radio click handler triggered', {
-        target,
-        tagName: target.tagName,
-        className: target.className,
-        id: target.id
-    });
-    // Try to find the radio input in multiple ways
+function handleRadioLabelClick(event, target) {
+    // Find the associated radio input
     let radioInput = null;
-    // Method 1: Direct click on radio input
-    if (target.tagName === 'INPUT' && target.type === 'radio') {
-        const goTo = getAttrValue(target, 'data-go-to');
-        if (goTo) {
-            radioInput = target;
-            console.log('[FormLib] Direct radio input click detected');
-        }
-    }
-    // Method 2: Click on .radio_field wrapper - find radio input inside
-    if (!radioInput && target.classList.contains('radio_field')) {
-        radioInput = target.querySelector('input[type="radio"][data-go-to]');
-        if (radioInput) {
-            console.log('[FormLib] Found radio input inside .radio_field wrapper');
-        }
-    }
-    // Method 2.5: Click on .radio_button-skip-step or similar visual radio elements
-    if (!radioInput && (target.classList.contains('radio_button-skip-step') ||
-        target.classList.contains('w-form-formradioinput') ||
-        target.classList.contains('w-radio-input'))) {
-        // Look in the parent label for the radio input
+    // Method 1: Look for radio input inside the clicked element
+    radioInput = target.querySelector('input[type="radio"][data-go-to]');
+    // Method 2: Look in parent label
+    if (!radioInput) {
         const parentLabel = target.closest('label');
         if (parentLabel) {
             radioInput = parentLabel.querySelector('input[type="radio"][data-go-to]');
-            if (radioInput) {
-                console.log('[FormLib] Found radio input in parent label from visual radio element click');
-            }
         }
     }
-    // Method 3: Click on element with data-go-to (find associated radio)
+    // Method 3: Look in sibling elements (for complex layouts)
     if (!radioInput) {
-        const goTo = getAttrValue(target, 'data-go-to');
-        if (goTo) {
-            // First try to find radio input in the same form context/section
-            const searchContext = target.closest('form, .form-section, .member-section, [data-step]');
-            if (searchContext) {
-                radioInput = searchContext.querySelector(`input[type="radio"][data-go-to="${goTo}"]`);
-            }
-            // If not found in local context, try nearest form or step element
-            if (!radioInput) {
-                const nearestStep = target.closest('[data-answer], [data-step]');
-                if (nearestStep) {
-                    radioInput = nearestStep.querySelector(`input[type="radio"][data-go-to="${goTo}"]`);
-                }
-            }
-            // Only as last resort, search globally
-            if (!radioInput) {
-                radioInput = document.querySelector(`input[type="radio"][data-go-to="${goTo}"]`);
-            }
-            console.log('[FormLib] Found radio via data-go-to attribute', {
-                goTo,
-                radioInput,
-                searchContext: searchContext ? searchContext.tagName : 'document',
-                contextClass: searchContext?.className || 'N/A'
-            });
+        const container = target.closest('.radio_field, .w-radio, .radio_component');
+        if (container) {
+            radioInput = container.querySelector('input[type="radio"][data-go-to]');
         }
     }
-    // Method 4: Look within clicked element for radio input
-    if (!radioInput) {
-        radioInput = target.querySelector('input[type="radio"][data-go-to]');
-        if (radioInput) {
-            console.log('[FormLib] Found radio input inside clicked element');
-        }
+    if (radioInput && getAttrValue(radioInput, 'data-go-to')) {
+        event.preventDefault();
+        event.stopPropagation();
+        // Select the radio button
+        radioInput.checked = true;
+        // Apply active styling
+        applyRadioActiveClass(radioInput);
+        // Trigger branching logic
+        const syntheticEvent = new Event('change', { bubbles: true });
+        Object.defineProperty(syntheticEvent, 'target', { value: radioInput });
+        handleBranchTrigger(syntheticEvent, radioInput);
     }
-    // Method 5: Look in parent elements (traverse up the DOM)
-    if (!radioInput) {
-        let currentElement = target.parentElement;
-        while (currentElement && !radioInput) {
-            radioInput = currentElement.querySelector('input[type="radio"][data-go-to]');
-            if (radioInput) {
-                console.log('[FormLib] Found radio input in parent element', { parent: currentElement });
-                break;
-            }
-            currentElement = currentElement.parentElement;
-            // Prevent infinite loop - stop at form or body
-            if (currentElement?.tagName === 'FORM' || currentElement?.tagName === 'BODY') {
-                break;
-            }
-        }
-    }
-    // Method 6: Look for closest .radio_field or label and find radio inside it
-    if (!radioInput) {
-        const parentRadioField = target.closest('.radio_field, label.radio_field, .w-radio, label.w-radio');
-        if (parentRadioField) {
-            radioInput = parentRadioField.querySelector('input[type="radio"][data-go-to]');
-            if (radioInput) {
-                console.log('[FormLib] Found radio input in closest radio field wrapper');
-            }
-        }
-    }
-    if (!radioInput) {
-        console.log('[FormLib] No radio input with data-go-to found after exhaustive search');
-        // Debug: Show what we did find
-        const anyRadio = target.querySelector('input[type="radio"]') ||
-            target.closest('label')?.querySelector('input[type="radio"]');
-        if (anyRadio) {
-            console.log('[FormLib] Found radio without data-go-to:', {
-                radio: anyRadio,
-                attributes: Array.from(anyRadio.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
-            });
-        }
-        return;
-    }
-    const goToValue = getAttrValue(radioInput, 'data-go-to');
-    console.log('[FormLib] Successfully found radio input', {
-        radioInput,
-        goTo: goToValue,
-        name: radioInput.name,
-        value: radioInput.value,
-        checked: radioInput.checked
-    });
-    // Prevent the event from triggering multiple times
-    event.preventDefault();
-    event.stopPropagation();
-    // Check/select the radio button
-    radioInput.checked = true;
-    // Apply active class styling
-    applyRadioActiveClass(radioInput);
-    // Trigger the branching logic
-    const syntheticEvent = new Event('change', { bubbles: true });
-    Object.defineProperty(syntheticEvent, 'target', { value: radioInput });
-    console.log('[FormLib] Triggering branch logic for data-go-to:', goToValue);
-    handleBranchTrigger(syntheticEvent, radioInput);
-}
-/**
- * Handle keyboard events on radio button labels
- */
-function handleRadioKeydown(event, target) {
-    // Only handle Enter and Space keys
-    if (event.key !== 'Enter' && event.key !== ' ') {
-        return;
-    }
-    console.log('[FormLib] Radio keyboard event', { key: event.key, target });
-    // Prevent default behavior and trigger click
-    event.preventDefault();
-    // Create a synthetic click event
-    const clickEvent = new MouseEvent('click', {
-        bubbles: true,
-        cancelable: true,
-        view: window
-    });
-    // Trigger the universal click handler
-    handleUniversalRadioClick(clickEvent, target);
 }
 /**
  * Handle branch trigger events
  */
 function handleBranchTrigger(event, target) {
-    console.log('[FormLib] handleBranchTrigger called', {
-        target,
-        tagName: target.tagName,
-        type: target.type,
-        isFormInput: isFormInput(target)
-    });
     if (!isFormInput(target)) {
-        console.log('[FormLib] Target is not a form input, ignoring');
         return;
     }
     const goToValue = getAttrValue(target, 'data-go-to');
     const inputValue = getInputValue(target);
-    console.log('[FormLib] Branch trigger activated', {
+    logVerbose('Branch trigger activated', {
         element: target,
         goTo: goToValue,
         value: inputValue,
-        type: target.type || target.tagName,
-        checked: target.checked,
-        name: target.name,
-        allAttributes: Array.from(target.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
+        type: target.type || target.tagName
     });
     // Store the field value in state
     const fieldName = target.name || getAttrValue(target, 'data-step-field-name');
@@ -355,27 +92,16 @@ function handleBranchTrigger(event, target) {
     // Handle different input types
     if (target instanceof HTMLInputElement) {
         if (target.type === 'radio' && target.checked) {
-            console.log(`[FormLib] EXACT MATCH: Radio button selected with data-go-to="${goToValue}"`);
-            console.log(`[FormLib] Radio button details:`, {
-                name: target.name,
-                value: target.value,
-                goTo: goToValue,
-                checked: target.checked,
-                allAttributes: Array.from(target.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
-            });
-            // Validate that this radio button should trigger navigation
             if (!goToValue) {
-                console.warn(`[FormLib] Radio button has no data-go-to attribute, skipping navigation`);
+                logVerbose('Radio button has no data-go-to attribute, skipping navigation');
                 return;
             }
-            // For radio buttons, first deactivate all other radio buttons in the same group
+            // Handle radio group selection
             handleRadioGroupSelection(target);
             // Apply active class styling
             applyRadioActiveClass(target);
-            console.log(`[FormLib] EXACT MATCH: Activating branch for data-go-to="${goToValue}"`);
+            // Activate branch and show step item
             activateBranch(goToValue, target.value);
-            // For radio buttons with data-go-to, trigger step_item visibility with exact match
-            console.log(`[FormLib] EXACT MATCH: Triggering step_item visibility for data-answer="${goToValue}"`);
             triggerStepItemVisibility(goToValue);
         }
         else if (target.type === 'checkbox') {
@@ -405,7 +131,7 @@ function handleBranchTrigger(event, target) {
             deactivateBranch(goToValue);
         }
     }
-    // Only update step visibility if we have active conditions
+    // Update step visibility if we have active conditions
     const activeConditions = FormState.getBranchPath().activeConditions;
     const hasActiveConditions = Object.values(activeConditions).some(value => value !== null && value !== undefined && value !== '');
     if (hasActiveConditions) {
@@ -425,23 +151,14 @@ function applyRadioActiveClass(selectedRadio) {
             const radioLabel = htmlRadio.closest('label');
             if (htmlRadio !== selectedRadio) {
                 htmlRadio.classList.remove(activeClass);
-                if (radioLabel) {
-                    radioLabel.classList.remove(activeClass);
-                }
+                radioLabel?.classList.remove(activeClass);
             }
         });
     }
     // Add active class to the selected radio and its label
     selectedRadio.classList.add(activeClass);
     const parentLabel = selectedRadio.closest('label');
-    if (parentLabel) {
-        parentLabel.classList.add(activeClass);
-    }
-    logVerbose(`Applied active class to radio button: ${selectedRadio.name}`, {
-        activeClass,
-        radioClasses: selectedRadio.className,
-        labelClasses: parentLabel?.className
-    });
+    parentLabel?.classList.add(activeClass);
 }
 /**
  * Handle radio button group selection - deactivate other options in the same group
@@ -449,10 +166,6 @@ function applyRadioActiveClass(selectedRadio) {
 function handleRadioGroupSelection(selectedRadio) {
     if (!selectedRadio.name)
         return;
-    logVerbose(`Handling radio group selection for: ${selectedRadio.name}`, {
-        selectedValue: selectedRadio.value,
-        selectedGoTo: getAttrValue(selectedRadio, 'data-go-to')
-    });
     // Find all radio buttons in the same group
     const radioGroup = document.querySelectorAll(`input[type="radio"][name="${selectedRadio.name}"]`);
     radioGroup.forEach(radio => {
@@ -460,80 +173,44 @@ function handleRadioGroupSelection(selectedRadio) {
         const radioGoTo = getAttrValue(htmlRadio, 'data-go-to');
         if (htmlRadio !== selectedRadio && radioGoTo) {
             // Deactivate this radio button's branch
-            logVerbose(`Deactivating radio option: ${radioGoTo}`);
             deactivateBranch(radioGoTo);
-            // Hide the corresponding step_item
-            if (radioGoTo) {
-                hideStepItem(radioGoTo);
-            }
+            hideStepItem(radioGoTo);
         }
     });
 }
 /**
- * Hide a specific step_item
+ * Show a step item by updating its visibility in the form state
+ */
+function showStepItem(stepItemId) {
+    FormState.setStepVisibility(stepItemId, true);
+    logVerbose(`Set step item visibility to true in FormState: ${stepItemId}`);
+}
+/**
+ * Hide a step item by updating its visibility in the form state
  */
 function hideStepItem(stepItemId) {
-    logVerbose(`Hiding step_item via multiStep: ${stepItemId}`);
-    if (typeof multiStepHideStepItem === 'function') {
-        multiStepHideStepItem(stepItemId);
-    }
+    FormState.setStepVisibility(stepItemId, false);
+    logVerbose(`Set step item visibility to false in FormState: ${stepItemId}`);
 }
 /**
  * Trigger step_item visibility based on radio button selection
  */
 function triggerStepItemVisibility(stepItemId) {
-    console.log(`[FormLib] EXACT MATCH: Triggering step_item visibility for data-answer="${stepItemId}"`);
-    // Validate that the target step item actually exists 
-    // Priority: .step_item first, then .step_wrapper fallback (when no step_items exist)
-    let targetStepItem = document.querySelector(`.step_item[data-answer="${stepItemId}"], .step-item[data-answer="${stepItemId}"]`);
-    if (!targetStepItem) {
-        // Fallback to .step_wrapper when no .step_item exists
-        targetStepItem = document.querySelector(`.step_wrapper[data-answer="${stepItemId}"]`);
-        console.log(`[FormLib] No .step_item found, using .step_wrapper fallback for data-answer="${stepItemId}"`);
-    }
-    if (!targetStepItem) {
-        console.error(`[FormLib] CRITICAL: No .step_item or .step_wrapper found with data-answer="${stepItemId}"`);
-        console.log('[FormLib] Available elements with data-answer:', {
-            stepItems: Array.from(document.querySelectorAll('.step_item[data-answer], .step-item[data-answer]')).map(el => ({
-                element: el,
-                dataAnswer: el.getAttribute('data-answer'),
-                className: el.className
-            })),
-            stepWrappers: Array.from(document.querySelectorAll('.step_wrapper[data-answer]')).map(el => ({
-                element: el,
-                dataAnswer: el.getAttribute('data-answer'),
-                className: el.className
-            }))
-        });
+    // Defensive check
+    if (!stepItemId) {
+        logVerbose('No stepItemId provided to triggerStepItemVisibility');
         return;
     }
-    console.log(`[FormLib] VALIDATED: Found target step item with data-answer="${stepItemId}"`, targetStepItem);
-    if (typeof multiStepShowStepItem === 'function') {
-        multiStepShowStepItem(stepItemId);
-    }
-    else {
-        console.error('[FormLib] multiStepShowStepItem function not available');
-    }
+    logVerbose(`Triggering visibility for step_item: ${stepItemId}`);
+    showStepItem(stepItemId);
 }
 /**
- * Activate a branch path
+ * Activate a branch and store its state
  */
 function activateBranch(target, value) {
     if (!target)
         return;
-    logVerbose(`Activating branch: ${target}`, {
-        value,
-        valueType: typeof value,
-        targetString: String(target)
-    });
-    // Set active condition in state
     FormState.setActiveCondition(target, value);
-    // Clear fields from inactive branches
-    clearInactiveBranchFields();
-    // Log current active conditions after setting
-    logVerbose('Active conditions after branch activation', {
-        activeConditions: FormState.getBranchPath().activeConditions
-    });
 }
 /**
  * Deactivate a branch path
@@ -550,161 +227,80 @@ function deactivateBranch(target) {
     updateStepVisibility();
 }
 /**
- * Get the next step based on current branching logic
+ * Get the next step based on branching logic
  */
 export function getNextStep(currentStep) {
     const activeConditions = FormState.getBranchPath().activeConditions;
-    logVerbose('Evaluating next step', {
-        currentStep,
-        activeConditions
-    });
-    /*
-     * Iterate through activeConditions in insertion order and return the first
-     * branch target that:
-     * 1. Has a non-null / non-empty value (i.e. branch is active)
-     * 2. Is NOT the current step we are on (prevents immediate loops)
-     * 3. Has NOT already been visited according to FormState (prevents back-tracking)
-     */
-    for (const [target, value] of Object.entries(activeConditions)) {
-        const isActive = value !== null && value !== undefined && value !== '';
-        const isCurrent = target === currentStep;
-        const wasVisited = FormState.wasStepVisited(target);
-        logVerbose('Branch candidate', { target, value, isActive, isCurrent, wasVisited });
-        if (isActive && !isCurrent && !wasVisited) {
-            logVerbose(`Next step determined by branch: ${target}`);
-            return target;
-        }
-    }
-    // If every active branch target was already visited (or none active), fall back to sequential navigation
-    logVerbose('No suitable active branch target found, using sequential navigation');
-    return null;
+    // This logic can be enhanced to handle complex rules.
+    // For now, it returns the first active condition target.
+    const nextStep = Object.keys(activeConditions).find(key => activeConditions[key]);
+    return nextStep || null;
 }
 /**
- * Update step visibility based on current branching state
+ * Update step visibility based on active branching conditions.
  */
 function updateStepVisibility() {
-    const conditionalSteps = queryAllByAttr(SELECTORS.ANSWER);
+    const allSteps = queryAllByAttr(SELECTORS.STEP);
     const activeConditions = FormState.getBranchPath().activeConditions;
-    logVerbose('Updating step visibility', { activeConditions });
-    conditionalSteps.forEach(step => {
+    allSteps.forEach(step => {
         const stepAnswer = getAttrValue(step, 'data-answer');
         const shouldBeVisible = shouldStepBeVisible(stepAnswer, activeConditions);
         // Update FormState
         if (stepAnswer) {
-            FormState.setStepInfo(stepAnswer, { visible: shouldBeVisible });
-        }
-        // Update DOM visibility
-        const htmlStep = step;
-        if (shouldBeVisible) {
-            htmlStep.style.display = '';
-            htmlStep.classList.remove('hidden-step');
-            logVerbose(`Step made visible: ${stepAnswer}`);
-        }
-        else {
-            htmlStep.style.display = 'none';
-            htmlStep.classList.add('hidden-step');
-            logVerbose(`Step hidden: ${stepAnswer}`);
+            FormState.setStepVisibility(stepAnswer, shouldBeVisible);
         }
     });
 }
 /**
- * Determine if a step should be visible based on active conditions
+ * Check if a step should be visible based on its data-show-if attribute.
  */
 function shouldStepBeVisible(stepAnswer, activeConditions) {
-    // Always keep the current parent step visible so user can click Next
-    const currentStepId = FormState.getCurrentStep();
-    if (stepAnswer && stepAnswer === currentStepId) {
-        return true;
-    }
     if (!stepAnswer)
-        return true;
-    // Check if this step matches any active condition
-    for (const [target, value] of Object.entries(activeConditions)) {
-        if (target === stepAnswer && value !== null && value !== undefined && value !== '') {
-            return true;
+        return true; // Steps without data-answer are always visible
+    // Find the step element
+    const stepElement = queryByAttr(`[data-answer="${stepAnswer}"]`);
+    if (stepElement) {
+        const showIf = getAttrValue(stepElement, 'data-show-if');
+        if (showIf) {
+            // Check if the step matches the show-if condition
+            const conditionMet = evaluateCondition(showIf, activeConditions);
+            return conditionMet;
         }
     }
+    // Default to not visible if it has conditions but none are met
     return false;
+}
+function evaluateCondition(showIf, activeConditions) {
+    // This is a simple implementation. You can extend it to support more complex conditions.
+    // For now, it checks if the 'showIf' value exists as a key in activeConditions.
+    return activeConditions.hasOwnProperty(showIf);
 }
 /**
  * Clear fields from inactive branches
  */
 function clearInactiveBranchFields() {
-    const allSteps = queryAllByAttr(SELECTORS.STEP);
-    const fieldsToKeep = [];
-    const fieldsToClear = [];
-    allSteps.forEach(step => {
-        const stepAnswer = getAttrValue(step, 'data-answer');
-        const isVisible = stepAnswer ? FormState.isStepVisible(stepAnswer) : true;
-        // Get all form inputs in this step
-        const inputs = step.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            const fieldName = input.name ||
-                getAttrValue(input, 'data-step-field-name');
-            if (fieldName) {
-                if (isVisible) {
-                    fieldsToKeep.push(fieldName);
-                }
-                else {
-                    fieldsToClear.push(fieldName);
-                }
-            }
-        });
-    });
-    // Clear fields that are not in visible steps
-    const uniqueFieldsToClear = fieldsToClear.filter(field => !fieldsToKeep.includes(field));
-    if (uniqueFieldsToClear.length > 0) {
-        FormState.clearFields(uniqueFieldsToClear);
-    }
+    // This function can be expanded to clear data from fields
+    // that are part of now-inactive branches.
 }
 /**
- * Clear fields from a specific branch
+ * Clear fields related to a specific branch target.
  */
 function clearBranchFields(branchTarget) {
-    const branchStep = queryByAttr(`[data-answer="${branchTarget}"]`);
-    if (!branchStep)
-        return;
-    const inputs = branchStep.querySelectorAll('input, select, textarea');
     const fieldsToClear = [];
-    inputs.forEach(input => {
-        const fieldName = input.name ||
-            getAttrValue(input, 'data-step-field-name');
-        if (fieldName) {
-            fieldsToClear.push(fieldName);
+    // Find all inputs that are part of the branch
+    const branchInputs = document.querySelectorAll(`[data-go-to="${branchTarget}"]`);
+    branchInputs.forEach(input => {
+        if (isFormInput(input) && input.name) {
+            fieldsToClear.push(input.name);
         }
     });
+    // Clear from FormState
     if (fieldsToClear.length > 0) {
         FormState.clearFields(fieldsToClear);
-        logVerbose(`Cleared fields from branch ${branchTarget}`, fieldsToClear);
     }
 }
 /**
- * Evaluate complex branching conditions (for future enhancement)
- */
-function evaluateConditions(conditions, logic = 'and') {
-    if (conditions.length === 0)
-        return true;
-    const results = conditions.map(condition => {
-        const fieldValue = FormState.getField(condition.field);
-        switch (condition.operator) {
-            case 'equals':
-                return fieldValue === condition.value;
-            case 'not_equals':
-                return fieldValue !== condition.value;
-            case 'contains':
-                return String(fieldValue).includes(String(condition.value));
-            case 'greater_than':
-                return Number(fieldValue) > Number(condition.value);
-            case 'less_than':
-                return Number(fieldValue) < Number(condition.value);
-            default:
-                return false;
-        }
-    });
-    return logic === 'and' ? results.every(r => r) : results.some(r => r);
-}
-/**
- * Reset branching state and cleanup
+ * Reset branching module state
  */
 export function resetBranching() {
     logVerbose('Resetting branching logic');
@@ -733,124 +329,7 @@ export function getBranchingState() {
     return {
         initialized,
         activeConditions: FormState.getBranchPath().activeConditions,
-        visibleSteps: Object.entries(FormState.getAllSteps())
-            .filter(([_, info]) => info.visible)
-            .map(([stepId, _]) => stepId)
+        branchPath: FormState.getBranchPath()
     };
 }
-/**
- * Debug function to test radio button detection (can be called from console)
- */
-function debugRadioButtons() {
-    console.log('=== DEBUG: Radio Button Detection ===');
-    // Find all radio buttons with data-go-to
-    const radioButtons = document.querySelectorAll('input[type="radio"][data-go-to]');
-    console.log(`Found ${radioButtons.length} radio buttons with data-go-to:`);
-    radioButtons.forEach((radio, index) => {
-        const htmlRadio = radio;
-        const goTo = getAttrValue(radio, 'data-go-to');
-        const parentLabel = radio.closest('label');
-        console.log(`Radio ${index}:`, {
-            element: radio,
-            name: htmlRadio.name,
-            value: htmlRadio.value,
-            goTo: goTo,
-            checked: htmlRadio.checked,
-            parentLabel: parentLabel,
-            parentLabelClasses: parentLabel?.className,
-            style: htmlRadio.style.cssText,
-            allAttributes: Array.from(radio.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
-        });
-    });
-    // Find all labels that might contain radio buttons
-    const radioLabels = document.querySelectorAll('label.radio_field, label.w-radio');
-    console.log(`Found ${radioLabels.length} radio labels:`);
-    radioLabels.forEach((label, index) => {
-        const radioInside = label.querySelector('input[type="radio"]');
-        const goTo = radioInside ? getAttrValue(radioInside, 'data-go-to') : null;
-        console.log(`Label ${index}:`, {
-            element: label,
-            className: label.className,
-            radioInside: radioInside,
-            goTo: goTo,
-            radioName: radioInside ? radioInside.name : null
-        });
-    });
-    console.log('=== END DEBUG ===');
-}
-/**
- * Test function to manually trigger radio button selection (can be called from console)
- */
-function testRadioClick(goToValue) {
-    console.log(`=== TESTING: Manual radio click for ${goToValue} ===`);
-    const radioButton = document.querySelector(`input[type="radio"][data-go-to="${goToValue}"]`);
-    if (!radioButton) {
-        console.error(`Radio button with data-go-to="${goToValue}" not found`);
-        return;
-    }
-    console.log('Found radio button:', radioButton);
-    // Manually trigger the selection
-    radioButton.checked = true;
-    applyRadioActiveClass(radioButton);
-    // Create and dispatch events
-    const changeEvent = new Event('change', { bubbles: true });
-    const clickEvent = new Event('click', { bubbles: true });
-    console.log('Dispatching events...');
-    radioButton.dispatchEvent(clickEvent);
-    radioButton.dispatchEvent(changeEvent);
-    // Manually trigger branching logic
-    console.log('Manually triggering branch logic...');
-    handleBranchTrigger(changeEvent, radioButton);
-    console.log('=== END TEST ===');
-}
-// Make debug functions available globally for console access
-window.debugRadioButtons = debugRadioButtons;
-window.testRadioClick = testRadioClick;
-/**
- * Debug function to log current branching state (can be called from console)
- */
-function debugBranching() {
-    const activeConditions = FormState.getBranchPath().activeConditions;
-    logVerbose('=== DEBUG: Branching State ===');
-    logVerbose('Active Conditions:', activeConditions);
-    // Find all elements with data-go-to
-    const branchTriggers = queryAllByAttr(SELECTORS.GO_TO);
-    logVerbose('All Branch Triggers:');
-    branchTriggers.forEach((trigger, index) => {
-        const goTo = getAttrValue(trigger, 'data-go-to');
-        const htmlTrigger = trigger;
-        let value = '';
-        let checked = false;
-        let elementType = htmlTrigger.tagName;
-        if (isFormInput(trigger)) {
-            const inputValue = getInputValue(trigger);
-            value = Array.isArray(inputValue) ? inputValue.join(', ') : inputValue;
-            if (trigger instanceof HTMLInputElement) {
-                checked = trigger.checked;
-                elementType = trigger.type;
-            }
-        }
-        logVerbose(`Trigger ${index}:`, {
-            element: trigger,
-            goTo: goTo,
-            value: value,
-            checked: checked,
-            type: elementType
-        });
-    });
-    // Find all steps with data-answer
-    const answerSteps = queryAllByAttr(SELECTORS.ANSWER);
-    logVerbose('All Answer Steps:');
-    answerSteps.forEach((step, index) => {
-        const answer = getAttrValue(step, 'data-answer');
-        logVerbose(`Answer Step ${index}:`, {
-            element: step,
-            dataAnswer: answer,
-            visible: step.style.display !== 'none'
-        });
-    });
-    logVerbose('=== END DEBUG ===');
-}
-// Make debug function available globally
-window.debugBranching = debugBranching;
 //# sourceMappingURL=branching.js.map

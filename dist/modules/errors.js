@@ -1,9 +1,12 @@
 /**
  * Error handling and display module
  */
-import { CSS_CLASSES } from '../config.js';
+import { CSS_CLASSES, SELECTORS } from '../config.js';
 import { logVerbose, getAttrValue, addClass, removeClass } from './utils.js';
 let errorConfigs = new Map();
+let initialized = false;
+let cleanupFunctions = [];
+let errorStates = new Map();
 /**
  * Initialize error handling
  */
@@ -41,7 +44,7 @@ export function showError(fieldName, message) {
     const errorElement = findOrCreateErrorElement(config);
     if (errorElement) {
         errorElement.textContent = errorMessage;
-        errorElement.style.display = 'block';
+        addClass(errorElement, CSS_CLASSES.ACTIVE_ERROR);
         config.errorElement = errorElement;
     }
     // Scroll to field if it's not visible
@@ -62,7 +65,7 @@ export function clearError(fieldName) {
     // Hide error message element
     if (config.errorElement) {
         config.errorElement.textContent = '';
-        config.errorElement.style.display = 'none';
+        removeClass(config.errorElement, CSS_CLASSES.ACTIVE_ERROR);
     }
 }
 /**
@@ -138,7 +141,7 @@ function findOrCreateErrorElement(config) {
     // Look for existing error element
     let errorElement = null;
     try {
-        errorElement = config.element.parentElement.querySelector(`.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${config.fieldName}"]`);
+        errorElement = config.element.parentElement.querySelector(`${SELECTORS.ERROR_DISPLAY}[data-field="${config.fieldName}"]`);
     }
     catch (error) {
         logVerbose(`Error finding existing error element for field: ${config.fieldName}`, error);
@@ -148,12 +151,8 @@ function findOrCreateErrorElement(config) {
         try {
             // Create new error element
             errorElement = document.createElement('div');
-            errorElement.className = CSS_CLASSES.ERROR_MESSAGE;
+            errorElement.setAttribute('data-form', 'error');
             errorElement.setAttribute('data-field', config.fieldName);
-            errorElement.style.color = 'red';
-            errorElement.style.fontSize = '0.875em';
-            errorElement.style.marginTop = '0.25rem';
-            errorElement.style.display = 'none';
             // Insert after the input
             const parent = config.element.parentElement;
             const nextSibling = config.element.nextSibling;
@@ -241,20 +240,13 @@ export function resetErrors() {
     logVerbose('Error handling reset complete');
 }
 /**
- * Get error state for debugging
+ * Get current error state for debugging
  */
 export function getErrorState() {
-    const fieldsWithErrors = getFieldsWithErrors();
-    const state = {
-        totalFields: errorConfigs.size,
-        fieldsWithErrors: fieldsWithErrors.length,
-        errors: {}
-    };
-    fieldsWithErrors.forEach(fieldName => {
-        const config = errorConfigs.get(fieldName);
-        state.errors[fieldName] = {
-            message: config?.errorElement?.textContent || 'Unknown error',
-            customMessage: config?.customMessage
+    const state = {};
+    errorStates.forEach((value, key) => {
+        state[key] = {
+            message: value.message
         };
     });
     return state;

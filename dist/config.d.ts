@@ -10,6 +10,7 @@ export declare const DATA_ATTRS: {
     readonly BACK_BTN: "data-form=\"back-btn\"";
     readonly SUBMIT: "data-form=\"submit\"";
     readonly SKIP: "data-skip";
+    readonly ERROR_DISPLAY: "data-form=\"error\"";
     readonly GO_TO: "data-go-to";
     readonly STEP_TYPE: "data-step-type";
     readonly STEP_SUBTYPE: "data-step-subtype";
@@ -32,7 +33,11 @@ export declare const SELECTORS: {
     readonly BACK_BTN: "[data-form=\"back-btn\"]";
     readonly SUBMIT: "[data-form=\"submit\"]";
     readonly SKIP: "[data-skip]";
+    readonly ERROR_DISPLAY: "[data-form=\"error\"]";
     readonly GO_TO: "[data-go-to]";
+    readonly SHOW_IF: "[data-show-if]";
+    readonly SKIP_BTN: "[data-form=\"skip-btn\"]";
+    readonly SUBMIT_BTN: "[data-form=\"submit-btn\"]";
     readonly STEP_TYPE: "[data-step-type]";
     readonly STEP_SUBTYPE: "[data-step-subtype]";
     readonly STEP_NUMBER: "[data-step-number]";
@@ -44,6 +49,7 @@ export declare const SELECTORS: {
     readonly JOIN: "[data-join]";
     readonly REQUIRED: "[required]";
     readonly ERROR_MESSAGE: "[data-error-message]";
+    readonly VALIDATE: "[data-validate]";
 };
 export declare const DEFAULTS: {
     readonly START_STEP: 1;
@@ -64,7 +70,7 @@ export declare const CSS_CLASSES: {
     readonly HIDDEN_STEP: "hidden-step";
     readonly HIDDEN_STEP_ITEM: "hidden-step-item";
     readonly ERROR_FIELD: "error-field";
-    readonly ERROR_MESSAGE: "error-message";
+    readonly ACTIVE_ERROR: "active-error";
     readonly DISABLED: "disabled";
 };
 export type JoinType = keyof typeof DEFAULTS.JOIN_SEPARATOR;

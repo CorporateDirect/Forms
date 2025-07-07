@@ -159,7 +159,7 @@ class FormStateManager {
     /**
      * Get fields by step type/subtype/number
      */
-    getFieldsByStep(type, subtype, number) {
+    getFieldsByStep() {
         const result = {};
         // For now, return all fields that match the criteria
         // This can be enhanced with more sophisticated filtering

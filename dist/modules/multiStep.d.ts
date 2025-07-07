@@ -22,15 +22,15 @@ export declare function goToStepById(stepId: string): void;
  */
 export declare function goToStep(stepIndex: number): void;
 /**
- * Show a specific step
+ * Show a step by its index
  */
 export declare function showStep(stepIndex: number): void;
 /**
  * Get current step information
  */
-export declare function getCurrentStepInfo(): any;
+export declare function getCurrentStepInfo(): Record<string, unknown>;
 /**
  * Get multi-step state for debugging
  */
-export declare function getMultiStepState(): any;
+export declare function getMultiStepState(): Record<string, unknown>;
 //# sourceMappingURL=multiStep.d.ts.map

@@ -50,7 +50,7 @@ export declare function getErrorStats(): any;
  */
 export declare function resetErrors(): void;
 /**
- * Get error state for debugging
+ * Get current error state for debugging
  */
-export declare function getErrorState(): any;
+export declare function getErrorState(): Record<string, unknown>;
 //# sourceMappingURL=errors.d.ts.map

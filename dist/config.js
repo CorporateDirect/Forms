@@ -13,6 +13,7 @@ export const DATA_ATTRS = {
     BACK_BTN: 'data-form="back-btn"',
     SUBMIT: 'data-form="submit"',
     SKIP: 'data-skip',
+    ERROR_DISPLAY: 'data-form="error"',
     // Branching logic
     GO_TO: 'data-go-to',
     // Step categorization
@@ -42,8 +43,12 @@ export const SELECTORS = {
     BACK_BTN: '[data-form="back-btn"]',
     SUBMIT: '[data-form="submit"]',
     SKIP: '[data-skip]',
+    ERROR_DISPLAY: '[data-form="error"]',
     // Branching logic
     GO_TO: '[data-go-to]',
+    SHOW_IF: '[data-show-if]',
+    SKIP_BTN: '[data-form="skip-btn"]',
+    SUBMIT_BTN: '[data-form="submit-btn"]',
     // Step categorization
     STEP_TYPE: '[data-step-type]',
     STEP_SUBTYPE: '[data-step-subtype]',
@@ -57,7 +62,8 @@ export const SELECTORS = {
     JOIN: '[data-join]',
     // Validation
     REQUIRED: '[required]',
-    ERROR_MESSAGE: '[data-error-message]'
+    ERROR_MESSAGE: '[data-error-message]',
+    VALIDATE: '[data-validate]'
 };
 export const DEFAULTS = {
     START_STEP: 1,
@@ -78,7 +84,7 @@ export const CSS_CLASSES = {
     HIDDEN_STEP: 'hidden-step',
     HIDDEN_STEP_ITEM: 'hidden-step-item',
     ERROR_FIELD: 'error-field',
-    ERROR_MESSAGE: 'error-message',
+    ACTIVE_ERROR: 'active-error',
     DISABLED: 'disabled'
 };
 //# sourceMappingURL=config.js.map

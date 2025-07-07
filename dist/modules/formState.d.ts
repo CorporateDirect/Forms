@@ -2,7 +2,7 @@
  * Singleton FormState class for managing form data in memory
  */
 export interface FormStateData {
-    [key: string]: any;
+    [key: string]: unknown;
 }
 export interface StepInfo {
     type?: string;
@@ -15,7 +15,7 @@ export interface BranchPath {
     currentStep: string;
     previousSteps: string[];
     skippedSteps: string[];
-    activeConditions: Record<string, any>;
+    activeConditions: Record<string, unknown>;
 }
 declare class FormStateManager {
     private static instance;
@@ -30,11 +30,11 @@ declare class FormStateManager {
     /**
      * Set field value
      */
-    setField(name: string, value: any): void;
+    setField(name: string, value: unknown): void;
     /**
      * Get field value
      */
-    getField(name: string): any;
+    getField(name: string): unknown;
     /**
      * Get all field data
      */
@@ -82,15 +82,15 @@ declare class FormStateManager {
     /**
      * Set active condition
      */
-    setActiveCondition(key: string, value: any): void;
+    setActiveCondition(key: string, value: unknown): void;
     /**
      * Get active condition
      */
-    getActiveCondition(key: string): any;
+    getActiveCondition(key: string): unknown;
     /**
      * Get fields by step type/subtype/number
      */
-    getFieldsByStep(type?: string, subtype?: string, number?: string): FormStateData;
+    getFieldsByStep(): FormStateData;
     /**
      * Handle field change events
      */
@@ -110,7 +110,7 @@ declare class FormStateManager {
     /**
      * Get debug information
      */
-    getDebugInfo(): any;
+    getDebugInfo(): Record<string, unknown>;
 }
 export declare const FormState: FormStateManager;
 export {};

@@ -9,7 +9,7 @@
     "lint": "eslint . --ext .ts",
     "build": "tsc",
     "build:browser": "tsc && node build-browser.js",
-    "build:prod": "tsc && node build-browser.js && terser dist/index.browser.js --compress --mangle --output dist/index.min.js",
+    "build:prod": "npm run build && esbuild index.ts --bundle --outfile=dist/index.browser.js --format=iife --global-name=FormLib && terser dist/index.browser.js --compress --mangle --output dist/index.min.js",
     "minify": "terser dist/index.browser.js --compress --mangle --output dist/index.min.js",
     "dev": "tsc --watch",
     "serve": "python3 -m http.server 8000",

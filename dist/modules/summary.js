@@ -265,22 +265,19 @@ export function addCustomSummary(element, fieldNames, joinType = 'space', type, 
     });
 }
 /**
- * Get summary state for debugging
+ * Get current summary state for debugging
  */
 export function getSummaryState() {
-    return {
-        initialized,
-        totalSummaryFields: summaryFields.length,
-        summaryFields: summaryFields.map(field => ({
-            fieldNames: field.fieldNames,
-            joinType: field.joinType,
-            type: field.type,
-            subtype: field.subtype,
-            number: field.number,
-            currentValue: field.element.textContent || ''
-        })),
-        formStateData: FormState.getAll()
-    };
+    const state = {};
+    summaryFields.forEach((summaryField, index) => {
+        const key = summaryField.type && summaryField.subtype && summaryField.number
+            ? `${summaryField.type}-${summaryField.subtype}-${summaryField.number}`
+            : `summary-${index}`;
+        state[key] = {
+            hasContent: (summaryField.element.textContent || '').trim().length > 0
+        };
+    });
+    return state;
 }
 /**
  * Reset summary functionality

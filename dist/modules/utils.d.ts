@@ -4,7 +4,7 @@
 /**
  * Enhanced logging with consistent formatting
  */
-export declare function logVerbose(message: string, data?: any): void;
+export declare function logVerbose(message: string, data?: unknown): void;
 /**
  * Query all elements by data attribute
  */
@@ -60,11 +60,11 @@ export declare function isVisible(element: HTMLElement): boolean;
 /**
  * Debounce function calls
  */
-export declare function debounce<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void;
+export declare function debounce<T extends (...args: unknown[]) => void>(func: T, delay: number): (...args: Parameters<T>) => void;
 /**
  * Get form data as object
  */
-export declare function getFormData(form: HTMLFormElement): Record<string, any>;
+export declare function getFormData(form: HTMLFormElement): Record<string, unknown>;
 /**
  * Get all form inputs within an element
  */

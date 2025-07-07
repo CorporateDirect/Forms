@@ -28,9 +28,9 @@ export declare function clearAllValidation(): void;
 /**
  * Add custom validation rule to a field
  */
-export declare function addCustomValidation(fieldName: string, validator: (value: any) => boolean, message: string): void;
+export declare function addCustomValidation(fieldName: string, validator: (value: string | string[]) => boolean, message: string): void;
 /**
  * Get validation state for debugging
  */
-export declare function getValidationState(): any;
+export declare function getValidationState(): Record<string, unknown>;
 //# sourceMappingURL=validation.d.ts.map

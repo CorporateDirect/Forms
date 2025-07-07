@@ -37,7 +37,7 @@ declare class FormLibrary {
     /**
      * Get current form state for debugging
      */
-    getState(): any;
+    getState(): Record<string, unknown>;
     /**
      * Log current state to console
      */
@@ -53,11 +53,11 @@ declare class FormLibrary {
     /**
      * Get form data
      */
-    getFormData(): any;
+    getFormData(): Record<string, unknown>;
     /**
      * Set form data
      */
-    setFormData(data: Record<string, any>): void;
+    setFormData(data: Record<string, unknown>): void;
 }
 declare const FormLib: FormLibrary;
 export default FormLib;

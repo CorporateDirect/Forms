@@ -1,8 +1,8 @@
 /**
  * Multi-step form navigation module
  */
-import { SELECTORS, CSS_CLASSES } from '../config.js';
-import { logVerbose, queryAllByAttr, getAttrValue, delegateEvent, isVisible, addClass, removeClass } from './utils.js';
+import { SELECTORS } from '../config.js';
+import { logVerbose, queryAllByAttr, getAttrValue, delegateEvent, showElement, hideElement, isVisible, removeClass } from './utils.js';
 import { FormState } from './formState.js';
 import { getNextStep } from './branching.js';
 let initialized = false;
@@ -38,12 +38,6 @@ export function initMultiStep(root = document) {
             number: getAttrValue(element, 'data-step-number') || undefined,
             isStepItem: false
         };
-        logVerbose(`Registering parent step ${index}`, {
-            stepId,
-            dataAnswer,
-            type: stepInfo.type,
-            element: htmlElement
-        });
         // Register step in FormState
         FormState.setStepInfo(stepId, {
             type: stepInfo.type,
@@ -54,25 +48,15 @@ export function initMultiStep(root = document) {
         });
         return stepInfo;
     });
-    // Find all step_item elements within parent steps (handle both .step_item and .step-item)
+    // Find all step_item elements within parent steps
     stepItems = [];
     steps.forEach((parentStep, parentIndex) => {
         const stepItemElements = parentStep.element.querySelectorAll('.step_item, .step-item');
-        console.log(`[FormLib] Found ${stepItemElements.length} step_items in parent step ${parentIndex} (${parentStep.id})`);
-        stepItemElements.forEach((stepItemElement, itemIndex) => {
+        stepItemElements.forEach((stepItemElement) => {
             const htmlElement = stepItemElement;
             const dataAnswer = getAttrValue(stepItemElement, 'data-answer');
-            const dataGoTo = getAttrValue(stepItemElement, 'data-go-to');
-            console.log(`[FormLib] Processing step_item ${itemIndex}:`, {
-                dataAnswer,
-                dataGoTo,
-                parentStepId: parentStep.id,
-                parentStepIndex: parentIndex,
-                element: htmlElement,
-                allAttributes: Array.from(htmlElement.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
-            });
             if (!dataAnswer) {
-                console.warn(`[FormLib] Step item ${itemIndex} in parent step ${parentIndex} missing required data-answer attribute`);
+                logVerbose(`Step item ${parentIndex} in parent step ${parentIndex} missing required data-answer attribute`);
                 return;
             }
             const stepItemInfo = {
@@ -85,13 +69,6 @@ export function initMultiStep(root = document) {
                 isStepItem: true,
                 parentStepIndex: parentIndex
             };
-            console.log(`[FormLib] Registered step_item:`, {
-                stepId: dataAnswer,
-                parentStepIndex: parentIndex,
-                globalIndex: stepItems.length,
-                type: stepItemInfo.type,
-                element: htmlElement
-            });
             // Register step_item in FormState
             FormState.setStepInfo(dataAnswer, {
                 type: stepItemInfo.type,
@@ -105,14 +82,14 @@ export function initMultiStep(root = document) {
     });
     // Hide all steps and step_items initially
     steps.forEach((step, index) => {
-        hideStepCompletely(step.element, `parent step ${index}`);
+        hideElement(step.element);
     });
     stepItems.forEach((stepItem, index) => {
-        hideStepCompletely(stepItem.element, `step_item ${index} (${stepItem.id})`);
+        hideElement(stepItem.element);
     });
     // Set up navigation event listeners
     setupNavigationListeners(root);
-    // Initialize first step (this will show step 0 and hide others)
+    // Initialize first step
     if (steps.length > 0) {
         goToStep(0);
     }
@@ -123,87 +100,27 @@ export function initMultiStep(root = document) {
     });
 }
 /**
- * Completely hide a step or step_item using multiple methods
- */
-function hideStepCompletely(element, description) {
-    // Use aggressive hiding only for step_items, normal hiding for regular steps
-    const isStepItem = description.includes('step_item');
-    if (isStepItem) {
-        // Aggressive hiding for step_items
-        element.style.display = 'none !important';
-        element.style.visibility = 'hidden';
-        element.style.opacity = '0';
-        element.style.height = '0';
-        element.style.overflow = 'hidden';
-        element.style.position = 'absolute';
-        element.style.left = '-9999px';
-        addClass(element, CSS_CLASSES.HIDDEN_STEP_ITEM);
-    }
-    else {
-        // Normal hiding for regular steps
-        element.style.display = 'none';
-        element.style.visibility = 'hidden';
-    }
-    addClass(element, 'hidden-step');
-    removeClass(element, CSS_CLASSES.ACTIVE_STEP);
-    element.setAttribute('data-step-hidden', 'true');
-    console.log(`[FormLib] Hiding ${description}:`, {
-        display: element.style.display,
-        visibility: element.style.visibility,
-        opacity: element.style.opacity,
-        isStepItem,
-        classes: element.className,
-        dataAnswer: getAttrValue(element, 'data-answer')
-    });
-}
-/**
- * Show a step or step_item
- */
-function showStepCompletely(element, description) {
-    // Clear all possible hiding styles
-    element.style.display = '';
-    element.style.visibility = '';
-    element.style.opacity = '';
-    element.style.height = '';
-    element.style.overflow = '';
-    element.style.position = '';
-    element.style.left = '';
-    removeClass(element, 'hidden-step');
-    removeClass(element, CSS_CLASSES.HIDDEN_STEP_ITEM);
-    addClass(element, CSS_CLASSES.ACTIVE_STEP);
-    element.removeAttribute('data-step-hidden');
-    console.log(`[FormLib] Showing ${description}:`, {
-        display: element.style.display,
-        visibility: element.style.visibility,
-        classes: element.className,
-        dataAnswer: getAttrValue(element, 'data-answer')
-    });
-}
-/**
  * Update required fields based on step_item subtype
  */
 function updateRequiredFields(stepItemElement, enable = true) {
     const subtype = getAttrValue(stepItemElement, 'data-step-subtype');
     if (!subtype)
         return;
-    console.log(`[FormLib] ${enable ? 'Enabling' : 'Disabling'} required fields for subtype: ${subtype}`);
+    logVerbose(`${enable ? 'Enabling' : 'Disabling'} required fields for subtype: ${subtype}`);
     // Find all fields with data-require-for-subtypes attribute in this step_item
     const conditionalFields = stepItemElement.querySelectorAll('[data-require-for-subtypes]');
     conditionalFields.forEach(field => {
         const requiredForSubtypes = field.getAttribute('data-require-for-subtypes');
         const htmlField = field;
         if (requiredForSubtypes && requiredForSubtypes.split(',').map(s => s.trim()).includes(subtype)) {
-            // This field should be required for this subtype
             if (enable) {
                 htmlField.required = true;
                 htmlField.disabled = false;
-                console.log(`[FormLib] Enabled required field: ${htmlField.name || htmlField.id} for subtype: ${subtype}`);
             }
             else {
                 htmlField.required = false;
                 htmlField.disabled = true;
-                htmlField.value = ''; // Clear the value when disabling
-                console.log(`[FormLib] Disabled required field: ${htmlField.name || htmlField.id} for subtype: ${subtype}`);
+                htmlField.value = '';
             }
         }
     });
@@ -212,206 +129,126 @@ function updateRequiredFields(stepItemElement, enable = true) {
  * Show a specific step_item within its parent step
  */
 export function showStepItem(stepItemId) {
-    console.log(`[FormLib] EXACT MATCH: Attempting to show step_item with data-answer="${stepItemId}"`);
-    console.log(`[FormLib] Available step_items:`, stepItems.map(item => ({
-        id: item.id,
-        dataAnswer: getAttrValue(item.element, 'data-answer'),
-        exactMatch: item.id === stepItemId
-    })));
-    // Find step item by exact ID match (ID should be the data-answer value)
+    logVerbose(`Attempting to show step_item: ${stepItemId}`);
+    // Find step item by exact ID match
     const stepItem = stepItems.find(item => item.id === stepItemId);
     if (!stepItem) {
-        console.error(`[FormLib] CRITICAL: Step item not found by ID: ${stepItemId}`);
-        console.log(`[FormLib] Trying fallback: looking for step_item with data-answer="${stepItemId}"`);
         // Try to find by data-answer attribute as fallback
         const stepItemByAnswer = stepItems.find(item => getAttrValue(item.element, 'data-answer') === stepItemId);
         if (stepItemByAnswer) {
-            console.warn(`[FormLib] FALLBACK SUCCESS: Found step_item by data-answer: ${stepItemId}`, {
-                foundId: stepItemByAnswer.id,
-                foundDataAnswer: getAttrValue(stepItemByAnswer.element, 'data-answer'),
-                mismatchWarning: 'ID and data-answer should match!'
-            });
+            logVerbose(`Found step_item by data-answer: ${stepItemId}`);
             return showStepItem(stepItemByAnswer.id);
         }
-        console.error(`[FormLib] CRITICAL FAILURE: No step item found with data-answer="${stepItemId}"`);
-        console.log('[FormLib] All available step items:', stepItems.map(item => ({
-            id: item.id,
-            dataAnswer: getAttrValue(item.element, 'data-answer'),
-            element: item.element
-        })));
+        logVerbose(`Step item not found: ${stepItemId}`);
         return;
-    }
-    // Validate that the found step item's data-answer matches exactly
-    const actualDataAnswer = getAttrValue(stepItem.element, 'data-answer');
-    if (actualDataAnswer !== stepItemId) {
-        console.error(`[FormLib] CRITICAL MISMATCH: Step item ID="${stepItem.id}" but data-answer="${actualDataAnswer}"`);
-        console.error(`[FormLib] Expected exact match for: ${stepItemId}`);
-    }
-    else {
-        console.log(`[FormLib] EXACT MATCH CONFIRMED: Found step_item with data-answer="${stepItemId}"`);
     }
     const parentStep = steps[stepItem.parentStepIndex];
     if (!parentStep) {
-        console.warn(`[FormLib] Parent step not found for step_item: ${stepItemId}`);
+        logVerbose(`Parent step not found for step_item: ${stepItemId}`);
         return;
     }
     logVerbose(`Showing step_item ${stepItemId} in parent step ${stepItem.parentStepIndex}`);
-    console.log(`[FormLib] Hiding all step_items in parent step ${stepItem.parentStepIndex}`);
-    // Hide ALL step_items in the parent step first
+    // Hide all step_items in the parent step first
     const allStepItemsInParent = stepItems.filter(item => item.parentStepIndex === stepItem.parentStepIndex);
-    console.log(`[FormLib] Found ${allStepItemsInParent.length} step_items to hide in parent step`);
     allStepItemsInParent.forEach(item => {
-        console.log(`[FormLib] Hiding step_item: ${item.id} (data-answer="${getAttrValue(item.element, 'data-answer')}")`);
-        hideStepCompletely(item.element, `step_item ${item.id}`);
-        updateRequiredFields(item.element, false); // Disable required fields for hidden step_items
+        hideElement(item.element);
+        updateRequiredFields(item.element, false);
         FormState.setStepVisibility(item.id, false);
     });
-    console.log(`[FormLib] Now showing target step_item: ${stepItemId}`);
     // Show the target step_item
-    showStepCompletely(stepItem.element, `step_item ${stepItemId}`);
+    showElement(stepItem.element);
     // Ensure parent containers are also visible
     let parentElement = stepItem.element.parentElement;
     while (parentElement && !parentElement.classList.contains('multi-form_step')) {
         if (parentElement.classList.contains('step_wrapper')) {
-            // Make sure step_wrapper is visible
             parentElement.style.display = '';
             parentElement.style.visibility = '';
             removeClass(parentElement, 'hidden-step');
             removeClass(parentElement, 'hidden-step-item');
-            logVerbose(`Made parent step_wrapper visible for step_item: ${stepItemId}`);
         }
         parentElement = parentElement.parentElement;
     }
-    updateRequiredFields(stepItem.element, true); // Enable required fields for visible step_item
+    updateRequiredFields(stepItem.element, true);
     FormState.setStepVisibility(stepItemId, true);
-    // Mark this step_item as visited so branching logic knows we've already been here
     FormState.setStepInfo(stepItemId, { visited: true });
-    // Update current step_item tracking
     currentStepItemId = stepItemId;
-    console.log(`[FormLib] Successfully showed step_item: ${stepItemId}`, {
-        currentStepItemId,
-        visibleStepItems: allStepItemsInParent.filter(item => item.id === stepItemId).length
-    });
+    logVerbose(`Successfully showed step_item: ${stepItemId}`);
 }
 /**
  * Hide a specific step_item
  */
 export function hideStepItem(stepItemId) {
-    logVerbose(`Attempting to hide step_item: ${stepItemId}`);
     const stepItem = stepItems.find(item => item.id === stepItemId);
     if (!stepItem) {
-        logVerbose(`Step item not found for hiding: ${stepItemId}`);
         return;
     }
-    logVerbose(`Hiding step_item: ${stepItemId}`);
-    // Hide the step_item
-    hideStepCompletely(stepItem.element, `step_item ${stepItemId}`);
-    updateRequiredFields(stepItem.element, false); // Disable required fields for hidden step_item
+    hideElement(stepItem.element);
+    updateRequiredFields(stepItem.element, false);
     FormState.setStepVisibility(stepItemId, false);
-    // Clear current step_item tracking if this was the active one
     if (currentStepItemId === stepItemId) {
         currentStepItemId = null;
     }
-    logVerbose(`Successfully hid step_item: ${stepItemId}`);
 }
 /**
  * Set up navigation event listeners
  */
 function setupNavigationListeners(root) {
-    // Next button clicks
+    // Use event delegation for navigation buttons
     const cleanup1 = delegateEvent(root, 'click', SELECTORS.NEXT_BTN, handleNextClick);
-    // Back button clicks
     const cleanup2 = delegateEvent(root, 'click', SELECTORS.BACK_BTN, handleBackClick);
-    // Skip button clicks
-    const cleanup3 = delegateEvent(root, 'click', SELECTORS.SKIP, handleSkipClick);
-    // Submit button clicks
-    const cleanup4 = delegateEvent(root, 'click', SELECTORS.SUBMIT, handleSubmitClick);
+    const cleanup3 = delegateEvent(root, 'click', SELECTORS.SKIP_BTN, handleSkipClick);
+    const cleanup4 = delegateEvent(root, 'click', SELECTORS.SUBMIT_BTN, handleSubmitClick);
     cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4);
 }
 /**
  * Handle next button click
+ * Validates the current step and moves to the next one.
  */
-function handleNextClick(event, target) {
+function handleNextClick(event) {
     event.preventDefault();
-    console.log('[FormLib] NEXT BUTTON: Next button clicked');
-    // Validate current step before proceeding
-    const currentStep = getCurrentStep();
-    if (!currentStep)
-        return;
-    // Check if we need to validate a step_item
-    if (currentStepItemId) {
-        const stepItem = stepItems.find(item => item.id === currentStepItemId);
-        if (stepItem && !validateStepElement(stepItem.element)) {
-            console.warn('[FormLib] NEXT BUTTON: Step item validation failed, staying on current step');
-            return;
-        }
-    }
-    else if (!validateStepElement(currentStep.element)) {
-        console.warn('[FormLib] NEXT BUTTON: Step validation failed, staying on current step');
-        return;
-    }
-    // Determine next step using branching logic
-    let nextStepId = null;
-    if (currentStepItemId) {
-        // If we're in a step_item, use its data-go-to attribute for next button navigation
-        const stepItem = stepItems.find(item => item.id === currentStepItemId);
-        if (stepItem) {
-            nextStepId = getAttrValue(stepItem.element, 'data-go-to');
-            console.log(`[FormLib] NEXT BUTTON FLOW: Active step_item "${currentStepItemId}" has data-go-to="${nextStepId}"`);
-            console.log(`[FormLib] NEXT BUTTON FLOW: Next button will navigate to: ${nextStepId}`);
-        }
-        else {
-            console.warn(`[FormLib] NEXT BUTTON ERROR: Current step_item "${currentStepItemId}" not found in stepItems array`);
-        }
-    }
-    if (!nextStepId) {
-        // Use branching logic to determine next step
-        nextStepId = getNextStep(currentStep.id);
-        console.log(`[FormLib] NEXT BUTTON: Branching logic determined next step: ${nextStepId}`);
-    }
-    if (nextStepId) {
-        console.log(`[FormLib] NEXT BUTTON: Navigating to: ${nextStepId}`);
-        goToStepById(nextStepId);
-    }
-    else {
-        console.log(`[FormLib] NEXT BUTTON: Using sequential navigation`);
-        goToNextStep();
-    }
+    goToNextStep();
 }
 /**
  * Handle back button click
  */
-function handleBackClick(event, target) {
+function handleBackClick(event) {
     event.preventDefault();
-    logVerbose('Back button clicked');
     goToPreviousStep();
 }
 /**
  * Handle skip button click
+ * Skips the current step and moves to the next one without validation.
  */
-function handleSkipClick(event, target) {
+function handleSkipClick(event) {
     event.preventDefault();
-    const skipTarget = getAttrValue(target, 'data-skip');
-    logVerbose('Skip button clicked', { skipTarget });
-    if (skipTarget) {
-        const targetIndex = findStepIndexById(skipTarget);
-        if (targetIndex !== -1) {
-            // Mark skipped steps
-            for (let i = currentStepIndex + 1; i < targetIndex; i++) {
-                FormState.addSkippedStep(steps[i].id);
+    const stepElement = getCurrentStep()?.element;
+    if (stepElement) {
+        const fields = Array.from(stepElement.querySelectorAll('input, select, textarea'));
+        fields.forEach(field => {
+            if (field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')) {
+                field.checked = false;
             }
-            goToStep(targetIndex);
-        }
-        else {
-            logVerbose(`Skip target step not found: ${skipTarget}`);
-        }
+            else {
+                field.value = '';
+            }
+            if (field.name) {
+                FormState.setField(field.name, null);
+            }
+        });
     }
+    goToNextStep(true); // Skip validation
 }
 /**
- * Handle submit button click
+ * Handle form submission
+ * This handler is mostly for single-step forms or the final step.
  */
-function handleSubmitClick(event, target) {
-    logVerbose('Submit button clicked');
+function handleSubmitClick(event) {
+    // Find the form
+    const form = event.target.closest('form');
+    if (!form) {
+        logVerbose('Form not found, preventing submission');
+        return;
+    }
     // Validate all visible steps before submission
     const isFormValid = validateAllVisibleSteps();
     if (!isFormValid) {
@@ -425,40 +262,31 @@ function handleSubmitClick(event, target) {
  * Go to a step by ID (works for both parent steps and step_items)
  */
 export function goToStepById(stepId) {
-    console.log(`[FormLib] NAVIGATION: Attempting to navigate to step: ${stepId}`);
+    logVerbose(`Navigating to step: ${stepId}`);
     // First check if it's a step_item
     const stepItem = stepItems.find(item => item.id === stepId);
     if (stepItem) {
-        console.log(`[FormLib] NAVIGATION: Found step_item: ${stepId} in parent step ${stepItem.parentStepIndex}`);
         // Navigate to the parent step first
         if (stepItem.parentStepIndex !== undefined) {
-            console.log(`[FormLib] NAVIGATION: Going to parent step ${stepItem.parentStepIndex} first, then showing step_item ${stepId}`);
             goToStep(stepItem.parentStepIndex);
             // Then show the specific step_item
             showStepItem(stepId);
         }
         return;
     }
-    // Then check if it's a parent step (only if not a step_item)
+    // Then check if it's a parent step
     const parentStepIndex = findStepIndexById(stepId);
     if (parentStepIndex !== -1) {
-        console.log(`[FormLib] NAVIGATION: Found parent step: ${stepId} at index ${parentStepIndex}`);
-        console.log(`[FormLib] NAVIGATION: This is a parent step - will show main content and hide step_items`);
         currentStepItemId = null; // Clear step item tracking
         goToStep(parentStepIndex);
         return;
     }
-    console.error(`[FormLib] NAVIGATION ERROR: Step not found: ${stepId}`);
-    console.log(`[FormLib] NAVIGATION: Available options:`, {
-        availableParentSteps: steps.map(s => s.id),
-        availableStepItems: stepItems.map(s => s.id)
-    });
+    logVerbose(`Step not found: ${stepId}`);
 }
 /**
  * Validate a step element (works for both parent steps and step_items)
  */
 function validateStepElement(element) {
-    // Use existing validation logic from validateCurrentStep
     const inputs = element.querySelectorAll('input[required], select[required], textarea[required]');
     for (const input of inputs) {
         const htmlInput = input;
@@ -480,10 +308,7 @@ function validateStepElement(element) {
         if (htmlInput.type === 'email' && htmlInput.value) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(htmlInput.value)) {
-                logVerbose('Validation failed: invalid email format', {
-                    element: htmlInput,
-                    value: htmlInput.value
-                });
+                logVerbose('Validation failed: invalid email format');
                 htmlInput.focus();
                 return false;
             }
@@ -495,139 +320,70 @@ function validateStepElement(element) {
  * Go to a specific step by index
  */
 export function goToStep(stepIndex) {
+    logVerbose(`Attempting to go to step index: ${stepIndex}`);
     if (stepIndex < 0 || stepIndex >= steps.length) {
         logVerbose(`Invalid step index: ${stepIndex}`);
         return;
     }
-    const previousStepIndex = currentStepIndex;
-    const newStep = steps[stepIndex];
-    logVerbose(`Navigating to step ${stepIndex}`, {
-        from: previousStepIndex,
-        to: stepIndex,
-        stepId: newStep.id
-    });
-    // Hide current step
-    if (steps[currentStepIndex]) {
+    // Hide current step if there is one
+    if (currentStepIndex !== -1 && currentStepIndex < steps.length) {
         hideStep(currentStepIndex);
     }
+    // Show the new step
+    showStep(stepIndex);
     // Update current step index
     currentStepIndex = stepIndex;
-    // Show new step
-    showStep(stepIndex);
-    // If we have an active step_item, scroll to it instead of main step content
-    let firstVisibleContent = null;
-    if (currentStepItemId) {
-        // Priority: .step_item first, then .step_wrapper fallback (when no step_items exist)
-        let activeStepItem = newStep.element.querySelector(`.step_item[data-answer="${currentStepItemId}"], .step-item[data-answer="${currentStepItemId}"]`);
-        if (!activeStepItem) {
-            // Fallback to .step_wrapper when no .step_item exists
-            activeStepItem = newStep.element.querySelector(`.step_wrapper[data-answer="${currentStepItemId}"]`);
-        }
-        if (activeStepItem && !activeStepItem.classList.contains('hidden-step') && !activeStepItem.classList.contains('hidden-step-item')) {
-            firstVisibleContent = activeStepItem.querySelector('.multi-form_form-content, h1, h2, h3') || activeStepItem;
-        }
-    }
-    // Fallback to main step content
-    if (!firstVisibleContent) {
-        firstVisibleContent = newStep.element.querySelector('.radio_component, .multi-form_form-content:not(.hidden-step):not(.hidden-step-item), .step_wrapper:not(.hidden-step):not(.hidden-step-item), h1, h2, h3');
-    }
-    if (firstVisibleContent) {
-        firstVisibleContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        logVerbose(`Scrolled to first visible content in step ${stepIndex}`, { element: firstVisibleContent });
-    }
-    else {
-        // Fallback to step element itself
-        newStep.element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    // Update FormState
+    // Update form state with current step
+    const newStep = steps[stepIndex];
     FormState.setCurrentStep(newStep.id);
-    // Update navigation button states
+    // Update visibility of navigation buttons
     updateNavigationButtons();
-    logVerbose(`Step navigation complete`, {
-        currentStep: newStep.id,
-        currentIndex: stepIndex
-    });
 }
 /**
- * Show a specific step
+ * Show a step by its index
  */
 export function showStep(stepIndex) {
-    if (stepIndex < 0 || stepIndex >= steps.length)
+    if (stepIndex < 0 || stepIndex >= steps.length) {
         return;
+    }
     const step = steps[stepIndex];
-    const element = step.element;
-    // Use showStepCompletely to properly clear all hiding styles
-    showStepCompletely(element, `parent step ${stepIndex} (${step.id})`);
-    // Ensure main step content (radio buttons, form content) is visible
-    const mainContentElements = element.querySelectorAll('.radio_component, .multi-form_form-content:not(.step_item .multi-form_form-content), .step_wrapper:not(.step_item .step_wrapper), .item_wrapper');
-    console.log(`[FormLib] STEP SHOW: Found ${mainContentElements.length} main content elements in step ${stepIndex}:`, Array.from(mainContentElements).map(el => ({
-        tagName: el.tagName,
-        className: el.className,
-        id: el.id,
-        dataAnswer: el.getAttribute('data-answer'),
-        display: el.style.display,
-        visibility: el.style.visibility
-    })));
-    mainContentElements.forEach(contentElement => {
-        const htmlElement = contentElement;
-        htmlElement.style.display = '';
-        htmlElement.style.visibility = '';
-        removeClass(htmlElement, 'hidden-step');
-        removeClass(htmlElement, 'hidden-step-item');
-        console.log(`[FormLib] STEP SHOW: Made visible:`, {
-            element: htmlElement,
-            className: htmlElement.className,
-            dataAnswer: htmlElement.getAttribute('data-answer')
-        });
+    showElement(step.element);
+    FormState.setStepVisibility(step.id, true);
+    // Also show any visible step_items within this step
+    stepItems.forEach(item => {
+        if (item.parentStepIndex === stepIndex && FormState.isStepVisible(item.id)) {
+            showElement(item.element);
+        }
     });
-    // Update FormState
-    FormState.setStepInfo(step.id, { visible: true, visited: true });
-    // IMPORTANT: Hide conditional step_items but keep main step content visible
-    // Check if this step has both main content and conditional step_items
-    const stepItemsInThisStep = stepItems.filter(item => item.parentStepIndex === stepIndex);
-    const hasMainContent = element.querySelector('.radio_component, .multi-form_form-content');
-    logVerbose(`Step ${stepIndex} analysis`, {
-        stepId: step.id,
-        hasMainContent: !!hasMainContent,
-        mainContentSelector: hasMainContent ? hasMainContent.className : 'none',
-        mainContentVisible: hasMainContent ? hasMainContent.style.display !== 'none' : false,
-        stepItemCount: stepItemsInThisStep.length,
-        stepItemIds: stepItemsInThisStep.map(item => item.id)
-    });
-    stepItemsInThisStep.forEach(stepItem => {
-        hideStepCompletely(stepItem.element, `step_item ${stepItem.id} (keeping hidden on parent step show)`);
-        FormState.setStepVisibility(stepItem.id, false);
-    });
-    logVerbose(`Step shown: ${step.id} (index: ${stepIndex})`, {
-        display: element.style.display,
-        visibility: element.style.visibility,
-        classes: element.className,
-        stepItemsHidden: stepItemsInThisStep.length,
-        hasMainContent: !!hasMainContent
-    });
+    logVerbose(`Showing step ${stepIndex} (${step.id})`);
 }
 /**
- * Hide a specific step
+ * Hide a step by its index
  */
 function hideStep(stepIndex) {
-    if (stepIndex < 0 || stepIndex >= steps.length)
+    if (stepIndex < 0 || stepIndex >= steps.length) {
         return;
+    }
     const step = steps[stepIndex];
-    const element = step.element;
-    // Use hideStepCompletely to properly hide the step (but not as aggressively as step_items)
-    hideStepCompletely(element, `parent step ${stepIndex} (${step.id})`);
-    // Update FormState (keep visited status)
-    FormState.setStepInfo(step.id, { visible: false });
-    logVerbose(`Step hidden: ${step.id} (index: ${stepIndex})`, {
-        display: element.style.display,
-        visibility: element.style.visibility,
-        classes: element.className
+    hideElement(step.element);
+    FormState.setStepVisibility(step.id, false);
+    // Also hide all step_items within this step
+    stepItems.forEach(item => {
+        if (item.parentStepIndex === stepIndex) {
+            hideElement(item.element);
+        }
     });
+    logVerbose(`Hiding step ${stepIndex} (${step.id})`);
 }
 /**
  * Go to next step (sequential)
  */
-function goToNextStep() {
+function goToNextStep(skipValidation = false) {
+    const currentStep = getCurrentStep();
+    if (!currentStep) {
+        logVerbose('No current step found');
+        return;
+    }
     const nextIndex = currentStepIndex + 1;
     if (nextIndex < steps.length) {
         goToStep(nextIndex);
@@ -674,89 +430,37 @@ function getCurrentStep() {
  * Update navigation button states
  */
 function updateNavigationButtons() {
-    const backButtons = queryAllByAttr(SELECTORS.BACK_BTN);
-    const nextButtons = queryAllByAttr(SELECTORS.NEXT_BTN);
-    const submitButtons = queryAllByAttr(SELECTORS.SUBMIT);
-    // Back button state
-    backButtons.forEach(btn => {
-        const htmlBtn = btn;
-        if (currentStepIndex === 0) {
-            htmlBtn.disabled = true;
-            addClass(btn, CSS_CLASSES.DISABLED);
-        }
-        else {
-            htmlBtn.disabled = false;
-            removeClass(btn, CSS_CLASSES.DISABLED);
-        }
-    });
-    // Next/Submit button state
+    const nextBtn = document.querySelector(SELECTORS.NEXT_BTN);
+    const backBtn = document.querySelector(SELECTORS.BACK_BTN);
+    const submitBtn = document.querySelector(SELECTORS.SUBMIT_BTN);
+    if (!nextBtn || !backBtn || !submitBtn)
+        return;
+    const isFirstStep = currentStepIndex === 0;
     const isLastStep = currentStepIndex === steps.length - 1;
-    nextButtons.forEach(btn => {
-        const htmlBtn = btn;
-        if (isLastStep) {
-            htmlBtn.style.display = 'none';
-        }
-        else {
-            htmlBtn.style.display = '';
-            htmlBtn.disabled = false;
-            removeClass(btn, CSS_CLASSES.DISABLED);
-        }
-    });
-    submitButtons.forEach(btn => {
-        const htmlBtn = btn;
-        if (isLastStep) {
-            htmlBtn.style.display = '';
-            htmlBtn.disabled = false;
-            removeClass(btn, CSS_CLASSES.DISABLED);
-        }
-        else {
-            htmlBtn.style.display = 'none';
-        }
-    });
-    logVerbose('Navigation buttons updated', {
-        currentStepIndex,
-        isLastStep,
-        backButtonsCount: backButtons.length,
-        nextButtonsCount: nextButtons.length,
-        submitButtonsCount: submitButtons.length
-    });
+    // Back button visibility
+    backBtn.style.display = isFirstStep ? 'none' : '';
+    // Next/Submit button visibility
+    if (isLastStep) {
+        nextBtn.style.display = 'none';
+        submitBtn.style.display = '';
+    }
+    else {
+        nextBtn.style.display = '';
+        submitBtn.style.display = 'none';
+    }
 }
 /**
- * Validate current step (placeholder - will be enhanced by validation module)
+ * Validate all visible steps
  */
-function validateCurrentStep() {
-    const currentStep = getCurrentStep();
-    if (!currentStep)
-        return true;
-    // Basic validation - check required fields
-    const requiredInputs = currentStep.element.querySelectorAll('[required]');
-    for (const input of requiredInputs) {
-        const htmlInput = input;
-        if (!htmlInput.value.trim()) {
-            logVerbose(`Required field empty: ${htmlInput.name || 'unnamed'}`);
-            return false;
+function validateAllVisibleSteps() {
+    for (const step of steps) {
+        if (FormState.isStepVisible(step.id)) {
+            if (!validateStepElement(step.element)) {
+                return false;
+            }
         }
     }
     return true;
-}
-/**
- * Validate all visible steps (placeholder - will be enhanced by validation module)
- */
-function validateAllVisibleSteps() {
-    let isValid = true;
-    steps.forEach((step, index) => {
-        if (FormState.isStepVisible(step.id)) {
-            const requiredInputs = step.element.querySelectorAll('[required]');
-            for (const input of requiredInputs) {
-                const htmlInput = input;
-                if (!htmlInput.value.trim()) {
-                    logVerbose(`Required field empty in step ${step.id}: ${htmlInput.name || 'unnamed'}`);
-                    isValid = false;
-                }
-            }
-        }
-    });
-    return isValid;
 }
 /**
  * Get current step information
@@ -775,19 +479,16 @@ export function getCurrentStepInfo() {
  * Reset multi-step state and cleanup
  */
 function resetMultiStep() {
-    logVerbose('Resetting multi-step navigation');
-    // Clean up event listeners
+    // Clear all event listeners
     cleanupFunctions.forEach(cleanup => cleanup());
     cleanupFunctions = [];
-    // Hide all steps
-    steps.forEach((step, index) => {
-        hideStep(index);
-    });
-    // Reset state
+    // Reset state variables
     steps = [];
+    stepItems = [];
     currentStepIndex = 0;
+    currentStepItemId = null;
     initialized = false;
-    logVerbose('Multi-step reset complete');
+    logVerbose('Multi-step module reset');
 }
 /**
  * Get multi-step state for debugging
@@ -807,25 +508,14 @@ export function getMultiStepState() {
         }))
     };
 }
-/**
- * Debug function to log all registered steps (can be called from console)
- */
-function debugSteps() {
-    logVerbose('=== DEBUG: All Registered Steps ===');
-    steps.forEach((step, index) => {
-        const element = step.element;
-        logVerbose(`Step ${index}:`, {
-            stepId: step.id,
-            dataAnswer: element.getAttribute('data-answer'),
-            elementId: element.getAttribute('id'),
-            index: step.index,
-            visible: element.style.display !== 'none',
-            classes: element.className,
-            element: element
-        });
-    });
-    logVerbose('=== END DEBUG ===');
+function findNextStepInSequence() {
+    return currentStepIndex + 1;
 }
-// Make debug function available globally
-window.debugFormSteps = debugSteps;
+/**
+ * Find the next step based on branching logic
+ */
+function findNextBranchingStep() {
+    const nextStep = getNextStep(steps[currentStepIndex]?.id);
+    return nextStep ? findStepIndexById(nextStep) : -1;
+}
 //# sourceMappingURL=multiStep.js.map

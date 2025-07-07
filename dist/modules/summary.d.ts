@@ -31,7 +31,7 @@ export declare function refreshSummaries(): void;
  */
 export declare function addCustomSummary(element: HTMLElement, fieldNames: string[], joinType?: JoinType, type?: string, subtype?: string, number?: string): void;
 /**
- * Get summary state for debugging
+ * Get current summary state for debugging
  */
-export declare function getSummaryState(): any;
+export declare function getSummaryState(): Record<string, unknown>;
 //# sourceMappingURL=summary.d.ts.map

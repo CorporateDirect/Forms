@@ -1,9 +1,10 @@
 /**
  * Form validation module with branch awareness
  */
-import { SELECTORS, DEFAULTS, CSS_CLASSES } from '../config.js';
-import { logVerbose, queryAllByAttr, queryByAttr, getAttrValue, delegateEvent, debounce, getInputValue, isFormInput, addClass, removeClass } from './utils.js';
+import { SELECTORS, DEFAULTS } from '../config.js';
+import { logVerbose, queryAllByAttr, queryByAttr, getAttrValue, delegateEvent, debounce, getInputValue, isFormInput } from './utils.js';
 import { FormState } from './formState.js';
+import { showError, clearError } from './errors.js';
 let initialized = false;
 let cleanupFunctions = [];
 let fieldValidations = new Map();
@@ -121,7 +122,9 @@ function extractValidationRules(input) {
  */
 function setupValidationListeners(root) {
     // Real-time validation on input (debounced)
-    const debouncedValidation = debounce(handleFieldValidation, DEFAULTS.VALIDATION_DELAY);
+    const debouncedValidation = debounce((...args) => {
+        handleFieldValidation(args[0], args[1]);
+    }, DEFAULTS.VALIDATION_DELAY);
     const cleanup1 = delegateEvent(root, 'input', 'input, select, textarea', debouncedValidation);
     // Validation on blur
     const cleanup2 = delegateEvent(root, 'blur', 'input, select, textarea', handleFieldValidation);
@@ -172,35 +175,21 @@ export function validateField(fieldName) {
     }
     const value = getInputValue(input);
     logVerbose(`Validating field: ${fieldName}`, { value, elementExists: !!input });
-    // Run all validation rules
-    let isValid = true;
-    let errorMessage = '';
     for (const rule of fieldValidation.rules) {
-        const ruleResult = validateRule(value, rule);
-        if (!ruleResult.isValid) {
-            isValid = false;
-            errorMessage = ruleResult.message || 'Validation failed';
-            break; // Stop at first failed rule
+        const { isValid, message } = validateRule(value, rule);
+        if (!isValid) {
+            fieldValidation.isValid = false;
+            fieldValidation.errorMessage = message || 'Invalid field';
+            showError(fieldName, fieldValidation.errorMessage);
+            updateFieldVisualState(input, false, fieldValidation.errorMessage);
+            return false;
         }
     }
-    // Update field validation state
-    fieldValidation.isValid = isValid;
-    fieldValidation.errorMessage = errorMessage;
-    // Update visual state - only if element exists and has parent
-    try {
-        updateFieldVisualState(input, isValid, errorMessage);
-    }
-    catch (error) {
-        logVerbose(`Error updating visual state for field: ${fieldName}`, error);
-    }
-    // Update FormState
-    FormState.setField(fieldName, value);
-    logVerbose(`Field validation result: ${fieldName}`, {
-        isValid,
-        errorMessage,
-        value
-    });
-    return isValid;
+    // All rules passed
+    fieldValidation.isValid = true;
+    clearError(fieldName);
+    updateFieldVisualState(input, true);
+    return true;
 }
 /**
  * Validate a single rule
@@ -208,42 +197,48 @@ export function validateField(fieldName) {
 function validateRule(value, rule) {
     switch (rule.type) {
         case 'required':
-            const isEmpty = value === '' || value === null || value === undefined ||
-                (Array.isArray(value) && value.length === 0);
             return {
-                isValid: !isEmpty,
+                isValid: Array.isArray(value) ? value.length > 0 : !!value,
                 message: rule.message
             };
         case 'email':
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            // Basic email regex
             return {
-                isValid: !value || emailRegex.test(String(value)),
+                isValid: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value)),
                 message: rule.message
             };
         case 'phone':
-            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+            // Basic phone regex (10 digits)
             return {
-                isValid: !value || phoneRegex.test(String(value).replace(/\D/g, '')),
+                isValid: /^\d{10}$/.test(String(value)),
                 message: rule.message
             };
         case 'min':
+            if (typeof rule.value !== 'number')
+                return { isValid: true };
             return {
-                isValid: !value || String(value).length >= rule.value,
+                isValid: String(value).length >= rule.value,
                 message: rule.message
             };
         case 'max':
+            if (typeof rule.value !== 'number')
+                return { isValid: true };
             return {
-                isValid: !value || String(value).length <= rule.value,
+                isValid: String(value).length <= rule.value,
                 message: rule.message
             };
         case 'pattern':
+            if (!(rule.value instanceof RegExp))
+                return { isValid: true };
             return {
-                isValid: !value || rule.value.test(String(value)),
+                isValid: rule.value.test(String(value)),
                 message: rule.message
             };
         case 'custom':
+            if (!rule.validator)
+                return { isValid: true };
             return {
-                isValid: !rule.validator || rule.validator(value),
+                isValid: rule.validator(value),
                 message: rule.message
             };
         default:
@@ -254,89 +249,15 @@ function validateRule(value, rule) {
  * Update field visual state based on validation
  */
 function updateFieldVisualState(input, isValid, errorMessage) {
-    // Update field styling
-    if (isValid) {
-        removeClass(input, CSS_CLASSES.ERROR_FIELD);
+    const fieldName = input.name || getAttrValue(input, 'data-step-field-name');
+    if (!fieldName)
+        return;
+    if (!isValid) {
+        showError(fieldName, errorMessage);
     }
     else {
-        addClass(input, CSS_CLASSES.ERROR_FIELD);
+        clearError(fieldName);
     }
-    // Update error message display
-    const errorElement = findOrCreateErrorElement(input);
-    if (errorElement) {
-        if (isValid) {
-            errorElement.textContent = '';
-            errorElement.style.display = 'none';
-        }
-        else {
-            errorElement.textContent = errorMessage || 'Validation failed';
-            errorElement.style.display = 'block';
-        }
-    }
-}
-/**
- * Find or create error message element
- */
-function findOrCreateErrorElement(input) {
-    // Defensive checks
-    if (!input) {
-        logVerbose('Cannot create error element - no input element provided');
-        return null;
-    }
-    const fieldName = input.name || getAttrValue(input, 'data-step-field-name');
-    if (!fieldName) {
-        logVerbose('Cannot create error element - no field name found', {
-            element: input,
-            name: input.name,
-            dataStepFieldName: getAttrValue(input, 'data-step-field-name')
-        });
-        return null;
-    }
-    // Check if input has a parent element
-    if (!input.parentElement) {
-        logVerbose(`Cannot create error element for field: ${fieldName} - no parent element`, {
-            element: input,
-            parentElement: input.parentElement,
-            nodeName: input.nodeName,
-            id: input.id
-        });
-        return null;
-    }
-    // Look for existing error element
-    let errorElement = null;
-    try {
-        errorElement = input.parentElement.querySelector(`.${CSS_CLASSES.ERROR_MESSAGE}[data-field="${fieldName}"]`);
-    }
-    catch (error) {
-        logVerbose(`Error finding existing error element for field: ${fieldName}`, error);
-        return null;
-    }
-    if (!errorElement) {
-        try {
-            // Create new error element
-            errorElement = document.createElement('div');
-            errorElement.className = CSS_CLASSES.ERROR_MESSAGE;
-            errorElement.setAttribute('data-field', fieldName);
-            errorElement.style.color = 'red';
-            errorElement.style.fontSize = '0.875em';
-            errorElement.style.marginTop = '0.25rem';
-            errorElement.style.display = 'none';
-            // Insert after the input
-            const nextSibling = input.nextSibling;
-            if (nextSibling) {
-                input.parentElement.insertBefore(errorElement, nextSibling);
-            }
-            else {
-                input.parentElement.appendChild(errorElement);
-            }
-            logVerbose(`Created error element for field: ${fieldName}`);
-        }
-        catch (error) {
-            logVerbose(`Error creating error element for field: ${fieldName}`, error);
-            return null;
-        }
-    }
-    return errorElement;
 }
 /**
  * Validate a specific step
@@ -441,27 +362,17 @@ export function addCustomValidation(fieldName, validator, message) {
  * Get validation state for debugging
  */
 export function getValidationState() {
-    const state = {
+    return {
         initialized,
-        totalFields: fieldValidations.size,
-        validFields: 0,
-        invalidFields: 0,
-        fields: {}
+        fieldValidations: Array.from(fieldValidations.entries()).reduce((acc, [key, value]) => {
+            acc[key] = {
+                isValid: value.isValid,
+                errorMessage: value.errorMessage,
+                rules: value.rules.map(r => r.type)
+            };
+            return acc;
+        }, {})
     };
-    fieldValidations.forEach((validation, fieldName) => {
-        state.fields[fieldName] = {
-            isValid: validation.isValid,
-            errorMessage: validation.errorMessage,
-            rulesCount: validation.rules.length
-        };
-        if (validation.isValid) {
-            state.validFields++;
-        }
-        else {
-            state.invalidFields++;
-        }
-    });
-    return state;
 }
 /**
  * Reset validation state and cleanup
