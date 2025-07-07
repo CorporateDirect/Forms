@@ -249,6 +249,19 @@ export function showStepItem(stepItemId) {
     console.log(`[FormLib] Now showing target step_item: ${stepItemId}`);
     // Show the target step_item
     showStepCompletely(stepItem.element, `step_item ${stepItemId}`);
+    // Ensure parent containers are also visible
+    let parentElement = stepItem.element.parentElement;
+    while (parentElement && !parentElement.classList.contains('multi-form_step')) {
+        if (parentElement.classList.contains('step_wrapper')) {
+            // Make sure step_wrapper is visible
+            parentElement.style.display = '';
+            parentElement.style.visibility = '';
+            removeClass(parentElement, 'hidden-step');
+            removeClass(parentElement, 'hidden-step-item');
+            logVerbose(`Made parent step_wrapper visible for step_item: ${stepItemId}`);
+        }
+        parentElement = parentElement.parentElement;
+    }
     updateRequiredFields(stepItem.element, true); // Enable required fields for visible step_item
     FormState.setStepVisibility(stepItemId, true);
     // Mark this step_item as visited so branching logic knows we've already been here
@@ -474,6 +487,26 @@ export function goToStep(stepIndex) {
     currentStepIndex = stepIndex;
     // Show new step
     showStep(stepIndex);
+    // If we have an active step_item, scroll to it instead of main step content
+    let firstVisibleContent = null;
+    if (currentStepItemId) {
+        const activeStepItem = newStep.element.querySelector(`[data-answer="${currentStepItemId}"]`);
+        if (activeStepItem && !activeStepItem.classList.contains('hidden-step') && !activeStepItem.classList.contains('hidden-step-item')) {
+            firstVisibleContent = activeStepItem.querySelector('.multi-form_form-content, h1, h2, h3') || activeStepItem;
+        }
+    }
+    // Fallback to main step content
+    if (!firstVisibleContent) {
+        firstVisibleContent = newStep.element.querySelector('.radio_component, .multi-form_form-content:not(.hidden-step):not(.hidden-step-item), .step_wrapper:not(.hidden-step):not(.hidden-step-item), h1, h2, h3');
+    }
+    if (firstVisibleContent) {
+        firstVisibleContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        logVerbose(`Scrolled to first visible content in step ${stepIndex}`, { element: firstVisibleContent });
+    }
+    else {
+        // Fallback to step element itself
+        newStep.element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
     // Update FormState
     FormState.setCurrentStep(newStep.id);
     // Update navigation button states
@@ -493,11 +526,30 @@ export function showStep(stepIndex) {
     const element = step.element;
     // Use showStepCompletely to properly clear all hiding styles
     showStepCompletely(element, `parent step ${stepIndex} (${step.id})`);
+    // Ensure main step content (radio buttons, form content) is visible
+    const mainContentElements = element.querySelectorAll('.radio_component, .multi-form_form-content:not(.step_item .multi-form_form-content), .step_wrapper:not(.step_item .step_wrapper)');
+    mainContentElements.forEach(contentElement => {
+        const htmlElement = contentElement;
+        htmlElement.style.display = '';
+        htmlElement.style.visibility = '';
+        removeClass(htmlElement, 'hidden-step');
+        removeClass(htmlElement, 'hidden-step-item');
+    });
+    logVerbose(`Made ${mainContentElements.length} main content elements visible in step ${stepIndex}`);
     // Update FormState
     FormState.setStepInfo(step.id, { visible: true, visited: true });
-    // IMPORTANT: Keep step_items hidden when showing parent step
-    // Only show step_items when explicitly triggered by radio button clicks
+    // IMPORTANT: Hide conditional step_items but keep main step content visible
+    // Check if this step has both main content and conditional step_items
     const stepItemsInThisStep = stepItems.filter(item => item.parentStepIndex === stepIndex);
+    const hasMainContent = element.querySelector('.radio_component, .multi-form_form-content');
+    logVerbose(`Step ${stepIndex} analysis`, {
+        stepId: step.id,
+        hasMainContent: !!hasMainContent,
+        mainContentSelector: hasMainContent ? hasMainContent.className : 'none',
+        mainContentVisible: hasMainContent ? hasMainContent.style.display !== 'none' : false,
+        stepItemCount: stepItemsInThisStep.length,
+        stepItemIds: stepItemsInThisStep.map(item => item.id)
+    });
     stepItemsInThisStep.forEach(stepItem => {
         hideStepCompletely(stepItem.element, `step_item ${stepItem.id} (keeping hidden on parent step show)`);
         FormState.setStepVisibility(stepItem.id, false);
@@ -506,7 +558,8 @@ export function showStep(stepIndex) {
         display: element.style.display,
         visibility: element.style.visibility,
         classes: element.className,
-        stepItemsHidden: stepItemsInThisStep.length
+        stepItemsHidden: stepItemsInThisStep.length,
+        hasMainContent: !!hasMainContent
     });
 }
 /**

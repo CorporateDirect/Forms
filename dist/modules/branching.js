@@ -4,6 +4,7 @@
 import { SELECTORS } from '../config.js';
 import { logVerbose, queryAllByAttr, queryByAttr, getAttrValue, delegateEvent, getInputValue, isFormInput } from './utils.js';
 import { FormState } from './formState.js';
+import { showStepItem as multiStepShowStepItem, hideStepItem as multiStepHideStepItem } from './multiStep.js';
 let initialized = false;
 let cleanupFunctions = [];
 /**
@@ -440,73 +441,18 @@ function handleRadioGroupSelection(selectedRadio) {
  * Hide a specific step_item
  */
 function hideStepItem(stepItemId) {
-    logVerbose(`Hiding step_item: ${stepItemId}`);
-    hideStepItemDirect(stepItemId);
-}
-/**
- * Hide step_item directly without dynamic import (avoids CORS issues on CDN)
- */
-function hideStepItemDirect(stepItemId) {
-    try {
-        const stepItemElement = document.querySelector(`[data-answer="${stepItemId}"]`);
-        if (!stepItemElement)
-            throw new Error('step_item element not found');
-        // Apply hiding styles (sync with multiStep.hideStepCompletely logic)
-        stepItemElement.style.display = 'none';
-        stepItemElement.style.visibility = 'hidden';
-        stepItemElement.style.opacity = '0';
-        stepItemElement.style.height = '0';
-        stepItemElement.style.overflow = 'hidden';
-        stepItemElement.style.position = 'absolute';
-        stepItemElement.style.left = '-9999px';
-        stepItemElement.classList.add('hidden-step');
-        logVerbose(`Step_item hidden directly: ${stepItemId}`);
-    }
-    catch (error) {
-        console.error('[FormLib] Failed to hide step_item:', error);
+    logVerbose(`Hiding step_item via multiStep: ${stepItemId}`);
+    if (typeof multiStepHideStepItem === 'function') {
+        multiStepHideStepItem(stepItemId);
     }
 }
 /**
  * Trigger step_item visibility based on radio button selection
  */
 function triggerStepItemVisibility(stepItemId) {
-    logVerbose(`Triggering step_item visibility: ${stepItemId}`);
-    // Show the step_item directly without dynamic import
-    showStepItemDirect(stepItemId);
-}
-/**
- * Show step_item directly without dynamic import
- */
-function showStepItemDirect(stepItemId) {
-    try {
-        // Find the step_item element
-        const stepItemElement = document.querySelector(`[data-answer="${stepItemId}"]`);
-        if (!stepItemElement) {
-            console.warn(`[FormLib] Step_item not found: ${stepItemId}`);
-            return;
-        }
-        // Make the step_item visible
-        stepItemElement.style.display = '';
-        stepItemElement.style.visibility = 'visible';
-        stepItemElement.style.opacity = '1';
-        // Remove hidden classes
-        stepItemElement.classList.remove('hidden-step', 'hidden-step-item');
-        // Add visible class if it exists
-        if (stepItemElement.classList.contains('step_item')) {
-            stepItemElement.classList.add('visible-step-item');
-        }
-        // Update FormState
-        FormState.setStepInfo(stepItemId, { visible: true });
-        logVerbose(`Successfully showed step_item: ${stepItemId}`, {
-            display: stepItemElement.style.display,
-            visibility: stepItemElement.style.visibility,
-            opacity: stepItemElement.style.opacity,
-            isStepItem: stepItemElement.classList.contains('step_item'),
-            classes: stepItemElement.className
-        });
-    }
-    catch (error) {
-        console.warn('[FormLib] Failed to show step_item:', error);
+    logVerbose(`Triggering step_item visibility via multiStep: ${stepItemId}`);
+    if (typeof multiStepShowStepItem === 'function') {
+        multiStepShowStepItem(stepItemId);
     }
 }
 /**
@@ -605,6 +551,11 @@ function updateStepVisibility() {
  * Determine if a step should be visible based on active conditions
  */
 function shouldStepBeVisible(stepAnswer, activeConditions) {
+    // Always keep the current parent step visible so user can click Next
+    const currentStepId = FormState.getCurrentStep();
+    if (stepAnswer && stepAnswer === currentStepId) {
+        return true;
+    }
     if (!stepAnswer)
         return true;
     // Check if this step matches any active condition

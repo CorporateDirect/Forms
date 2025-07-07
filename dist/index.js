@@ -8,6 +8,7 @@ import { SELECTORS } from './config.js';
 import { logVerbose } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
 // Import all modules
+import { initNavigation, resetNavigation, validateNavigationPattern, getNavigationState } from './modules/navigation.js';
 import { initBranching, resetBranching, getNextStep, getBranchingState } from './modules/branching.js';
 import { initMultiStep, goToStep, showStep, getCurrentStepInfo, getMultiStepState } from './modules/multiStep.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
@@ -58,19 +59,26 @@ class FormLibrary {
         }
         // Initialize modules in dependency order
         try {
-            // 1. Initialize error handling first (used by validation)
+            // 1. Initialize navigation system first (validates data-go-to ↔ data-answer pattern)
+            const navigationResult = initNavigation(root);
+            if (!navigationResult.valid) {
+                logVerbose('Navigation validation failed, but continuing initialization', {
+                    issues: navigationResult.issues
+                });
+            }
+            // 2. Initialize error handling (used by validation)
             initErrors(root);
-            // 2. Initialize validation (used by multi-step navigation)
+            // 3. Initialize validation (used by multi-step navigation)
             initValidation(root);
-            // 3. Initialize branching logic (used by multi-step navigation)
+            // 4. Initialize branching logic (used by multi-step navigation)
             if (logicForms.length > 0) {
                 initBranching(root);
             }
-            // 4. Initialize multi-step navigation (coordinates with branching)
+            // 5. Initialize multi-step navigation (coordinates with branching)
             if (multistepForms.length > 0 || stepElements.length > 0) {
                 initMultiStep(root);
             }
-            // 5. Initialize summary functionality (listens to field changes)
+            // 6. Initialize summary functionality (listens to field changes)
             initSummary(root);
             this.initialized = true;
             logVerbose('FormLibrary initialization complete');
@@ -93,6 +101,7 @@ class FormLibrary {
         logVerbose('Destroying FormLibrary');
         // Reset all modules (they handle their own cleanup)
         try {
+            resetNavigation();
             resetBranching();
             // Note: Other modules will be reset when re-initialized
         }
@@ -116,6 +125,7 @@ class FormLibrary {
     getState() {
         return {
             initialized: this.initialized,
+            navigation: getNavigationState(),
             formState: FormState.getDebugInfo(),
             branching: getBranchingState(),
             multiStep: getMultiStepState(),
@@ -143,6 +153,19 @@ class FormLibrary {
         const isValid = validateAllVisibleFields();
         logVerbose('Form validation result', { isValid });
         return isValid;
+    }
+    /**
+     * Validate navigation patterns (data-go-to ↔ data-answer)
+     */
+    validateNavigation() {
+        if (!this.initialized) {
+            logVerbose('Cannot validate navigation - library not initialized');
+            return { valid: false, message: 'Library not initialized' };
+        }
+        logVerbose('Validating navigation patterns');
+        const result = validateNavigationPattern(this.rootElement);
+        logVerbose('Navigation validation result', result);
+        return result;
     }
     /**
      * Reset form to initial state
