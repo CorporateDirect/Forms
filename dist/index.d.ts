@@ -47,10 +47,6 @@ declare class FormLibrary {
      */
     validateForm(): boolean;
     /**
-     * Validate navigation patterns (data-go-to ↔ data-answer)
-     */
-    validateNavigation(): any;
-    /**
      * Reset form to initial state
      */
     resetForm(): void;

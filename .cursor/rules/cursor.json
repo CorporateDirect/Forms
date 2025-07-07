@@ -1,0 +1,21 @@
+{
+    "rules": [
+      {
+        "name": "Webflow Integration Compliance",
+        "description": "Ensure all modules, scripts, and form functionality remain fully compatible with Webflow’s environment and custom code limitations.",
+        "criteria": [
+          "Use only vanilla JavaScript (or compiled TypeScript). Do not use frameworks, bundlers, or libraries that conflict with Webflow’s live sites.",
+          "Bind all logic to data-attributes — never rely on classes or IDs that may change in the Webflow Designer.",
+          "Never conflict with or overwrite Webflow’s native w-* classes, IX2 Interactions, or CMS output.",
+          "Wrap all custom scripts to run after Webflow loads using window.Webflow.push(function() { ... }) or DOMContentLoaded.",
+          "Test against exported index.html from Webflow to validate real output and DOM structure.",
+          "Always specify exactly where to place the code in Webflow: <head>, <body>, or embed element.",
+          "Assume no server-side runtime — all functionality must run fully in-browser.",
+          "Console logs must be included for debugging and easily toggleable or removed for production.",
+          "Do not use document.write or any blocking scripts that could break Webflow’s rendering.",
+          "Review each module for modularity, reusability, and compatibility before every commit."
+        ],
+        "enforcement": "If any output violates these constraints, refactor immediately to ensure Webflow compliance."
+      }
+    ]
+  }

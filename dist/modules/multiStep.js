@@ -212,23 +212,43 @@ function updateRequiredFields(stepItemElement, enable = true) {
  * Show a specific step_item within its parent step
  */
 export function showStepItem(stepItemId) {
-    console.log(`[FormLib] Attempting to show step_item: ${stepItemId}`);
+    console.log(`[FormLib] EXACT MATCH: Attempting to show step_item with data-answer="${stepItemId}"`);
     console.log(`[FormLib] Available step_items:`, stepItems.map(item => ({
         id: item.id,
         dataAnswer: getAttrValue(item.element, 'data-answer'),
-        element: item.element
+        exactMatch: item.id === stepItemId
     })));
+    // Find step item by exact ID match (ID should be the data-answer value)
     const stepItem = stepItems.find(item => item.id === stepItemId);
     if (!stepItem) {
-        console.warn(`[FormLib] Step item not found: ${stepItemId}`);
-        console.log(`[FormLib] Looking for step_item with data-answer="${stepItemId}"`);
-        // Try to find by data-answer attribute
+        console.error(`[FormLib] CRITICAL: Step item not found by ID: ${stepItemId}`);
+        console.log(`[FormLib] Trying fallback: looking for step_item with data-answer="${stepItemId}"`);
+        // Try to find by data-answer attribute as fallback
         const stepItemByAnswer = stepItems.find(item => getAttrValue(item.element, 'data-answer') === stepItemId);
         if (stepItemByAnswer) {
-            console.log(`[FormLib] Found step_item by data-answer: ${stepItemId}`, stepItemByAnswer);
+            console.warn(`[FormLib] FALLBACK SUCCESS: Found step_item by data-answer: ${stepItemId}`, {
+                foundId: stepItemByAnswer.id,
+                foundDataAnswer: getAttrValue(stepItemByAnswer.element, 'data-answer'),
+                mismatchWarning: 'ID and data-answer should match!'
+            });
             return showStepItem(stepItemByAnswer.id);
         }
+        console.error(`[FormLib] CRITICAL FAILURE: No step item found with data-answer="${stepItemId}"`);
+        console.log('[FormLib] All available step items:', stepItems.map(item => ({
+            id: item.id,
+            dataAnswer: getAttrValue(item.element, 'data-answer'),
+            element: item.element
+        })));
         return;
+    }
+    // Validate that the found step item's data-answer matches exactly
+    const actualDataAnswer = getAttrValue(stepItem.element, 'data-answer');
+    if (actualDataAnswer !== stepItemId) {
+        console.error(`[FormLib] CRITICAL MISMATCH: Step item ID="${stepItem.id}" but data-answer="${actualDataAnswer}"`);
+        console.error(`[FormLib] Expected exact match for: ${stepItemId}`);
+    }
+    else {
+        console.log(`[FormLib] EXACT MATCH CONFIRMED: Found step_item with data-answer="${stepItemId}"`);
     }
     const parentStep = steps[stepItem.parentStepIndex];
     if (!parentStep) {

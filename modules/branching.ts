@@ -300,9 +300,32 @@ function handleUniversalRadioClick(event: Event, target: Element): void {
   if (!radioInput) {
     const goTo = getAttrValue(target, 'data-go-to');
     if (goTo) {
-      // Look for radio input with same data-go-to value
-      radioInput = document.querySelector(`input[type="radio"][data-go-to="${goTo}"]`) as HTMLInputElement;
-      console.log('[FormLib] Found radio via data-go-to attribute', { goTo, radioInput });
+      // First try to find radio input in the same form context/section
+      const searchContext = target.closest('form, .form-section, .member-section, [data-step]');
+      
+      if (searchContext) {
+        radioInput = searchContext.querySelector(`input[type="radio"][data-go-to="${goTo}"]`) as HTMLInputElement;
+      }
+      
+      // If not found in local context, try nearest form or step element
+      if (!radioInput) {
+        const nearestStep = target.closest('[data-answer], [data-step]');
+        if (nearestStep) {
+          radioInput = nearestStep.querySelector(`input[type="radio"][data-go-to="${goTo}"]`) as HTMLInputElement;
+        }
+      }
+      
+      // Only as last resort, search globally
+      if (!radioInput) {
+        radioInput = document.querySelector(`input[type="radio"][data-go-to="${goTo}"]`) as HTMLInputElement;
+      }
+      
+      console.log('[FormLib] Found radio via data-go-to attribute', { 
+        goTo, 
+        radioInput, 
+        searchContext: searchContext ? searchContext.tagName : 'document',
+        contextClass: searchContext?.className || 'N/A'
+      });
     }
   }
   
@@ -446,17 +469,33 @@ function handleBranchTrigger(event: Event, target: Element): void {
   // Handle different input types
   if (target instanceof HTMLInputElement) {
     if (target.type === 'radio' && target.checked) {
+      console.log(`[FormLib] EXACT MATCH: Radio button selected with data-go-to="${goToValue}"`);
+      console.log(`[FormLib] Radio button details:`, {
+        name: target.name,
+        value: target.value,
+        goTo: goToValue,
+        checked: target.checked,
+        allAttributes: Array.from(target.attributes).map(attr => `${attr.name}="${attr.value}"`).join(' ')
+      });
+      
+      // Validate that this radio button should trigger navigation
+      if (!goToValue) {
+        console.warn(`[FormLib] Radio button has no data-go-to attribute, skipping navigation`);
+        return;
+      }
+      
       // For radio buttons, first deactivate all other radio buttons in the same group
       handleRadioGroupSelection(target);
       
       // Apply active class styling
       applyRadioActiveClass(target);
       
+      console.log(`[FormLib] EXACT MATCH: Activating branch for data-go-to="${goToValue}"`);
       activateBranch(goToValue, target.value);
-      // For radio buttons with data-go-to, trigger step_item visibility
-      if (goToValue) {
-        triggerStepItemVisibility(goToValue);
-      }
+      
+      // For radio buttons with data-go-to, trigger step_item visibility with exact match
+      console.log(`[FormLib] EXACT MATCH: Triggering step_item visibility for data-answer="${goToValue}"`);
+      triggerStepItemVisibility(goToValue);
     } else if (target.type === 'checkbox') {
       if (target.checked) {
         activateBranch(goToValue, target.value);
@@ -571,9 +610,24 @@ function hideStepItem(stepItemId: string): void {
  * Trigger step_item visibility based on radio button selection
  */
 function triggerStepItemVisibility(stepItemId: string): void {
-  logVerbose(`Triggering step_item visibility via multiStep: ${stepItemId}`);
+  console.log(`[FormLib] EXACT MATCH: Triggering step_item visibility for data-answer="${stepItemId}"`);
+  
+  // Validate that the target step item actually exists
+  const targetStepItem = document.querySelector(`[data-answer="${stepItemId}"]`);
+  if (!targetStepItem) {
+    console.error(`[FormLib] CRITICAL: No step item found with data-answer="${stepItemId}"`);
+    console.log('[FormLib] Available step items with data-answer:', 
+      Array.from(document.querySelectorAll('[data-answer]')).map(el => el.getAttribute('data-answer'))
+    );
+    return;
+  }
+  
+  console.log(`[FormLib] VALIDATED: Found target step item with data-answer="${stepItemId}"`, targetStepItem);
+  
   if (typeof multiStepShowStepItem === 'function') {
     multiStepShowStepItem(stepItemId);
+  } else {
+    console.error('[FormLib] multiStepShowStepItem function not available');
   }
 }
 
