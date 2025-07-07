@@ -612,13 +612,30 @@ function hideStepItem(stepItemId: string): void {
 function triggerStepItemVisibility(stepItemId: string): void {
   console.log(`[FormLib] EXACT MATCH: Triggering step_item visibility for data-answer="${stepItemId}"`);
   
-  // Validate that the target step item actually exists
-  const targetStepItem = document.querySelector(`[data-answer="${stepItemId}"]`);
+  // Validate that the target step item actually exists 
+  // Priority: .step_item first, then .step_wrapper fallback (when no step_items exist)
+  let targetStepItem = document.querySelector(`.step_item[data-answer="${stepItemId}"], .step-item[data-answer="${stepItemId}"]`);
+  
   if (!targetStepItem) {
-    console.error(`[FormLib] CRITICAL: No step item found with data-answer="${stepItemId}"`);
-    console.log('[FormLib] Available step items with data-answer:', 
-      Array.from(document.querySelectorAll('[data-answer]')).map(el => el.getAttribute('data-answer'))
-    );
+    // Fallback to .step_wrapper when no .step_item exists
+    targetStepItem = document.querySelector(`.step_wrapper[data-answer="${stepItemId}"]`);
+    console.log(`[FormLib] No .step_item found, using .step_wrapper fallback for data-answer="${stepItemId}"`);
+  }
+  
+  if (!targetStepItem) {
+    console.error(`[FormLib] CRITICAL: No .step_item or .step_wrapper found with data-answer="${stepItemId}"`);
+    console.log('[FormLib] Available elements with data-answer:', {
+      stepItems: Array.from(document.querySelectorAll('.step_item[data-answer], .step-item[data-answer]')).map(el => ({
+        element: el,
+        dataAnswer: el.getAttribute('data-answer'),
+        className: el.className
+      })),
+      stepWrappers: Array.from(document.querySelectorAll('.step_wrapper[data-answer]')).map(el => ({
+        element: el,
+        dataAnswer: el.getAttribute('data-answer'),
+        className: el.className
+      }))
+    });
     return;
   }
   

@@ -457,11 +457,14 @@ function handleNextClick(event: Event, target: Element): void {
   let nextStepId: string | null = null;
   
   if (currentStepItemId) {
-    // If we're in a step_item, use its data-go-to attribute
+    // If we're in a step_item, use its data-go-to attribute for next button navigation
     const stepItem = stepItems.find(item => item.id === currentStepItemId);
     if (stepItem) {
       nextStepId = getAttrValue(stepItem.element, 'data-go-to');
-      logVerbose(`Step item ${currentStepItemId} has data-go-to: ${nextStepId}`);
+      console.log(`[FormLib] NEXT BUTTON FLOW: Active step_item "${currentStepItemId}" has data-go-to="${nextStepId}"`);
+      console.log(`[FormLib] NEXT BUTTON FLOW: Next button will navigate to: ${nextStepId}`);
+    } else {
+      console.warn(`[FormLib] NEXT BUTTON ERROR: Current step_item "${currentStepItemId}" not found in stepItems array`);
     }
   }
   
@@ -641,7 +644,14 @@ export function goToStep(stepIndex: number): void {
   let firstVisibleContent: HTMLElement | null = null;
   
   if (currentStepItemId) {
-    const activeStepItem = newStep.element.querySelector(`[data-answer="${currentStepItemId}"]`) as HTMLElement;
+    // Priority: .step_item first, then .step_wrapper fallback (when no step_items exist)
+    let activeStepItem = newStep.element.querySelector(`.step_item[data-answer="${currentStepItemId}"], .step-item[data-answer="${currentStepItemId}"]`) as HTMLElement;
+    
+    if (!activeStepItem) {
+      // Fallback to .step_wrapper when no .step_item exists
+      activeStepItem = newStep.element.querySelector(`.step_wrapper[data-answer="${currentStepItemId}"]`) as HTMLElement;
+    }
+    
     if (activeStepItem && !activeStepItem.classList.contains('hidden-step') && !activeStepItem.classList.contains('hidden-step-item')) {
       firstVisibleContent = activeStepItem.querySelector('.multi-form_form-content, h1, h2, h3') as HTMLElement || activeStepItem;
     }

@@ -353,11 +353,15 @@ function handleNextClick(event, target) {
     // Determine next step using branching logic
     let nextStepId = null;
     if (currentStepItemId) {
-        // If we're in a step_item, use its data-go-to attribute
+        // If we're in a step_item, use its data-go-to attribute for next button navigation
         const stepItem = stepItems.find(item => item.id === currentStepItemId);
         if (stepItem) {
             nextStepId = getAttrValue(stepItem.element, 'data-go-to');
-            logVerbose(`Step item ${currentStepItemId} has data-go-to: ${nextStepId}`);
+            console.log(`[FormLib] NEXT BUTTON FLOW: Active step_item "${currentStepItemId}" has data-go-to="${nextStepId}"`);
+            console.log(`[FormLib] NEXT BUTTON FLOW: Next button will navigate to: ${nextStepId}`);
+        }
+        else {
+            console.warn(`[FormLib] NEXT BUTTON ERROR: Current step_item "${currentStepItemId}" not found in stepItems array`);
         }
     }
     if (!nextStepId) {
@@ -510,7 +514,12 @@ export function goToStep(stepIndex) {
     // If we have an active step_item, scroll to it instead of main step content
     let firstVisibleContent = null;
     if (currentStepItemId) {
-        const activeStepItem = newStep.element.querySelector(`[data-answer="${currentStepItemId}"]`);
+        // Priority: .step_item first, then .step_wrapper fallback (when no step_items exist)
+        let activeStepItem = newStep.element.querySelector(`.step_item[data-answer="${currentStepItemId}"], .step-item[data-answer="${currentStepItemId}"]`);
+        if (!activeStepItem) {
+            // Fallback to .step_wrapper when no .step_item exists
+            activeStepItem = newStep.element.querySelector(`.step_wrapper[data-answer="${currentStepItemId}"]`);
+        }
         if (activeStepItem && !activeStepItem.classList.contains('hidden-step') && !activeStepItem.classList.contains('hidden-step-item')) {
             firstVisibleContent = activeStepItem.querySelector('.multi-form_form-content, h1, h2, h3') || activeStepItem;
         }
