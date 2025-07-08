@@ -74,6 +74,9 @@ export function initMultiStep(root: Document | Element = document): void {
       }
     }
     
+    // Console log the expected step format for debugging
+    console.log(`Expected Step: "step-${index}" | Found: "${dataAnswer || 'MISSING'}"`);
+    
     // Error if no data-answer found
     if (!dataAnswer) {
       const expectedValue = `step-${index}`;
@@ -421,6 +424,26 @@ function setupNavigationListeners(root: Document | Element): void {
  * Validates the current step and moves to the next one.
  */
 function handleNextClick(event: Event): void {
+  console.log('🔍 NEXT BUTTON CLICK HANDLER TRIGGERED');
+  console.log('Event target:', event.target);
+  console.log('Event currentTarget:', event.currentTarget);
+  
+  // Check if this is actually a skip button being clicked
+  const target = event.target as Element;
+  const skipAttribute = target.getAttribute('data-skip');
+  
+  if (skipAttribute) {
+    console.log('❌ CONFLICT DETECTED: Skip button triggered next button handler!', {
+      skipAttribute,
+      targetElement: target,
+      targetTagName: target.tagName,
+      targetClassName: target.className
+    });
+    // Don't prevent default here - let the skip handler deal with it
+    return;
+  }
+  
+  console.log('✅ Legitimate next button click - proceeding with navigation');
   event.preventDefault();
   goToNextStep();
 }
@@ -715,6 +738,10 @@ function hideStep(stepIndex: number): void {
 function goToNextStep(): void {
   logVerbose('=== GO TO NEXT STEP FUNCTION START ===');
   
+  // Add stack trace to see what called this function
+  console.log('🔍 GO TO NEXT STEP CALLED');
+  console.trace('Call stack for goToNextStep:');
+  
   const currentStep = getCurrentStep();
   if (!currentStep) {
     logVerbose('No current step found');
@@ -737,6 +764,8 @@ function goToNextStep(): void {
 
   // Use original simple next step logic
   const nextIndex = currentStepIndex + 1;
+  console.log(`🔍 ATTEMPTING TO NAVIGATE TO NEXT STEP - Current: ${currentStepIndex}, Next: ${nextIndex}`);
+  
   logVerbose('Sequential navigation logic', {
     currentIndex: currentStepIndex,
     nextIndex,
