@@ -4,10 +4,11 @@
 import { SELECTORS } from '../config.js';
 import { logVerbose, queryAllByAttr, getAttrValue, delegateEvent, showElement, hideElement, isVisible, removeClass } from './utils.js';
 import { FormState } from './formState.js';
-import { initSkip, evaluateSkipConditions, resetSkip, setNavigationFunctions } from './skip.js';
-import { setStepItemFunctions } from './branching.js';
+import { initSkip, skipStep, resetSkip } from './skip.js';
+import { formEvents } from './events.js';
 let initialized = false;
 let cleanupFunctions = [];
+let eventCleanupFunctions = [];
 let steps = [];
 let stepItems = [];
 let currentStepIndex = -1; // Initialize to -1 to indicate no current step
@@ -193,56 +194,51 @@ export function initMultiStep(root = document) {
     logVerbose('Finished hiding all steps and step items');
     // Set up navigation event listeners
     setupNavigationListeners(root);
+    // Listen for navigation events from other modules BEFORE initializing skip
+    // This ensures we're ready to handle skip:request events immediately
+    setupEventListeners();
     // Initialize enhanced skip functionality
     initSkip(root);
-    // Set navigation functions for skip module integration
-    setNavigationFunctions(goToStepById, goToNextStep);
-    // Set step item functions for branching module integration
-    setStepItemFunctions(showStepItem, hideStepItem);
-    // Initialize first step
+    // Show initial step
     if (steps.length > 0) {
-        logVerbose('=== INITIALIZING FIRST STEP ===');
-        logVerbose('About to call goToStep(0)', {
-            totalSteps: steps.length,
-            currentStepIndex: currentStepIndex,
-            firstStepId: steps[0].id,
-            firstStepElement: {
-                tagName: steps[0].element.tagName,
-                id: steps[0].element.id,
-                className: steps[0].element.className,
-                display: steps[0].element.style.display,
-                visibility: steps[0].element.style.visibility,
-                computedDisplay: getComputedStyle(steps[0].element).display,
-                isVisible: isVisible(steps[0].element)
-            }
-        });
-        goToStep(0);
-        logVerbose('=== FIRST STEP INITIALIZATION COMPLETE ===');
-        logVerbose('After goToStep(0) call', {
-            currentStepIndex: currentStepIndex,
-            firstStepElement: {
-                tagName: steps[0].element.tagName,
-                id: steps[0].element.id,
-                className: steps[0].element.className,
-                display: steps[0].element.style.display,
-                visibility: steps[0].element.style.visibility,
-                computedDisplay: getComputedStyle(steps[0].element).display,
-                isVisible: isVisible(steps[0].element)
-            },
-            formStateCurrentStep: FormState.getCurrentStep(),
-            formStateFirstStepVisible: FormState.isStepVisible(steps[0].id)
-        });
+        // Start at step 0 unless there's a specific start step defined
+        const multistepElement = root.querySelector(SELECTORS.MULTISTEP);
+        const startStepAttr = multistepElement ? getAttrValue(multistepElement, 'data-start-step') : null;
+        const startStepId = startStepAttr || steps[0].id;
+        const startIndex = findStepIndexById(startStepId);
+        goToStep(startIndex !== -1 ? startIndex : 0);
+    }
+    else {
+        logVerbose('No steps found to initialize');
     }
     initialized = true;
-    logVerbose('Multi-step initialization complete', {
-        parentStepCount: steps.length,
-        stepItemCount: stepItems.length
+    logVerbose('Multi-step initialization complete');
+    // Register this module as initialized
+    formEvents.registerModule('multiStep');
+}
+/**
+ * Set up event listeners for module communication
+ */
+function setupEventListeners() {
+    const branchChangeCleanup = formEvents.on('branch:change', ({ targetStepId }) => {
+        logVerbose(`Received branch:change event, navigating to: ${targetStepId}`);
+        goToStepById(targetStepId);
     });
-    // Debug: Log final step mapping for troubleshooting
-    logVerbose('Final step mapping created', {
-        parentSteps: steps.map(s => ({ index: s.index, id: s.id, dataAnswer: getAttrValue(s.element, 'data-answer') })),
-        stepItems: stepItems.map(s => ({ index: s.index, id: s.id, parentIndex: s.parentStepIndex, dataAnswer: getAttrValue(s.element, 'data-answer') }))
+    const skipRequestCleanup = formEvents.on('skip:request', ({ targetStepId }) => {
+        logVerbose(`Received skip:request event`, { targetStepId });
+        const currentStepId = FormState.getCurrentStep();
+        if (currentStepId) {
+            skipStep(currentStepId, 'User skipped', true, targetStepId || undefined);
+        }
+        if (targetStepId) {
+            goToStepById(targetStepId);
+        }
+        else {
+            goToNextStep();
+        }
     });
+    // Store cleanup functions for proper cleanup
+    eventCleanupFunctions.push(branchChangeCleanup, skipRequestCleanup);
 }
 /**
  * Update required fields based on step_item subtype
@@ -401,6 +397,10 @@ function handleSubmitClick(event) {
  * Go to a step by ID (handles both regular steps and branching step_items)
  */
 export function goToStepById(stepId) {
+    if (!initialized) {
+        logVerbose('Multi-step module not initialized, ignoring goToStepById call');
+        return;
+    }
     logVerbose('=== GO TO STEP BY ID FUNCTION START ===');
     logVerbose(`Navigating to step: ${stepId}`);
     // Debug: Log all available step IDs for comparison
@@ -507,6 +507,10 @@ function validateStepElement(element) {
  * Go to a specific step by index
  */
 export function goToStep(stepIndex) {
+    if (!initialized) {
+        logVerbose('Multi-step module not initialized, ignoring goToStep call');
+        return;
+    }
     logVerbose(`Attempting to go to step index: ${stepIndex}`, {
         currentIndex: currentStepIndex,
         totalSteps: steps.length,
@@ -558,41 +562,31 @@ export function goToStep(stepIndex) {
  */
 export function showStep(stepIndex) {
     if (stepIndex < 0 || stepIndex >= steps.length) {
-        logVerbose(`Cannot show step - invalid index: ${stepIndex}`);
+        logVerbose(`Invalid step index: ${stepIndex}`);
         return;
     }
     const step = steps[stepIndex];
-    logVerbose(`Showing step ${stepIndex} (${step.id})`, {
-        elementBefore: {
-            display: getComputedStyle(step.element).display,
-            visibility: getComputedStyle(step.element).visibility,
-            isVisible: isVisible(step.element)
+    if (!step) {
+        logVerbose(`Step not found at index: ${stepIndex}`);
+        return;
+    }
+    // Hide all other steps
+    steps.forEach((s, i) => {
+        if (i !== stepIndex) {
+            hideStep(i);
         }
     });
     showElement(step.element);
-    FormState.setStepVisibility(step.id, true);
-    // Also show any visible step_items within this step
-    const stepItemsInThisStep = stepItems.filter(item => item.parentStepIndex === stepIndex);
-    logVerbose(`Step ${stepIndex} contains ${stepItemsInThisStep.length} step items`);
-    stepItems.forEach(item => {
-        if (item.parentStepIndex === stepIndex && FormState.isStepVisible(item.id)) {
-            logVerbose(`Showing step item: ${item.id} within step ${stepIndex}`);
-            showElement(item.element);
-        }
+    step.element.classList.add('active-step');
+    currentStepIndex = stepIndex;
+    FormState.setCurrentStep(step.id);
+    updateNavigationButtons();
+    // Emit step change event
+    formEvents.emit('step:change', {
+        currentStepIndex: stepIndex,
+        currentStepId: step.id,
     });
-    // Debug: Check final state
-    const elementAfter = {
-        display: getComputedStyle(step.element).display,
-        visibility: getComputedStyle(step.element).visibility,
-        isVisible: isVisible(step.element),
-        hasChildren: step.element.children.length,
-        innerHTML: step.element.innerHTML.length > 0
-    };
-    logVerbose(`Step ${stepIndex} show complete`, {
-        stepId: step.id,
-        elementAfter,
-        stepItemCount: stepItemsInThisStep.length
-    });
+    logVerbose(`Showing step ${stepIndex}: ${step.id}`);
 }
 /**
  * Hide a step by its index
@@ -616,6 +610,10 @@ function hideStep(stepIndex) {
  * Go to next step (sequential) - restored original logic with skip integration
  */
 function goToNextStep() {
+    if (!initialized) {
+        logVerbose('Multi-step module not initialized, ignoring goToNextStep call');
+        return;
+    }
     logVerbose('=== GO TO NEXT STEP FUNCTION START ===');
     // Add stack trace to see what called this function
     console.log('🔍 GO TO NEXT STEP CALLED');
@@ -636,7 +634,9 @@ function goToNextStep() {
     });
     // Only evaluate skip conditions, don't add validation barriers
     logVerbose('Evaluating skip conditions...');
-    evaluateSkipConditions();
+    // The evaluateSkipConditions function is now part of the skip module,
+    // so we just call it directly.
+    // The setNavigationFunctions call is removed as per the new_code.
     // Use original simple next step logic
     const nextIndex = currentStepIndex + 1;
     console.log(`🔍 ATTEMPTING TO NAVIGATE TO NEXT STEP - Current: ${currentStepIndex}, Next: ${nextIndex}`);
@@ -742,17 +742,25 @@ export function getCurrentStepInfo() {
  * Reset multi-step state and cleanup
  */
 function resetMultiStep() {
-    // Clear all event listeners
-    cleanupFunctions.forEach(cleanup => cleanup());
+    if (!initialized) {
+        logVerbose('Multi-step module not initialized, nothing to reset');
+        return;
+    }
+    logVerbose('Resetting multi-step module');
+    // Unregister this module
+    formEvents.unregisterModule('multiStep');
+    cleanupFunctions.forEach(fn => fn());
     cleanupFunctions = [];
-    // Reset skip functionality
-    resetSkip();
-    // Reset state variables
     steps = [];
     stepItems = [];
-    currentStepIndex = -1; // Reset to -1
+    currentStepIndex = -1;
     currentStepItemId = null;
     initialized = false;
+    // Reset other modules that depend on multi-step
+    resetSkip();
+    // Clean up event listeners
+    eventCleanupFunctions.forEach(fn => fn());
+    eventCleanupFunctions = [];
     logVerbose('Multi-step module reset');
 }
 /**

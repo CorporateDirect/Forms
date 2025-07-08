@@ -10,25 +10,12 @@ import {
   getAttrValue, 
   delegateEvent,
   getInputValue,
-  isFormInput
+  isFormInput,
+  showElement,
+  hideElement
 } from './utils.js';
 import { FormState } from './formState.js';
-
-// Forward declaration for multiStep integration
-let showStepItemFn: ((stepItemId: string) => void) | null = null;
-let hideStepItemFn: ((stepItemId: string) => void) | null = null;
-
-/**
- * Set step item functions from multiStep module
- */
-export function setStepItemFunctions(
-  showStepItemFunction: (stepItemId: string) => void,
-  hideStepItemFunction: (stepItemId: string) => void
-): void {
-  showStepItemFn = showStepItemFunction;
-  hideStepItemFn = hideStepItemFunction;
-  logVerbose('Step item functions set for branching module');
-}
+import { formEvents } from './events.js';
 
 let initialized = false;
 let cleanupFunctions: (() => void)[] = [];
@@ -49,6 +36,9 @@ export function initBranching(root: Document | Element = document): void {
 
   initialized = true;
   logVerbose('Branching initialization complete');
+  
+  // Register this module as initialized
+  formEvents.registerModule('branching');
 }
 
 /**
@@ -188,40 +178,119 @@ function validateGoToValue(goToValue: string | null): boolean {
  * Handle branch trigger events
  */
 function handleBranchTrigger(event: Event, target: Element): void {
+  console.log('🌿 [Branch] Trigger event detected', {
+    eventType: event.type,
+    element: target,
+    tagName: target.tagName,
+    className: target.className,
+    id: target.id
+  });
+
+  if (!initialized) {
+    console.error('❌ [Branch] Module not initialized, ignoring branch trigger', {
+      target: target,
+      initialized: initialized,
+      eventType: event.type
+    });
+    return;
+  }
+
   if (!isFormInput(target)) {
+    console.log('ℹ️ [Branch] Element is not a form input, ignoring', {
+      tagName: target.tagName,
+      isInput: target instanceof HTMLInputElement,
+      isSelect: target instanceof HTMLSelectElement,
+      isTextarea: target instanceof HTMLTextAreaElement
+    });
     return;
   }
 
   const goToValue = getAttrValue(target, 'data-go-to');
+  const fieldName = (target as HTMLInputElement).name || getAttrValue(target, 'data-step-field-name');
+  const inputValue = getInputValue(target);
+  const inputType = (target as HTMLInputElement).type || target.tagName;
+  
+  console.log('📋 [Branch] Data attributes analysis:', {
+    'data-go-to': goToValue,
+    'data-step-field-name': getAttrValue(target, 'data-step-field-name'),
+    'name': (target as HTMLInputElement).name,
+    'type': inputType,
+    'value': inputValue,
+    'checked': (target as HTMLInputElement).checked,
+    allAttributes: Array.from(target.attributes).map(attr => ({ 
+      name: attr.name, 
+      value: attr.value 
+    }))
+  });
   
   // Validate go-to value before proceeding
   if (goToValue && !validateGoToValue(goToValue)) {
-    logVerbose('Skipping branch trigger due to invalid data-go-to value', { goToValue });
+    console.error('❌ [Branch] Invalid data-go-to value format', { 
+      goToValue,
+      validFormat: 'alphanumeric, hyphens, underscores only',
+      pattern: '/^[a-zA-Z0-9_-]+$/'
+    });
     return;
   }
-  
-  const inputValue = getInputValue(target);
 
-  logVerbose('Branch trigger activated', {
+  console.log('🎯 [Branch] Processing branch trigger:', {
     element: target,
     goTo: goToValue,
     value: inputValue,
-    type: (target as HTMLInputElement).type || target.tagName
+    type: inputType,
+    fieldName: fieldName,
+    hasGoTo: !!goToValue,
+    hasValue: !!inputValue
   });
 
   // Store the field value in state
-  const fieldName = (target as HTMLInputElement).name || getAttrValue(target, 'data-step-field-name');
   if (fieldName) {
     FormState.setField(fieldName, inputValue);
+    console.log('💾 [Branch] Field value stored in FormState:', {
+      fieldName,
+      value: inputValue,
+      previousValue: FormState.getField(fieldName)
+    });
+  } else {
+    console.warn('⚠️ [Branch] No field name found, cannot store value in FormState', {
+      element: target,
+      name: (target as HTMLInputElement).name,
+      dataStepFieldName: getAttrValue(target, 'data-step-field-name')
+    });
   }
 
-  // Handle different input types with better error handling
+  // Handle different input types with detailed logging
   try {
     if (target instanceof HTMLInputElement) {
       if (target.type === 'radio' && target.checked) {
+        console.log('📻 [Branch] Processing radio button selection:', {
+          name: target.name,
+          value: target.value,
+          checked: target.checked,
+          goTo: goToValue
+        });
+        
         if (!goToValue) {
-          logVerbose('Radio button has no data-go-to attribute, skipping navigation');
+          console.warn('⚠️ [Branch] Radio button has no data-go-to attribute, skipping navigation', {
+            element: target,
+            name: target.name,
+            value: target.value
+          });
           return;
+        }
+        
+        // Verify target step exists
+        const targetElement = document.querySelector(`[data-answer="${goToValue}"]`);
+        if (!targetElement) {
+          const allAnswerElements = document.querySelectorAll('[data-answer]');
+          const allAnswerValues = Array.from(allAnswerElements).map(el => getAttrValue(el, 'data-answer'));
+          
+          console.error('❌ [Branch] Target step not found in DOM!', {
+            searchedFor: goToValue,
+            availableSteps: allAnswerValues,
+            suggestion: `Check if element with data-answer="${goToValue}" exists`,
+            possibleMatches: allAnswerValues.filter(val => val && val.includes(goToValue))
+          });
         }
         
         // Handle radio group selection
@@ -230,46 +299,93 @@ function handleBranchTrigger(event: Event, target: Element): void {
         // Apply active class styling
         applyRadioActiveClass(target);
         
-        // Activate branch and show step item
+        // Activate branch and emit event
         activateBranch(goToValue, target.value);
-        triggerStepItemVisibility(goToValue);
+        
+        console.log('🚀 [Branch] Emitting branch:change event:', {
+          targetStepId: goToValue,
+          triggerValue: target.value,
+          triggerType: 'radio'
+        });
+        
+        formEvents.emit('branch:change', { targetStepId: goToValue });
         
       } else if (target.type === 'checkbox') {
+        console.log('☑️ [Branch] Processing checkbox:', {
+          name: target.name,
+          value: target.value,
+          checked: target.checked,
+          goTo: goToValue
+        });
+        
         if (goToValue) {
           if (target.checked) {
+            console.log('✅ [Branch] Checkbox checked, activating branch:', { goToValue });
             activateBranch(goToValue, target.value);
           } else {
+            console.log('❌ [Branch] Checkbox unchecked, deactivating branch:', { goToValue });
             deactivateBranch(goToValue);
           }
         }
       } else if (target.type !== 'radio' && target.type !== 'checkbox') {
+        console.log('📝 [Branch] Processing text input/other:', {
+          type: target.type,
+          name: target.name,
+          value: inputValue,
+          goTo: goToValue
+        });
+        
         // Text inputs, selects, etc.
         if (goToValue) {
           if (inputValue) {
+            console.log('✅ [Branch] Input has value, activating branch:', { goToValue, inputValue });
             activateBranch(goToValue, inputValue);
           } else {
+            console.log('❌ [Branch] Input is empty, deactivating branch:', { goToValue });
             deactivateBranch(goToValue);
           }
         }
       }
     } else {
+      console.log('📋 [Branch] Processing select/textarea:', {
+        tagName: target.tagName,
+        value: inputValue,
+        goTo: goToValue
+      });
+      
       // Select elements and textareas
       if (goToValue) {
         if (inputValue) {
+          console.log('✅ [Branch] Element has value, activating branch:', { goToValue, inputValue });
           activateBranch(goToValue, inputValue);
         } else {
+          console.log('❌ [Branch] Element is empty, deactivating branch:', { goToValue });
           deactivateBranch(goToValue);
         }
       }
     }
   } catch (error) {
-    logVerbose('Error handling branch trigger', { error, element: target });
+    console.error('💥 [Branch] Error handling branch trigger:', {
+      error: error,
+      errorMessage: error instanceof Error ? error.message : String(error),
+      errorStack: error instanceof Error ? error.stack : undefined,
+      element: target,
+      goToValue,
+      inputValue,
+      fieldName
+    });
   }
 
   // Update step visibility if we have active conditions
   const activeConditions = FormState.getBranchPath().activeConditions;
   if (Object.keys(activeConditions).length > 0) {
+    console.log('🔄 [Branch] Updating step visibility based on active conditions:', {
+      activeConditions,
+      conditionCount: Object.keys(activeConditions).length
+    });
     updateStepVisibility();
+  } else {
+    console.log('ℹ️ [Branch] No active conditions, skipping step visibility update');
   }
 }
 
@@ -277,20 +393,21 @@ function handleBranchTrigger(event: Event, target: Element): void {
  * Apply active class to radio button and remove from others in the same group
  */
 function applyRadioActiveClass(selectedRadio: HTMLInputElement): void {
+  const groupName = selectedRadio.name;
+  if (!groupName) return;
+
   const activeClass = getAttrValue(selectedRadio, 'fs-inputactive-class') || 'is-active-inputactive';
   
   // Remove active class from other radio buttons in the same group
-  if (selectedRadio.name) {
-    const radioGroup = document.querySelectorAll(`input[type="radio"][name="${selectedRadio.name}"]`);
-    radioGroup.forEach(radio => {
-      const htmlRadio = radio as HTMLInputElement;
-      const radioLabel = htmlRadio.closest('label');
-      if (htmlRadio !== selectedRadio) {
-        htmlRadio.classList.remove(activeClass);
-        radioLabel?.classList.remove(activeClass);
-      }
-    });
-  }
+  const radioGroup = document.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
+  radioGroup.forEach(radio => {
+    const htmlRadio = radio as HTMLInputElement;
+    const radioLabel = htmlRadio.closest('label');
+    if (htmlRadio !== selectedRadio) {
+      htmlRadio.classList.remove(activeClass);
+      radioLabel?.classList.remove(activeClass);
+    }
+  });
   
   // Add active class to the selected radio and its label
   selectedRadio.classList.add(activeClass);
@@ -299,80 +416,26 @@ function applyRadioActiveClass(selectedRadio: HTMLInputElement): void {
 }
 
 /**
- * Handle radio button group selection - deactivate other options in the same group
+ * Handle radio group state for branching
  */
 function handleRadioGroupSelection(selectedRadio: HTMLInputElement): void {
-  if (!selectedRadio.name) return;
-  
-  // Find all radio buttons in the same group
-  const radioGroup = document.querySelectorAll(`input[type="radio"][name="${selectedRadio.name}"]`);
-  
-  radioGroup.forEach(radio => {
-    const htmlRadio = radio as HTMLInputElement;
-    const radioGoTo = getAttrValue(htmlRadio, 'data-go-to');
-    
-    if (htmlRadio !== selectedRadio && radioGoTo) {
-      // Deactivate this radio button's branch
-      deactivateBranch(radioGoTo);
-      hideStepItem(radioGoTo);
+  const groupName = selectedRadio.name;
+  if (!groupName) return;
+
+  const allRadiosInGroup = document.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
+  allRadiosInGroup.forEach(radio => {
+    const r = radio as HTMLInputElement;
+    if (r !== selectedRadio) {
+      const goToValue = getAttrValue(r, 'data-go-to');
+      if (goToValue) {
+        deactivateBranch(goToValue);
+      }
     }
   });
 }
 
 /**
- * Show a step item by calling the multiStep function
- */
-function showStepItem(stepItemId: string): void {
-  if (showStepItemFn) {
-    showStepItemFn(stepItemId);
-  } else {
-    // Fallback to just updating FormState
-    FormState.setStepVisibility(stepItemId, true);
-    logVerbose(`Set step item visibility to true in FormState: ${stepItemId} (multiStep function not available)`);
-  }
-}
-
-/**
- * Hide a step item by calling the multiStep function
- */
-function hideStepItem(stepItemId: string): void {
-  if (hideStepItemFn) {
-    hideStepItemFn(stepItemId);
-  } else {
-    // Fallback to just updating FormState
-    FormState.setStepVisibility(stepItemId, false);
-    logVerbose(`Set step item visibility to false in FormState: ${stepItemId} (multiStep function not available)`);
-  }
-}
-
-/**
- * Trigger step_item visibility based on radio button selection
- */
-function triggerStepItemVisibility(stepItemId: string): void {
-  // Defensive check
-  if (!stepItemId) {
-    logVerbose('No stepItemId provided to triggerStepItemVisibility');
-    return;
-  }
-
-  logVerbose('=== BRANCHING: TRIGGER STEP ITEM VISIBILITY ===');
-  logVerbose(`Triggering visibility for step_item: ${stepItemId}`);
-
-  // Check if this might conflict with skip navigation
-  const currentStep = FormState.getCurrentStep();
-  logVerbose('Branching visibility trigger context', {
-    targetStepItem: stepItemId,
-    currentStep,
-    isSkipOperation: false // This is branching, not skip
-  });
-
-  showStepItem(stepItemId);
-  
-  logVerbose('=== BRANCHING: TRIGGER STEP ITEM VISIBILITY END ===');
-}
-
-/**
- * Activate a branch and store its state
+ * Activate a branch target
  */
 function activateBranch(target: string | null, value: string | string[]): void {
   if (!target) return;
@@ -380,134 +443,98 @@ function activateBranch(target: string | null, value: string | string[]): void {
 }
 
 /**
- * Deactivate a branch path
+ * Deactivate a branch target
  */
 function deactivateBranch(target: string | null): void {
   if (!target) return;
-
-  logVerbose(`Deactivating branch: ${target}`);
-
-  // Remove active condition from state
   FormState.setActiveCondition(target, null);
-
-  // Clear fields from this branch
   clearBranchFields(target);
-
-  // Update step visibility
-  updateStepVisibility();
 }
 
 /**
  * Get the next step based on branching logic
+ * (This might still be useful for complex scenarios, but core navigation is event-based)
  */
 export function getNextStep(): string | null {
   const activeConditions = FormState.getBranchPath().activeConditions;
-  
-  // This logic can be enhanced to handle complex rules.
-  // For now, it returns the first active condition target.
-  const nextStep = Object.keys(activeConditions).find(key => activeConditions[key]);
-  
-  return nextStep || null;
+  const activeTargets = Object.keys(activeConditions).filter(
+    key => activeConditions[key]
+  );
+  return activeTargets.length > 0 ? activeTargets[0] : null;
 }
 
 /**
- * Update step visibility based on active branching conditions.
+ * Update visibility of all conditional steps based on active branches
  */
 function updateStepVisibility(): void {
-  const allSteps = queryAllByAttr(SELECTORS.STEP);
+  const allConditionalSteps = queryAllByAttr('[data-show-if]');
   const activeConditions = FormState.getBranchPath().activeConditions;
 
-  allSteps.forEach(step => {
-    const stepAnswer = getAttrValue(step, 'data-answer');
-    const shouldBeVisible = shouldStepBeVisible(stepAnswer, activeConditions);
-    
-    // Update FormState
-    if (stepAnswer) {
-      FormState.setStepVisibility(stepAnswer, shouldBeVisible);
-    }
-  });
-}
-
-/**
- * Check if a step should be visible based on its data-show-if attribute.
- */
-function shouldStepBeVisible(stepAnswer: string | null, activeConditions: Record<string, unknown>): boolean {
-  if (!stepAnswer) return true; // Steps without data-answer are always visible
-  
-  // Find the step element
-  const stepElement = queryByAttr(`[data-answer="${stepAnswer}"]`);
-  if (stepElement) {
-    const showIf = getAttrValue(stepElement, 'data-show-if');
-    if (showIf) {
-      // Check if the step matches the show-if condition
-      const conditionMet = evaluateCondition(showIf, activeConditions);
-      return conditionMet;
-    }
-  }
-  
-  // Default to not visible if it has conditions but none are met
-  return false;
-}
-
-/**
- * Clear fields associated with inactive branches
- */
-function clearBranchFields(branchTarget: string): void {
-  // Find all fields that were set when this branch was active
-  const fieldsToCheck = document.querySelectorAll(`[data-step-field-name]`);
-  
-  fieldsToCheck.forEach(field => {
-    const fieldElement = field as HTMLInputElement;
-    const stepElement = fieldElement.closest(SELECTORS.STEP);
-    
-    if (stepElement) {
-      const stepAnswer = getAttrValue(stepElement, 'data-answer');
-      if (stepAnswer === branchTarget) {
-        // Clear field value
-        fieldElement.value = '';
-        if (fieldElement.name) {
-          FormState.setField(fieldElement.name, null);
-        }
+  allConditionalSteps.forEach(step => {
+    const condition = getAttrValue(step, 'data-show-if');
+    if (condition) {
+      if (evaluateCondition(condition, activeConditions)) {
+        showElement(step as HTMLElement);
+      } else {
+        hideElement(step as HTMLElement);
       }
     }
   });
 }
 
 /**
- * Reset branching module state
+ * Clear fields within a deactivated branch
  */
-export function resetBranching(): void {
-  logVerbose('Resetting branching logic');
+function clearBranchFields(branchTarget: string): void {
+  const fieldsToClear: string[] = [];
+  const branchContainer = queryByAttr(`[data-answer="${branchTarget}"]`);
 
-  // Clean up event listeners
-  cleanupFunctions.forEach(cleanup => cleanup());
-  cleanupFunctions = [];
+  if (branchContainer) {
+    const fields = queryAllByAttr('[data-step-field-name]', branchContainer);
+    fields.forEach(field => {
+      const fieldName = getAttrValue(field, 'data-step-field-name');
+      if (fieldName) {
+        fieldsToClear.push(fieldName);
+      }
+    });
+  }
 
-  // Clear active conditions
-  const activeConditions = FormState.getBranchPath().activeConditions;
-  Object.keys(activeConditions).forEach(key => {
-    FormState.setActiveCondition(key, null);
-  });
-
-  // Reset visibility of all conditional steps
-  const conditionalSteps = queryAllByAttr(SELECTORS.ANSWER);
-  conditionalSteps.forEach(step => {
-    const htmlStep = step as HTMLElement;
-    htmlStep.style.display = 'none';
-    htmlStep.classList.add('hidden-step');
-  });
-
-  initialized = false;
-  logVerbose('Branching reset complete');
+  if (fieldsToClear.length > 0) {
+    FormState.clearFields(fieldsToClear);
+  }
 }
 
 /**
- * Get current branching state for debugging
+ * Reset branching module state
+ */
+export function resetBranching(): void {
+  if (!initialized) {
+    logVerbose('Branching module not initialized, nothing to reset');
+    return;
+  }
+  
+  logVerbose('Resetting branching module');
+
+  // Unregister this module
+  formEvents.unregisterModule('branching');
+  
+  cleanupFunctions.forEach(fn => fn());
+  cleanupFunctions = [];
+  
+  // Clear relevant parts of FormState
+  const branchPath = FormState.getBranchPath();
+  branchPath.activeConditions = {};
+  
+  initialized = false;
+  logVerbose('Branching module reset');
+}
+
+/**
+ * Get current branching state
  */
 export function getBranchingState(): Record<string, unknown> {
   return {
     initialized,
-    activeConditions: FormState.getBranchPath().activeConditions,
-    branchPath: FormState.getBranchPath()
+    activeConditions: FormState.getBranchPath().activeConditions
   };
 } 

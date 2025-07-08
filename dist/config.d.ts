@@ -78,6 +78,7 @@ export declare const SELECTORS: {
     readonly REQUIRED: "[required]";
     readonly ERROR_MESSAGE: "[data-error-message]";
     readonly VALIDATE: "[data-validate]";
+    readonly ALL_INPUTS: "input, select, textarea";
 };
 export declare const DEFAULTS: {
     readonly START_STEP: 1;

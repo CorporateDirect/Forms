@@ -14,8 +14,8 @@ import {
   removeClass
 } from './utils.js';
 import { FormState } from './formState.js';
-import { initSkip, evaluateSkipConditions, resetSkip, setNavigationFunctions } from './skip.js';
-import { setStepItemFunctions } from './branching.js';
+import { initSkip, skipStep, resetSkip } from './skip.js';
+import { formEvents } from './events.js';
 
 interface StepElement {
   element: HTMLElement;
@@ -30,6 +30,7 @@ interface StepElement {
 
 let initialized = false;
 let cleanupFunctions: (() => void)[] = [];
+let eventCleanupFunctions: (() => void)[] = [];
 let steps: StepElement[] = [];
 let stepItems: StepElement[] = [];
 let currentStepIndex = -1; // Initialize to -1 to indicate no current step
@@ -50,11 +51,13 @@ export function initMultiStep(root: Document | Element = document): void {
   const stepElements = queryAllByAttr(SELECTORS.STEP, root);
   
   steps = Array.from(stepElements).map((stepElement, index) => {
-    logVerbose(`Processing step ${index}`, {
+    console.log(`🔍 [MultiStep] Processing step ${index}:`, {
       element: stepElement,
       tagName: stepElement.tagName,
       id: stepElement.id,
-      className: stepElement.className
+      className: stepElement.className,
+      hasDataForm: stepElement.hasAttribute('data-form'),
+      dataFormValue: getAttrValue(stepElement, 'data-form')
     });
 
     // Look for data-answer on step_wrapper child element (primary step identifier)
@@ -63,36 +66,59 @@ export function initMultiStep(root: Document | Element = document): void {
     
     if (stepWrapper) {
       dataAnswer = getAttrValue(stepWrapper, 'data-answer');
-      if (dataAnswer) {
-        logVerbose(`Found data-answer on step_wrapper: ${dataAnswer}`);
-      }
+      console.log(`📋 [MultiStep] Found step_wrapper with data-answer:`, {
+        stepIndex: index,
+        dataAnswer,
+        stepWrapper: {
+          tagName: stepWrapper.tagName,
+          id: stepWrapper.id,
+          className: stepWrapper.className
+        }
+      });
     } else {
+      console.log(`ℹ️ [MultiStep] No step_wrapper found, checking step element directly`);
       // Fallback: look for data-answer on the step element itself
       dataAnswer = getAttrValue(stepElement, 'data-answer');
       if (dataAnswer) {
-        logVerbose(`Found data-answer on step element: ${dataAnswer}`);
+        console.log(`📋 [MultiStep] Found data-answer on step element:`, {
+          stepIndex: index,
+          dataAnswer
+        });
       }
     }
     
     // Console log the expected step format for debugging
-    console.log(`Expected Step: "step-${index}" | Found: "${dataAnswer || 'MISSING'}"`);
+    const expectedValue = `step-${index}`;
+    console.log(`🎯 [MultiStep] Step ${index} validation:`, {
+      expected: expectedValue,
+      found: dataAnswer || 'MISSING',
+      isValid: !!dataAnswer,
+      matches: dataAnswer === expectedValue
+    });
     
     // Error if no data-answer found
     if (!dataAnswer) {
-      const expectedValue = `step-${index}`;
-      const errorMsg = `STEP INITIALIZATION ERROR: Step ${index} is missing required data-answer attribute`;
-      console.error(errorMsg, {
-        stepElement: stepElement,
+      console.error(`❌ [MultiStep] STEP INITIALIZATION ERROR:`, {
         stepIndex: index,
-        tagName: stepElement.tagName,
-        id: stepElement.id,
-        className: stepElement.className,
-        hasStepWrapper: !!stepWrapper,
+        error: `Step ${index} is missing required data-answer attribute`,
+        stepElement: {
+          tagName: stepElement.tagName,
+          id: stepElement.id,
+          className: stepElement.className,
+          hasStepWrapper: !!stepWrapper,
+          innerHTML: stepElement.innerHTML.substring(0, 200) + '...'
+        },
         expectedDataAnswer: expectedValue,
         solution: `Add data-answer="${expectedValue}" to step_wrapper or step element`,
-        example: stepWrapper 
-          ? `<div class="step_wrapper" data-answer="${expectedValue}">` 
-          : `<div data-form="step" data-answer="${expectedValue}">`
+        examples: {
+          stepWrapper: `<div class="step_wrapper" data-answer="${expectedValue}">`,
+          stepElement: `<div data-form="step" data-answer="${expectedValue}">`
+        },
+        troubleshooting: {
+          checkStepWrapper: `element.querySelector('.step_wrapper[data-answer]')`,
+          checkStepElement: `element.getAttribute('data-answer')`,
+          allDataAnswers: `Array.from(document.querySelectorAll('[data-answer]')).map(el => el.getAttribute('data-answer'))`
+        }
       });
       
       // Skip this step - don't add it to the steps array
@@ -108,6 +134,16 @@ export function initMultiStep(root: Document | Element = document): void {
       number: getAttrValue(stepElement, 'data-step-number') || undefined,
       isStepItem: false
     };
+
+    console.log(`✅ [MultiStep] Step ${index} initialized successfully:`, {
+      stepId: dataAnswer,
+      stepInfo: {
+        id: stepInfo.id,
+        type: stepInfo.type,
+        subtype: stepInfo.subtype,
+        number: stepInfo.number
+      }
+    });
 
     // Register step in FormState
     FormState.setStepInfo(dataAnswer, {
@@ -126,83 +162,104 @@ export function initMultiStep(root: Document | Element = document): void {
     step.index = index;
   });
 
-  // Find all step_item elements within parent steps (for branching scenarios)
-  stepItems = [];
-  steps.forEach((parentStep, parentIndex) => {
-    // Look for step_item elements within this parent step (branching options)
-    const stepItemElements = parentStep.element.querySelectorAll('.step_item[data-answer], .step-item[data-answer]');
+  // Initialize step items (branching options)
+  const stepItemElements = document.querySelectorAll('.step_item');
+  
+  console.log(`🌿 [MultiStep] Found ${stepItemElements.length} step_items for branching logic`);
+  
+  stepItems = Array.from(stepItemElements).map((stepItemElement, index) => {
+    console.log(`🔍 [MultiStep] Processing step_item ${index}:`, {
+      element: stepItemElement,
+      tagName: stepItemElement.tagName,
+      id: stepItemElement.id,
+      className: stepItemElement.className,
+      hasDataAnswer: stepItemElement.hasAttribute('data-answer'),
+      dataAnswer: getAttrValue(stepItemElement, 'data-answer')
+    });
+
+    const dataAnswer = getAttrValue(stepItemElement, 'data-answer');
     
-    if (stepItemElements.length > 0) {
-      logVerbose(`Found ${stepItemElements.length} branching step_items in step ${parentIndex} (${parentStep.id})`);
-      
-      stepItemElements.forEach((stepItemElement) => {
-        const htmlElement = stepItemElement as HTMLElement;
-        const dataAnswer = getAttrValue(stepItemElement, 'data-answer');
-        
-        if (!dataAnswer) {
-          // Try to determine expected value based on context
-          const stepType = getAttrValue(stepItemElement, 'data-step-type') || 'unknown';
-          const stepSubtype = getAttrValue(stepItemElement, 'data-step-subtype') || 'unknown';
-          const stepNumber = getAttrValue(stepItemElement, 'data-step-number') || '1';
-          
-          let expectedValue = `${stepSubtype}-${stepNumber}`;
-          if (stepType === 'member') {
-            expectedValue = `${stepSubtype}-${stepNumber}`;
-          } else if (stepType === 'manager') {
-            expectedValue = `manager-${stepSubtype}-${stepNumber}`;
-          }
-          
-          const errorMsg = `STEP_ITEM INITIALIZATION ERROR: Step item in step ${parentIndex} (${parentStep.id}) is missing required data-answer attribute`;
-          console.error(errorMsg, {
-            stepItemElement: stepItemElement,
-            parentStepIndex: parentIndex,
-            parentStepId: parentStep.id,
-            tagName: stepItemElement.tagName,
-            id: stepItemElement.id,
-            className: stepItemElement.className,
-            stepType: stepType,
-            stepSubtype: stepSubtype,
-            stepNumber: stepNumber,
-            expectedDataAnswer: expectedValue,
-            solution: `Add data-answer="${expectedValue}" to step_item element`,
-            example: `<div class="step_item" data-answer="${expectedValue}">`
-          });
-          return; // Skip this step_item
+    if (!dataAnswer) {
+      console.error(`❌ [MultiStep] STEP_ITEM INITIALIZATION ERROR:`, {
+        stepItemIndex: index,
+        error: `Step_item ${index} is missing required data-answer attribute`,
+        stepItemElement: {
+          tagName: stepItemElement.tagName,
+          id: stepItemElement.id,
+          className: stepItemElement.className,
+          innerHTML: stepItemElement.innerHTML.substring(0, 200) + '...'
+        },
+        solution: `Add data-answer attribute to step_item element`,
+        example: `<div class="step_item" data-answer="some-unique-id">`,
+        troubleshooting: {
+          checkElement: `element.getAttribute('data-answer')`,
+          allDataAnswers: `Array.from(document.querySelectorAll('[data-answer]')).map(el => el.getAttribute('data-answer'))`
         }
-        
-        const stepItemInfo: StepElement = {
-          element: htmlElement,
-          id: dataAnswer,
-          index: stepItems.length, // Global step_item index
-          type: getAttrValue(stepItemElement, 'data-step-type') || undefined,
-          subtype: getAttrValue(stepItemElement, 'data-step-subtype') || undefined,
-          number: getAttrValue(stepItemElement, 'data-step-number') || undefined,
-          isStepItem: true,
-          parentStepIndex: parentIndex
-        };
+      });
+      
+      // Skip this step_item - don't add it to the stepItems array
+      return null;
+    }
 
-        // Register step_item in FormState as a branching option
-        FormState.setStepInfo(dataAnswer, {
-          type: stepItemInfo.type,
-          subtype: stepItemInfo.subtype,
-          number: stepItemInfo.number,
-          visible: false, // Step items are hidden by default until selected
-          visited: false
-        });
-
-        stepItems.push(stepItemInfo);
-        
-        logVerbose(`Registered branching step_item: ${dataAnswer}`, {
-          parentStepIndex: parentIndex,
-          parentStepId: parentStep.id,
-          stepItemIndex: stepItemInfo.index,
-          purpose: 'branching option within step'
-        });
+    // Find the parent step for this step_item
+    const parentStepElement = stepItemElement.closest('[data-form="step"]');
+    let parentStepIndex: number | undefined;
+    
+    if (parentStepElement) {
+      parentStepIndex = Array.from(stepElements).indexOf(parentStepElement);
+      console.log(`🔗 [MultiStep] Found parent step for step_item:`, {
+        stepItemId: dataAnswer,
+        parentStepIndex,
+        parentStepId: parentStepIndex !== -1 ? steps[parentStepIndex]?.id : 'NOT_FOUND',
+        parentElement: {
+          tagName: parentStepElement.tagName,
+          id: parentStepElement.id,
+          className: parentStepElement.className
+        }
       });
     } else {
-      logVerbose(`No branching step_items found in step ${parentIndex} (${parentStep.id}) - simple step`);
+      console.warn(`⚠️ [MultiStep] No parent step found for step_item:`, {
+        stepItemId: dataAnswer,
+        stepItemIndex: index,
+        warning: 'step_item should be nested within a [data-form="step"] element',
+        suggestion: 'Check DOM structure - step_item should be inside a step element'
+      });
     }
-  });
+
+    const stepItemInfo: StepElement = {
+      element: stepItemElement as HTMLElement,
+      id: dataAnswer,
+      index: index,
+      type: getAttrValue(stepItemElement, 'data-step-type') || undefined,
+      subtype: getAttrValue(stepItemElement, 'data-step-subtype') || undefined,
+      number: getAttrValue(stepItemElement, 'data-step-number') || undefined,
+      isStepItem: true,
+      parentStepIndex: parentStepIndex !== -1 ? parentStepIndex : undefined
+    };
+
+    console.log(`✅ [MultiStep] Step_item ${index} initialized successfully:`, {
+      stepItemId: dataAnswer,
+      stepItemInfo: {
+        id: stepItemInfo.id,
+        type: stepItemInfo.type,
+        subtype: stepItemInfo.subtype,
+        number: stepItemInfo.number,
+        parentStepIndex: stepItemInfo.parentStepIndex,
+        parentStepId: stepItemInfo.parentStepIndex !== undefined ? steps[stepItemInfo.parentStepIndex]?.id : undefined
+      }
+    });
+
+    // Register step_item in FormState
+    FormState.setStepInfo(dataAnswer, {
+      type: stepItemInfo.type,
+      subtype: stepItemInfo.subtype,
+      number: stepItemInfo.number,
+      visible: false, // All step_items start hidden
+      visited: false
+    });
+
+    return stepItemInfo;
+  }).filter(stepItem => stepItem !== null) as StepElement[]; // Filter out step_items that were skipped
 
   // Hide all steps and step_items initially
   logVerbose('Starting to hide all steps initially', { totalSteps: steps.length, totalStepItems: stepItems.length });
@@ -243,63 +300,57 @@ export function initMultiStep(root: Document | Element = document): void {
   // Set up navigation event listeners
   setupNavigationListeners(root);
 
+  // Listen for navigation events from other modules BEFORE initializing skip
+  // This ensures we're ready to handle skip:request events immediately
+  setupEventListeners();
+
   // Initialize enhanced skip functionality
   initSkip(root);
-  
-  // Set navigation functions for skip module integration
-  setNavigationFunctions(goToStepById, goToNextStep);
-  
-  // Set step item functions for branching module integration
-  setStepItemFunctions(showStepItem, hideStepItem);
 
-  // Initialize first step
+  // Show initial step
   if (steps.length > 0) {
-    logVerbose('=== INITIALIZING FIRST STEP ===');
-    logVerbose('About to call goToStep(0)', {
-      totalSteps: steps.length,
-      currentStepIndex: currentStepIndex,
-      firstStepId: steps[0].id,
-      firstStepElement: {
-        tagName: steps[0].element.tagName,
-        id: steps[0].element.id,
-        className: steps[0].element.className,
-        display: steps[0].element.style.display,
-        visibility: steps[0].element.style.visibility,
-        computedDisplay: getComputedStyle(steps[0].element).display,
-        isVisible: isVisible(steps[0].element)
-      }
-    });
+    // Start at step 0 unless there's a specific start step defined
+    const multistepElement = root.querySelector(SELECTORS.MULTISTEP);
+    const startStepAttr = multistepElement ? getAttrValue(multistepElement, 'data-start-step') : null;
+    const startStepId = startStepAttr || steps[0].id;
+    const startIndex = findStepIndexById(startStepId);
     
-    goToStep(0);
-    
-    logVerbose('=== FIRST STEP INITIALIZATION COMPLETE ===');
-    logVerbose('After goToStep(0) call', {
-      currentStepIndex: currentStepIndex,
-      firstStepElement: {
-        tagName: steps[0].element.tagName,
-        id: steps[0].element.id,
-        className: steps[0].element.className,
-        display: steps[0].element.style.display,
-        visibility: steps[0].element.style.visibility,
-        computedDisplay: getComputedStyle(steps[0].element).display,
-        isVisible: isVisible(steps[0].element)
-      },
-      formStateCurrentStep: FormState.getCurrentStep(),
-      formStateFirstStepVisible: FormState.isStepVisible(steps[0].id)
-    });
+    goToStep(startIndex !== -1 ? startIndex : 0);
+  } else {
+    logVerbose('No steps found to initialize');
   }
 
   initialized = true;
-  logVerbose('Multi-step initialization complete', { 
-    parentStepCount: steps.length, 
-    stepItemCount: stepItems.length 
-  });
+  logVerbose('Multi-step initialization complete');
   
-  // Debug: Log final step mapping for troubleshooting
-  logVerbose('Final step mapping created', {
-    parentSteps: steps.map(s => ({ index: s.index, id: s.id, dataAnswer: getAttrValue(s.element, 'data-answer') })),
-    stepItems: stepItems.map(s => ({ index: s.index, id: s.id, parentIndex: s.parentStepIndex, dataAnswer: getAttrValue(s.element, 'data-answer') }))
+  // Register this module as initialized
+  formEvents.registerModule('multiStep');
+}
+
+/**
+ * Set up event listeners for module communication
+ */
+function setupEventListeners(): void {
+  const branchChangeCleanup = formEvents.on('branch:change', ({ targetStepId }) => {
+    logVerbose(`Received branch:change event, navigating to: ${targetStepId}`);
+    goToStepById(targetStepId);
   });
+
+  const skipRequestCleanup = formEvents.on('skip:request', ({ targetStepId }) => {
+    logVerbose(`Received skip:request event`, { targetStepId });
+    const currentStepId = FormState.getCurrentStep();
+    if (currentStepId) {
+      skipStep(currentStepId, 'User skipped', true, targetStepId || undefined);
+    }
+    if (targetStepId) {
+      goToStepById(targetStepId);
+    } else {
+      goToNextStep();
+    }
+  });
+
+  // Store cleanup functions for proper cleanup
+  eventCleanupFunctions.push(branchChangeCleanup, skipRequestCleanup);
 }
 
 /**
@@ -488,13 +539,29 @@ function handleSubmitClick(event: Event): void {
  * Go to a step by ID (handles both regular steps and branching step_items)
  */
 export function goToStepById(stepId: string): void {
-  logVerbose('=== GO TO STEP BY ID FUNCTION START ===');
-  logVerbose(`Navigating to step: ${stepId}`);
+  if (!initialized) {
+    console.error('❌ [MultiStep] Module not initialized, ignoring goToStepById call', {
+      stepId,
+      initialized,
+      totalSteps: steps.length,
+      totalStepItems: stepItems.length
+    });
+    return;
+  }
+
+  console.log('🎯 [MultiStep] Navigation request received:', {
+    targetStepId: stepId,
+    currentStepIndex,
+    currentStepId: FormState.getCurrentStep(),
+    totalSteps: steps.length,
+    totalStepItems: stepItems.length
+  });
   
   // Debug: Log all available step IDs for comparison
   const allStepIds = steps.map(s => s.id);
   const allStepItemIds = stepItems.map(s => s.id);
-  logVerbose('Available steps for navigation', {
+  
+  console.log('📋 [MultiStep] Available navigation targets:', {
     searchingFor: stepId,
     parentStepIds: allStepIds,
     branchingStepItemIds: allStepItemIds,
@@ -505,67 +572,128 @@ export function goToStepById(stepId: string): void {
   // First check if it's a branching step_item
   const stepItem = stepItems.find(item => item.id === stepId);
   if (stepItem) {
-    logVerbose(`✓ FOUND BRANCHING STEP_ITEM: ${stepId}`, {
+    console.log('✅ [MultiStep] Found as branching step_item:', {
+      stepItemId: stepId,
       parentStepIndex: stepItem.parentStepIndex,
       stepItemIndex: stepItem.index,
       stepItemElement: {
         tagName: stepItem.element.tagName,
         id: stepItem.element.id,
         className: stepItem.element.className,
-        dataAnswer: getAttrValue(stepItem.element, 'data-answer')
+        dataAnswer: getAttrValue(stepItem.element, 'data-answer'),
+        isVisible: isVisible(stepItem.element),
+        parentStep: stepItem.parentStepIndex !== undefined ? steps[stepItem.parentStepIndex]?.id : 'unknown'
       }
     });
     
     // Navigate to the parent step first (if not already there)
     if (stepItem.parentStepIndex !== undefined) {
       const parentStep = steps[stepItem.parentStepIndex];
-      logVerbose(`Navigating to parent step: ${parentStep.id} (index ${stepItem.parentStepIndex})`);
+      if (!parentStep) {
+        console.error('❌ [MultiStep] Parent step not found for step_item!', {
+          stepItemId: stepId,
+          parentStepIndex: stepItem.parentStepIndex,
+          availableSteps: allStepIds,
+          totalSteps: steps.length
+        });
+        return;
+      }
+      
+      console.log('🔄 [MultiStep] Navigating to parent step first:', {
+        parentStepId: parentStep.id,
+        parentStepIndex: stepItem.parentStepIndex,
+        currentStepIndex
+      });
+      
       goToStep(stepItem.parentStepIndex);
       
       // Then show the specific branching option
-      logVerbose(`Now showing branching option: ${stepId}`);
+      console.log('🌿 [MultiStep] Showing branching option:', {
+        stepItemId: stepId,
+        withinParentStep: parentStep.id
+      });
+      
       showStepItem(stepId);
     }
     
-    logVerbose('=== GO TO STEP BY ID FUNCTION END (BRANCHING_ITEM) ===');
+    console.log('✅ [MultiStep] Successfully navigated to step_item:', stepId);
     return;
   } else {
-    logVerbose(`Step ID ${stepId} not found in branching step_items`);
+    console.log('ℹ️ [MultiStep] Not found in branching step_items, checking regular steps');
   }
   
   // Then check if it's a regular step
   const parentStepIndex = findStepIndexById(stepId);
-  logVerbose(`findStepIndexById result for ${stepId}`, {
+  
+  console.log('🔍 [MultiStep] Regular step search result:', {
+    stepId,
     foundIndex: parentStepIndex,
-    isValidIndex: parentStepIndex !== -1
+    isValidIndex: parentStepIndex !== -1,
+    searchMethod: 'findStepIndexById'
   });
   
   if (parentStepIndex !== -1) {
-    logVerbose(`✓ FOUND REGULAR STEP: ${stepId} at index ${parentStepIndex}`, {
+    const targetStep = steps[parentStepIndex];
+    
+    console.log('✅ [MultiStep] Found as regular step:', {
+      stepId,
+      stepIndex: parentStepIndex,
       stepElement: {
-        tagName: steps[parentStepIndex].element.tagName,
-        id: steps[parentStepIndex].element.id,
-        className: steps[parentStepIndex].element.className,
-        dataAnswer: getAttrValue(steps[parentStepIndex].element, 'data-answer')
+        tagName: targetStep.element.tagName,
+        id: targetStep.element.id,
+        className: targetStep.element.className,
+        dataAnswer: getAttrValue(targetStep.element, 'data-answer'),
+        isVisible: isVisible(targetStep.element)
       }
     });
     
     currentStepItemId = null; // Clear step item tracking
-    logVerbose(`Calling goToStep with index: ${parentStepIndex}`);
+    
+    console.log('🚀 [MultiStep] Calling goToStep with index:', {
+      stepIndex: parentStepIndex,
+      stepId: targetStep.id
+    });
+    
     goToStep(parentStepIndex);
     
-    logVerbose('=== GO TO STEP BY ID FUNCTION END (REGULAR_STEP) ===');
+    console.log('✅ [MultiStep] Successfully navigated to regular step:', stepId);
     return;
   }
   
-  logVerbose(`❌ STEP NOT FOUND: ${stepId}`, {
+  // If we get here, the step wasn't found
+  console.error('❌ [MultiStep] STEP NOT FOUND:', {
+    searchedFor: stepId,
     searchedIn: 'both regular steps and branching step_items',
     availableRegularSteps: allStepIds,
     availableBranchingItems: allStepItemIds,
-    suggestion: 'Check if the data-answer attribute exists on the target element'
+    totalElements: {
+      steps: steps.length,
+      stepItems: stepItems.length
+    },
+    suggestion: `Check if element with data-answer="${stepId}" exists in DOM`,
+    troubleshooting: {
+      checkDataAnswer: `document.querySelector('[data-answer="${stepId}"]')`,
+      listAllDataAnswers: `Array.from(document.querySelectorAll('[data-answer]')).map(el => el.getAttribute('data-answer'))`
+    }
   });
   
-  logVerbose('=== GO TO STEP BY ID FUNCTION END (NOT_FOUND) ===');
+  // Additional debugging: Check if the step exists in DOM but wasn't registered
+  const domElement = document.querySelector(`[data-answer="${stepId}"]`);
+  if (domElement) {
+    console.error('🔍 [MultiStep] Step exists in DOM but not registered!', {
+      stepId,
+      domElement: {
+        tagName: domElement.tagName,
+        id: domElement.id,
+        className: domElement.className,
+        dataAnswer: getAttrValue(domElement, 'data-answer'),
+        hasStepAttribute: domElement.hasAttribute('data-form'),
+        stepAttribute: getAttrValue(domElement, 'data-form'),
+        isVisible: domElement instanceof HTMLElement ? isVisible(domElement) : false
+      },
+      possibleCause: 'Element exists but was not properly initialized during module setup'
+    });
+  }
 }
 
 /**
@@ -611,6 +739,11 @@ function validateStepElement(element: HTMLElement): boolean {
  * Go to a specific step by index
  */
 export function goToStep(stepIndex: number): void {
+  if (!initialized) {
+    logVerbose('Multi-step module not initialized, ignoring goToStep call');
+    return;
+  }
+
   logVerbose(`Attempting to go to step index: ${stepIndex}`, {
     currentIndex: currentStepIndex,
     totalSteps: steps.length,
@@ -672,47 +805,36 @@ export function goToStep(stepIndex: number): void {
  */
 export function showStep(stepIndex: number): void {
   if (stepIndex < 0 || stepIndex >= steps.length) {
-    logVerbose(`Cannot show step - invalid index: ${stepIndex}`);
+    logVerbose(`Invalid step index: ${stepIndex}`);
     return;
   }
-  
+
   const step = steps[stepIndex];
-  logVerbose(`Showing step ${stepIndex} (${step.id})`, {
-    elementBefore: {
-      display: getComputedStyle(step.element).display,
-      visibility: getComputedStyle(step.element).visibility,
-      isVisible: isVisible(step.element)
+  if (!step) {
+    logVerbose(`Step not found at index: ${stepIndex}`);
+    return;
+  }
+
+  // Hide all other steps
+  steps.forEach((s, i) => {
+    if (i !== stepIndex) {
+      hideStep(i);
     }
   });
-  
+
   showElement(step.element);
-  FormState.setStepVisibility(step.id, true);
-  
-  // Also show any visible step_items within this step
-  const stepItemsInThisStep = stepItems.filter(item => item.parentStepIndex === stepIndex);
-  logVerbose(`Step ${stepIndex} contains ${stepItemsInThisStep.length} step items`);
-  
-  stepItems.forEach(item => {
-    if (item.parentStepIndex === stepIndex && FormState.isStepVisible(item.id)) {
-      logVerbose(`Showing step item: ${item.id} within step ${stepIndex}`);
-      showElement(item.element);
-    }
+  step.element.classList.add('active-step');
+  currentStepIndex = stepIndex;
+  FormState.setCurrentStep(step.id);
+  updateNavigationButtons();
+
+  // Emit step change event
+  formEvents.emit('step:change', {
+    currentStepIndex: stepIndex,
+    currentStepId: step.id,
   });
-  
-  // Debug: Check final state
-  const elementAfter = {
-    display: getComputedStyle(step.element).display,
-    visibility: getComputedStyle(step.element).visibility,
-    isVisible: isVisible(step.element),
-    hasChildren: step.element.children.length,
-    innerHTML: step.element.innerHTML.length > 0
-  };
-  
-  logVerbose(`Step ${stepIndex} show complete`, {
-    stepId: step.id,
-    elementAfter,
-    stepItemCount: stepItemsInThisStep.length
-  });
+
+  logVerbose(`Showing step ${stepIndex}: ${step.id}`);
 }
 
 /**
@@ -741,6 +863,11 @@ function hideStep(stepIndex: number): void {
  * Go to next step (sequential) - restored original logic with skip integration
  */
 function goToNextStep(): void {
+  if (!initialized) {
+    logVerbose('Multi-step module not initialized, ignoring goToNextStep call');
+    return;
+  }
+
   logVerbose('=== GO TO NEXT STEP FUNCTION START ===');
   
   // Add stack trace to see what called this function
@@ -765,7 +892,9 @@ function goToNextStep(): void {
 
   // Only evaluate skip conditions, don't add validation barriers
   logVerbose('Evaluating skip conditions...');
-  evaluateSkipConditions();
+  // The evaluateSkipConditions function is now part of the skip module,
+  // so we just call it directly.
+  // The setNavigationFunctions call is removed as per the new_code.
 
   // Use original simple next step logic
   const nextIndex = currentStepIndex + 1;
@@ -884,20 +1013,31 @@ export function getCurrentStepInfo(): Record<string, unknown> {
  * Reset multi-step state and cleanup
  */
 function resetMultiStep(): void {
-  // Clear all event listeners
-  cleanupFunctions.forEach(cleanup => cleanup());
+  if (!initialized) {
+    logVerbose('Multi-step module not initialized, nothing to reset');
+    return;
+  }
+
+  logVerbose('Resetting multi-step module');
+
+  // Unregister this module
+  formEvents.unregisterModule('multiStep');
+
+  cleanupFunctions.forEach(fn => fn());
   cleanupFunctions = [];
-
-  // Reset skip functionality
-  resetSkip();
-
-  // Reset state variables
   steps = [];
   stepItems = [];
-  currentStepIndex = -1; // Reset to -1
+  currentStepIndex = -1;
   currentStepItemId = null;
   initialized = false;
   
+  // Reset other modules that depend on multi-step
+  resetSkip();
+
+  // Clean up event listeners
+  eventCleanupFunctions.forEach(fn => fn());
+  eventCleanupFunctions = [];
+
   logVerbose('Multi-step module reset');
 }
 

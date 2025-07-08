@@ -9,26 +9,12 @@ import {
   getAttrValue, 
   delegateEvent,
   addClass,
-  removeClass
+  removeClass,
+  isVisible
 } from './utils.js';
 import { FormState } from './formState.js';
 import { clearFieldValidation } from './validation.js';
-
-// Forward declarations for multiStep integration
-let goToStepById: ((stepId: string) => void) | null = null;
-let goToNextStep: (() => void) | null = null;
-
-/**
- * Set navigation functions from multiStep module
- */
-export function setNavigationFunctions(
-  goToStepByIdFn: (stepId: string) => void,
-  goToNextStepFn: () => void
-): void {
-  goToStepById = goToStepByIdFn;
-  goToNextStep = goToNextStepFn;
-  logVerbose('Navigation functions set for skip module');
-}
+import { formEvents } from './events.js';
 
 interface SkipRule {
   stepId: string;
@@ -76,6 +62,9 @@ export function initSkip(root: Document | Element = document): void {
     skipRules: skipRules.size,
     skipSections: skipSections.size
   });
+  
+  // Register this module as initialized
+  formEvents.registerModule('skip');
 }
 
 /**
@@ -176,25 +165,55 @@ function setupSkipListeners(root: Document | Element): void {
 function handleSkipButtonClick(event: Event, target: Element): void {
   event.preventDefault();
   
-  logVerbose('=== SKIP BUTTON CLICK START ===');
-  logVerbose('Skip button clicked in skip module', {
-    target: target,
+  console.log('🔘 [Skip] Button clicked - starting analysis', {
+    element: target,
     tagName: target.tagName,
     className: target.className,
-    attributes: Array.from(target.attributes).map(attr => ({ name: attr.name, value: attr.value }))
+    id: target.id
+  });
+  
+  if (!initialized) {
+    console.error('❌ [Skip] Module not initialized, ignoring skip button click', {
+      target: target,
+      initialized: initialized,
+      skipRulesCount: skipRules.size,
+      skipSectionsCount: skipSections.size
+    });
+    return;
+  }
+  
+  // Detailed data attribute analysis
+  const dataSkip = getAttrValue(target, 'data-skip');
+  const dataSkipReason = getAttrValue(target, 'data-skip-reason');
+  const dataAllowUndo = getAttrValue(target, 'data-allow-skip-undo');
+  const dataSkipTo = getAttrValue(target, 'data-skip-to');
+  
+  console.log('📋 [Skip] Data attributes analysis:', {
+    'data-skip': dataSkip,
+    'data-skip-reason': dataSkipReason,
+    'data-allow-skip-undo': dataAllowUndo,
+    'data-skip-to': dataSkipTo,
+    allAttributes: Array.from(target.attributes).map(attr => ({ 
+      name: attr.name, 
+      value: attr.value 
+    }))
   });
   
   const currentStepId = FormState.getCurrentStep();
   if (!currentStepId) {
-    logVerbose('No current step found for skip operation');
+    console.error('❌ [Skip] No current step found for skip operation', {
+      formState: FormState.getDebugInfo(),
+      branchPath: FormState.getBranchPath(),
+      allSteps: FormState.getAllSteps()
+    });
     return;
   }
 
-  const skipReason = getAttrValue(target, 'data-skip-reason') || 'User skipped';
-  const allowUndo = getAttrValue(target, 'data-allow-skip-undo') !== 'false';
-  const skipValue = getAttrValue(target, 'data-skip');
+  const skipReason = dataSkipReason || 'User skipped';
+  const allowUndo = dataAllowUndo !== 'false';
+  const skipValue = dataSkip;
 
-  logVerbose('=== SKIP BUTTON ANALYSIS ===', {
+  console.log('🎯 [Skip] Processing skip request:', {
     currentStepId,
     skipReason,
     allowUndo,
@@ -206,55 +225,80 @@ function handleSkipButtonClick(event: Event, target: Element): void {
   });
 
   // Determine target step with detailed logging
-  let targetStep: string | undefined;
+  let targetStep: string | null = null;
   if (skipValue && skipValue !== 'true' && skipValue !== '') {
     targetStep = skipValue;
-    logVerbose('Using data-skip as target', { targetStep });
+    console.log('✅ [Skip] Using data-skip as target step:', { 
+      targetStep,
+      originalValue: skipValue 
+    });
   } else {
-    logVerbose('No specific target found, will use next available step');
+    console.log('ℹ️ [Skip] No specific target found, will use next available step', {
+      skipValue,
+      isEmptyString: skipValue === '',
+      isTrueString: skipValue === 'true',
+      isNull: skipValue === null,
+      isUndefined: skipValue === undefined
+    });
   }
 
   // Verify target step exists in DOM
   if (targetStep) {
     const targetElement = document.querySelector(`[data-answer="${targetStep}"]`);
-    logVerbose('Target step verification', {
+    const allAnswerElements = document.querySelectorAll('[data-answer]');
+    const allAnswerValues = Array.from(allAnswerElements).map(el => getAttrValue(el, 'data-answer'));
+    
+    console.log('🔍 [Skip] Target step verification:', {
       targetStep,
       targetElementExists: !!targetElement,
       targetElement: targetElement ? {
         tagName: targetElement.tagName,
         id: targetElement.id,
         className: targetElement.className,
-        dataAnswer: getAttrValue(targetElement, 'data-answer')
-      } : null
+        dataAnswer: getAttrValue(targetElement, 'data-answer'),
+        isVisible: targetElement instanceof HTMLElement ? isVisible(targetElement) : false
+      } : null,
+      availableSteps: allAnswerValues,
+      totalStepsWithDataAnswer: allAnswerElements.length,
+      searchQuery: `[data-answer="${targetStep}"]`
     });
+    
+    if (!targetElement) {
+      console.error('❌ [Skip] Target step not found in DOM!', {
+        searchedFor: targetStep,
+        availableSteps: allAnswerValues,
+        suggestion: `Check if element with data-answer="${targetStep}" exists`,
+        possibleMatches: allAnswerValues.filter(val => val && val.includes(targetStep))
+      });
+    }
   }
 
-  logVerbose('=== CALLING SKIP STEP FUNCTION ===', {
-    stepId: currentStepId,
+  console.log('🚀 [Skip] Emitting skip:request event:', {
+    targetStepId: targetStep,
+    currentStep: currentStepId,
     reason: skipReason,
-    allowUndo,
-    targetStep
-  });
-
-  // Use skipStep function which has better navigation logic
-  const success = skipStep(currentStepId, skipReason, allowUndo, targetStep);
-  
-  logVerbose('=== SKIP OPERATION RESULT ===', {
-    success,
-    finalCurrentStep: FormState.getCurrentStep()
+    allowUndo: allowUndo
   });
   
-  if (!success) {
-    logVerbose('Skip operation failed');
-  }
+  formEvents.emit('skip:request', { targetStepId: targetStep });
   
-  logVerbose('=== SKIP BUTTON CLICK END ===');
+  console.log('✅ [Skip] Skip request emitted successfully');
 }
 
 /**
  * Skip a specific step
  */
 export function skipStep(stepId: string, reason?: string, allowUndo: boolean = true, targetStep?: string): boolean {
+  if (!initialized) {
+    logVerbose('Skip module not initialized, cannot skip step');
+    return false;
+  }
+
+  if (!stepId) {
+    logVerbose('Invalid stepId provided to skipStep');
+    return false;
+  }
+
   logVerbose('=== SKIP STEP FUNCTION START ===');
   logVerbose(`Attempting to skip step: ${stepId}`, { reason, allowUndo, targetStep });
 
@@ -264,46 +308,20 @@ export function skipStep(stepId: string, reason?: string, allowUndo: boolean = t
     return false;
   }
 
-  // Clear fields in the step being skipped
-  const fieldsCleared = clearStepFields(stepId);
-  logVerbose('Fields cleared from skipped step', { fieldsCleared });
-  
-  // Add to skip tracking
+  // Mark the step as skipped in the central state
   FormState.addSkippedStep(stepId, reason, allowUndo);
-  logVerbose('Step added to skip tracking in FormState');
-  
-  // Update skip history with cleared fields
-  const skipHistory = FormState.getSkipHistory();
-  const latestEntry = skipHistory[skipHistory.length - 1];
-  if (latestEntry && latestEntry.stepId === stepId) {
-    latestEntry.fieldsCleared = fieldsCleared;
-  }
 
-  // Apply skip styling
+  // Clear fields of the skipped step
+  const clearedFields = clearStepFields(stepId);
+
+  // Apply visual styling for skipped step
   applySkipStyling(stepId, true);
-  logVerbose('Skip styling applied');
 
-  // Navigate to target step or next step
-  logVerbose('=== NAVIGATION DECISION ===', {
-    hasTargetStep: !!targetStep,
+  logVerbose(`Step ${stepId} skipped successfully`, {
+    reason,
+    allowUndo,
     targetStep,
-    willNavigateToTarget: !!targetStep,
-    willNavigateToNext: !targetStep
-  });
-
-  if (targetStep) {
-    logVerbose('Navigating to specific target step', { targetStep });
-    navigateToStep(targetStep);
-  } else {
-    logVerbose('No target step specified, navigating to next available step');
-    navigateToNextAvailableStep();
-  }
-
-  logVerbose(`=== SKIP STEP FUNCTION END ===`, {
-    stepId,
-    fieldsCleared: fieldsCleared.length,
-    targetStep,
-    success: true
+    clearedFields
   });
 
   return true;
@@ -391,34 +409,40 @@ export function evaluateSkipConditions(): void {
  * Clear fields in a step
  */
 function clearStepFields(stepId: string): string[] {
+  const clearedFields: string[] = [];
   const stepElement = document.querySelector(`[data-answer="${stepId}"]`);
-  if (!stepElement) return [];
-
-  const fieldsCleared: string[] = [];
-  const fields = stepElement.querySelectorAll('input, select, textarea');
-
+  
+  if (!stepElement) {
+    logVerbose(`Cannot clear fields - step element not found for ${stepId}`);
+    return [];
+  }
+  
+  const fields = stepElement.querySelectorAll(SELECTORS.ALL_INPUTS);
+  
   fields.forEach(field => {
-    const htmlField = field as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
-    const fieldName = htmlField.name || getAttrValue(field, 'data-step-field-name');
-
+    const input = field as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    const fieldName = input.name || getAttrValue(input, 'data-step-field-name');
+    
     if (fieldName) {
-      // Clear validation errors
+      // Clear value from FormState
+      FormState.clearFields([fieldName]);
+      
+      // Clear validation state
       clearFieldValidation(fieldName);
       
-      // Clear field value
-      if (htmlField instanceof HTMLInputElement && (htmlField.type === 'checkbox' || htmlField.type === 'radio')) {
-        htmlField.checked = false;
+      // Reset input value
+      if (input.type === 'radio' || input.type === 'checkbox') {
+        (input as HTMLInputElement).checked = false;
       } else {
-        htmlField.value = '';
+        input.value = '';
       }
-
-      // Clear from FormState
-      FormState.setField(fieldName, null);
-      fieldsCleared.push(fieldName);
+      
+      clearedFields.push(fieldName);
     }
   });
 
-  return fieldsCleared;
+  logVerbose(`Cleared ${clearedFields.length} fields in step ${stepId}`, { clearedFields });
+  return clearedFields;
 }
 
 /**
@@ -441,6 +465,10 @@ function applySkipStyling(stepId: string, isSkipped: boolean): void {
  * Evaluate a condition string
  */
 function evaluateCondition(condition: string, activeConditions: Record<string, unknown>): boolean {
+  if (!condition || typeof condition !== 'string') {
+    logVerbose('Invalid condition provided', { condition });
+    return false;
+  }
   try {
     // Simple condition evaluation - can be enhanced for complex logic
     const trimmedCondition = condition.trim();
@@ -472,152 +500,21 @@ function evaluateCondition(condition: string, activeConditions: Record<string, u
 }
 
 /**
- * Navigate to a specific step
+ * Navigate to the target step if provided.
+ * This function is now decoupled and relies on event emission.
  */
 function navigateToStep(stepId: string): void {
-  logVerbose('=== NAVIGATE TO STEP FUNCTION START ===');
-  logVerbose(`Navigation requested to step: ${stepId}`);
-  
-  // Check if navigation function is available
-  logVerbose('Navigation function availability', {
-    goToStepByIdAvailable: !!goToStepById,
-    goToStepByIdType: typeof goToStepById
-  });
-
-  // First, let's verify the target step exists in the DOM
-  const targetElement = document.querySelector(`[data-answer="${stepId}"]`);
-  const targetStepWrapper = document.querySelector(`.step_wrapper[data-answer="${stepId}"]`);
-  
-  logVerbose('Target step DOM verification', {
-    targetStepId: stepId,
-    targetElementExists: !!targetElement,
-    targetStepWrapperExists: !!targetStepWrapper,
-    targetElement: targetElement ? {
-      tagName: targetElement.tagName,
-      id: targetElement.id,
-      className: targetElement.className,
-      dataAnswer: targetElement.getAttribute('data-answer')
-    } : null,
-    targetStepWrapper: targetStepWrapper ? {
-      tagName: targetStepWrapper.tagName,
-      id: targetStepWrapper.id,
-      className: targetStepWrapper.className,
-      dataAnswer: targetStepWrapper.getAttribute('data-answer')
-    } : null
-  });
-
-  if (goToStepById) {
-    logVerbose(`Calling goToStepById with stepId: ${stepId}`);
-    
-    // Get current step before navigation
-    const currentStepBefore = FormState.getCurrentStep();
-    logVerbose('State before navigation', { currentStepBefore });
-    
-    // Call the navigation function
-    goToStepById(stepId);
-    
-    // Get current step after navigation
-    const currentStepAfter = FormState.getCurrentStep();
-    logVerbose('State after navigation', { 
-      currentStepAfter,
-      navigationSuccessful: currentStepAfter === stepId,
-      expectedStep: stepId,
-      actualStep: currentStepAfter
-    });
-    
-    // If navigation failed, let's try to understand why
-    if (currentStepAfter !== stepId) {
-      logVerbose('❌ NAVIGATION FAILED - DEBUGGING', {
-        expectedStep: stepId,
-        actualStep: currentStepAfter,
-        targetElementExists: !!targetElement,
-        targetStepWrapperExists: !!targetStepWrapper,
-        possibleIssue: 'Step might not be properly initialized or goToStepById function has a bug'
-      });
-      
-      // Let's try to find all steps with data-answer attributes
-      const allStepsWithAnswers = document.querySelectorAll('[data-answer]');
-      const stepAnswers = Array.from(allStepsWithAnswers).map(el => el.getAttribute('data-answer'));
-      
-      logVerbose('All available steps with data-answer', {
-        totalSteps: allStepsWithAnswers.length,
-        stepAnswers: stepAnswers,
-        searchingFor: stepId,
-        foundInList: stepAnswers.includes(stepId)
-      });
-    }
-    
-    logVerbose('=== NAVIGATE TO STEP FUNCTION END ===');
-  } else {
-    logVerbose(`ERROR: Navigation requested to step: ${stepId}, but goToStepById is not set.`);
-    logVerbose('=== NAVIGATE TO STEP FUNCTION END (FAILED) ===');
-  }
+  logVerbose(`Requesting navigation to step: ${stepId}`);
+  formEvents.emit('skip:request', { targetStepId: stepId });
 }
 
 /**
- * Navigate to the next available (non-skipped) step
+ * Navigate to the next available step.
+ * This function is now decoupled and relies on event emission.
  */
 function navigateToNextAvailableStep(): void {
-  logVerbose('Finding next available step...');
-  
-  // Get current step info
-  const currentStepId = FormState.getCurrentStep();
-  if (!currentStepId) {
-    logVerbose('No current step found for navigation');
-    return;
-  }
-
-  // Find all steps in the form
-  const allSteps = Array.from(document.querySelectorAll(SELECTORS.STEP));
-  const stepIds: string[] = [];
-  
-  allSteps.forEach(stepElement => {
-    const stepId = getAttrValue(stepElement, 'data-answer');
-    if (stepId) {
-      stepIds.push(stepId);
-    }
-  });
-
-  logVerbose('Available steps for navigation', {
-    currentStepId,
-    allStepIds: stepIds,
-    totalSteps: stepIds.length
-  });
-
-  // Find current step index
-  const currentIndex = stepIds.indexOf(currentStepId);
-  if (currentIndex === -1) {
-    logVerbose(`Current step ${currentStepId} not found in step list`);
-    return;
-  }
-
-  // Look for next non-skipped step
-  for (let i = currentIndex + 1; i < stepIds.length; i++) {
-    const nextStepId = stepIds[i];
-    const isSkipped = FormState.isStepSkipped(nextStepId);
-    const isVisible = FormState.isStepVisible(nextStepId);
-    
-    logVerbose(`Checking step ${nextStepId}`, {
-      index: i,
-      isSkipped,
-      isVisible,
-      stepId: nextStepId
-    });
-
-    if (!isSkipped) {
-      logVerbose(`Found next available step: ${nextStepId}`);
-      navigateToStep(nextStepId);
-      return;
-    }
-  }
-
-  // If no next step found, try using the simple next step function
-  logVerbose('No specific next step found, using default navigation');
-  if (goToNextStep) {
-    goToNextStep();
-  } else {
-    logVerbose('Navigation requested to next available step, but goToNextStep is not set.');
-  }
+  logVerbose('Requesting navigation to next available step');
+  formEvents.emit('skip:request', { targetStepId: null });
 }
 
 /**
@@ -657,7 +554,15 @@ export function getSkipState(): Record<string, unknown> {
  * Reset skip functionality
  */
 export function resetSkip(): void {
+  if (!initialized) {
+    logVerbose('Skip module not initialized, nothing to reset');
+    return;
+  }
+
   logVerbose('Resetting skip functionality');
+
+  // Unregister this module
+  formEvents.unregisterModule('skip');
 
   // Clean up event listeners
   cleanupFunctions.forEach(cleanup => cleanup());

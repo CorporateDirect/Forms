@@ -111,7 +111,10 @@ export const SELECTORS = {
   // Validation
   REQUIRED: '[required]',
   ERROR_MESSAGE: '[data-error-message]',
-  VALIDATE: '[data-validate]'
+  VALIDATE: '[data-validate]',
+  
+  // Generic
+  ALL_INPUTS: 'input, select, textarea'
 } as const;
 
 export const DEFAULTS = {
