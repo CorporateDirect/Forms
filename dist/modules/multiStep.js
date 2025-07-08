@@ -32,15 +32,39 @@ export function initMultiStep(root = document) {
         });
         // Look for data-answer on step_wrapper child element (primary step identifier)
         const stepWrapper = stepElement.querySelector('.step_wrapper[data-answer]');
-        let dataAnswer;
+        let dataAnswer = null;
         if (stepWrapper) {
-            dataAnswer = getAttrValue(stepWrapper, 'data-answer') || `step-${index}`;
-            logVerbose(`Found data-answer on step_wrapper: ${dataAnswer}`);
+            dataAnswer = getAttrValue(stepWrapper, 'data-answer');
+            if (dataAnswer) {
+                logVerbose(`Found data-answer on step_wrapper: ${dataAnswer}`);
+            }
         }
         else {
             // Fallback: look for data-answer on the step element itself
-            dataAnswer = getAttrValue(stepElement, 'data-answer') || `step-${index}`;
-            logVerbose(`Using fallback step ID: ${dataAnswer}`);
+            dataAnswer = getAttrValue(stepElement, 'data-answer');
+            if (dataAnswer) {
+                logVerbose(`Found data-answer on step element: ${dataAnswer}`);
+            }
+        }
+        // Error if no data-answer found
+        if (!dataAnswer) {
+            const expectedValue = `step-${index}`;
+            const errorMsg = `STEP INITIALIZATION ERROR: Step ${index} is missing required data-answer attribute`;
+            console.error(errorMsg, {
+                stepElement: stepElement,
+                stepIndex: index,
+                tagName: stepElement.tagName,
+                id: stepElement.id,
+                className: stepElement.className,
+                hasStepWrapper: !!stepWrapper,
+                expectedDataAnswer: expectedValue,
+                solution: `Add data-answer="${expectedValue}" to step_wrapper or step element`,
+                example: stepWrapper
+                    ? `<div class="step_wrapper" data-answer="${expectedValue}">`
+                    : `<div data-form="step" data-answer="${expectedValue}">`
+            });
+            // Skip this step - don't add it to the steps array
+            return null;
         }
         const stepInfo = {
             element: stepElement,
@@ -60,7 +84,7 @@ export function initMultiStep(root = document) {
             visited: false
         });
         return stepInfo;
-    });
+    }).filter(step => step !== null); // Filter out steps that were skipped
     // Find all step_item elements within parent steps (for branching scenarios)
     stepItems = [];
     steps.forEach((parentStep, parentIndex) => {
@@ -72,8 +96,33 @@ export function initMultiStep(root = document) {
                 const htmlElement = stepItemElement;
                 const dataAnswer = getAttrValue(stepItemElement, 'data-answer');
                 if (!dataAnswer) {
-                    logVerbose(`Step item in parent step ${parentIndex} missing required data-answer attribute`);
-                    return;
+                    // Try to determine expected value based on context
+                    const stepType = getAttrValue(stepItemElement, 'data-step-type') || 'unknown';
+                    const stepSubtype = getAttrValue(stepItemElement, 'data-step-subtype') || 'unknown';
+                    const stepNumber = getAttrValue(stepItemElement, 'data-step-number') || '1';
+                    let expectedValue = `${stepSubtype}-${stepNumber}`;
+                    if (stepType === 'member') {
+                        expectedValue = `${stepSubtype}-${stepNumber}`;
+                    }
+                    else if (stepType === 'manager') {
+                        expectedValue = `manager-${stepSubtype}-${stepNumber}`;
+                    }
+                    const errorMsg = `STEP_ITEM INITIALIZATION ERROR: Step item in step ${parentIndex} (${parentStep.id}) is missing required data-answer attribute`;
+                    console.error(errorMsg, {
+                        stepItemElement: stepItemElement,
+                        parentStepIndex: parentIndex,
+                        parentStepId: parentStep.id,
+                        tagName: stepItemElement.tagName,
+                        id: stepItemElement.id,
+                        className: stepItemElement.className,
+                        stepType: stepType,
+                        stepSubtype: stepSubtype,
+                        stepNumber: stepNumber,
+                        expectedDataAnswer: expectedValue,
+                        solution: `Add data-answer="${expectedValue}" to step_item element`,
+                        example: `<div class="step_item" data-answer="${expectedValue}">`
+                    });
+                    return; // Skip this step_item
                 }
                 const stepItemInfo = {
                     element: htmlElement,
