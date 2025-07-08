@@ -199,19 +199,20 @@ function setupNavigationListeners(root) {
     // Use event delegation for navigation buttons
     const cleanup1 = delegateEvent(root, 'click', SELECTORS.NEXT_BTN, handleNextClick);
     const cleanup2 = delegateEvent(root, 'click', SELECTORS.BACK_BTN, handleBackClick);
-    const cleanup3 = delegateEvent(root, 'click', SELECTORS.SKIP_BTN, handleSkipClick);
-    const cleanup4 = delegateEvent(root, 'click', SELECTORS.SUBMIT_BTN, handleSubmitClick);
-    // Also listen for generic skip selector as fallback
-    const cleanup5 = delegateEvent(root, 'click', SELECTORS.SKIP, handleSkipClick);
+    // Primary skip listener - for data-skip attribute (Webflow standard)
+    const cleanup3 = delegateEvent(root, 'click', SELECTORS.SKIP, handleSkipClick);
+    // Secondary skip listener - for data-form="skip-btn" (fallback)
+    const cleanup4 = delegateEvent(root, 'click', SELECTORS.SKIP_BTN, handleSkipClick);
+    const cleanup5 = delegateEvent(root, 'click', SELECTORS.SUBMIT_BTN, handleSubmitClick);
     cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4, cleanup5);
     // Debug: Log what skip buttons we found
-    const skipBtns = root.querySelectorAll(SELECTORS.SKIP_BTN);
     const skipElements = root.querySelectorAll(SELECTORS.SKIP);
+    const skipBtns = root.querySelectorAll(SELECTORS.SKIP_BTN);
     logVerbose('Skip button setup complete', {
-        skipBtnCount: skipBtns.length,
-        skipElementCount: skipElements.length,
-        skipBtnSelector: SELECTORS.SKIP_BTN,
-        skipSelector: SELECTORS.SKIP
+        dataSkipCount: skipElements.length,
+        dataFormSkipBtnCount: skipBtns.length,
+        primarySelector: SELECTORS.SKIP,
+        fallbackSelector: SELECTORS.SKIP_BTN
     });
 }
 /**
