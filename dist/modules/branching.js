@@ -120,88 +120,202 @@ function validateGoToValue(goToValue) {
  * Handle branch trigger events
  */
 function handleBranchTrigger(event, target) {
+    console.log('🌿 [Branch] Trigger event detected', {
+        eventType: event.type,
+        element: target,
+        tagName: target.tagName,
+        className: target.className,
+        id: target.id
+    });
     if (!initialized) {
-        logVerbose('Branching module not initialized, ignoring branch trigger');
+        console.error('❌ [Branch] Module not initialized, ignoring branch trigger', {
+            target: target,
+            initialized: initialized,
+            eventType: event.type
+        });
         return;
     }
     if (!isFormInput(target)) {
+        console.log('ℹ️ [Branch] Element is not a form input, ignoring', {
+            tagName: target.tagName,
+            isInput: target instanceof HTMLInputElement,
+            isSelect: target instanceof HTMLSelectElement,
+            isTextarea: target instanceof HTMLTextAreaElement
+        });
         return;
     }
     const goToValue = getAttrValue(target, 'data-go-to');
+    const fieldName = target.name || getAttrValue(target, 'data-step-field-name');
+    const inputValue = getInputValue(target);
+    const inputType = target.type || target.tagName;
+    console.log('📋 [Branch] Data attributes analysis:', {
+        'data-go-to': goToValue,
+        'data-step-field-name': getAttrValue(target, 'data-step-field-name'),
+        'name': target.name,
+        'type': inputType,
+        'value': inputValue,
+        'checked': target.checked,
+        allAttributes: Array.from(target.attributes).map(attr => ({
+            name: attr.name,
+            value: attr.value
+        }))
+    });
     // Validate go-to value before proceeding
     if (goToValue && !validateGoToValue(goToValue)) {
-        logVerbose('Skipping branch trigger due to invalid data-go-to value', { goToValue });
+        console.error('❌ [Branch] Invalid data-go-to value format', {
+            goToValue,
+            validFormat: 'alphanumeric, hyphens, underscores only',
+            pattern: '/^[a-zA-Z0-9_-]+$/'
+        });
         return;
     }
-    const inputValue = getInputValue(target);
-    logVerbose('Branch trigger activated', {
+    console.log('🎯 [Branch] Processing branch trigger:', {
         element: target,
         goTo: goToValue,
         value: inputValue,
-        type: target.type || target.tagName
+        type: inputType,
+        fieldName: fieldName,
+        hasGoTo: !!goToValue,
+        hasValue: !!inputValue
     });
     // Store the field value in state
-    const fieldName = target.name || getAttrValue(target, 'data-step-field-name');
     if (fieldName) {
         FormState.setField(fieldName, inputValue);
+        console.log('💾 [Branch] Field value stored in FormState:', {
+            fieldName,
+            value: inputValue,
+            previousValue: FormState.getField(fieldName)
+        });
     }
-    // Handle different input types with better error handling
+    else {
+        console.warn('⚠️ [Branch] No field name found, cannot store value in FormState', {
+            element: target,
+            name: target.name,
+            dataStepFieldName: getAttrValue(target, 'data-step-field-name')
+        });
+    }
+    // Handle different input types with detailed logging
     try {
         if (target instanceof HTMLInputElement) {
             if (target.type === 'radio' && target.checked) {
+                console.log('📻 [Branch] Processing radio button selection:', {
+                    name: target.name,
+                    value: target.value,
+                    checked: target.checked,
+                    goTo: goToValue
+                });
                 if (!goToValue) {
-                    logVerbose('Radio button has no data-go-to attribute, skipping navigation');
+                    console.warn('⚠️ [Branch] Radio button has no data-go-to attribute, skipping navigation', {
+                        element: target,
+                        name: target.name,
+                        value: target.value
+                    });
                     return;
+                }
+                // Verify target step exists
+                const targetElement = document.querySelector(`[data-answer="${goToValue}"]`);
+                if (!targetElement) {
+                    const allAnswerElements = document.querySelectorAll('[data-answer]');
+                    const allAnswerValues = Array.from(allAnswerElements).map(el => getAttrValue(el, 'data-answer'));
+                    console.error('❌ [Branch] Target step not found in DOM!', {
+                        searchedFor: goToValue,
+                        availableSteps: allAnswerValues,
+                        suggestion: `Check if element with data-answer="${goToValue}" exists`,
+                        possibleMatches: allAnswerValues.filter(val => val && val.includes(goToValue))
+                    });
                 }
                 // Handle radio group selection
                 handleRadioGroupSelection(target);
                 // Apply active class styling
                 applyRadioActiveClass(target);
-                // Activate branch and show step item
+                // Activate branch and emit event
                 activateBranch(goToValue, target.value);
+                console.log('🚀 [Branch] Emitting branch:change event:', {
+                    targetStepId: goToValue,
+                    triggerValue: target.value,
+                    triggerType: 'radio'
+                });
                 formEvents.emit('branch:change', { targetStepId: goToValue });
             }
             else if (target.type === 'checkbox') {
+                console.log('☑️ [Branch] Processing checkbox:', {
+                    name: target.name,
+                    value: target.value,
+                    checked: target.checked,
+                    goTo: goToValue
+                });
                 if (goToValue) {
                     if (target.checked) {
+                        console.log('✅ [Branch] Checkbox checked, activating branch:', { goToValue });
                         activateBranch(goToValue, target.value);
                     }
                     else {
+                        console.log('❌ [Branch] Checkbox unchecked, deactivating branch:', { goToValue });
                         deactivateBranch(goToValue);
                     }
                 }
             }
             else if (target.type !== 'radio' && target.type !== 'checkbox') {
+                console.log('📝 [Branch] Processing text input/other:', {
+                    type: target.type,
+                    name: target.name,
+                    value: inputValue,
+                    goTo: goToValue
+                });
                 // Text inputs, selects, etc.
                 if (goToValue) {
                     if (inputValue) {
+                        console.log('✅ [Branch] Input has value, activating branch:', { goToValue, inputValue });
                         activateBranch(goToValue, inputValue);
                     }
                     else {
+                        console.log('❌ [Branch] Input is empty, deactivating branch:', { goToValue });
                         deactivateBranch(goToValue);
                     }
                 }
             }
         }
         else {
+            console.log('📋 [Branch] Processing select/textarea:', {
+                tagName: target.tagName,
+                value: inputValue,
+                goTo: goToValue
+            });
             // Select elements and textareas
             if (goToValue) {
                 if (inputValue) {
+                    console.log('✅ [Branch] Element has value, activating branch:', { goToValue, inputValue });
                     activateBranch(goToValue, inputValue);
                 }
                 else {
+                    console.log('❌ [Branch] Element is empty, deactivating branch:', { goToValue });
                     deactivateBranch(goToValue);
                 }
             }
         }
     }
     catch (error) {
-        logVerbose('Error handling branch trigger', { error, element: target });
+        console.error('💥 [Branch] Error handling branch trigger:', {
+            error: error,
+            errorMessage: error instanceof Error ? error.message : String(error),
+            errorStack: error instanceof Error ? error.stack : undefined,
+            element: target,
+            goToValue,
+            inputValue,
+            fieldName
+        });
     }
     // Update step visibility if we have active conditions
     const activeConditions = FormState.getBranchPath().activeConditions;
     if (Object.keys(activeConditions).length > 0) {
+        console.log('🔄 [Branch] Updating step visibility based on active conditions:', {
+            activeConditions,
+            conditionCount: Object.keys(activeConditions).length
+        });
         updateStepVisibility();
+    }
+    else {
+        console.log('ℹ️ [Branch] No active conditions, skipping step visibility update');
     }
 }
 /**

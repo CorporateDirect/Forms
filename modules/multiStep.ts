@@ -740,18 +740,22 @@ function validateStepElement(element: HTMLElement): boolean {
  */
 export function goToStep(stepIndex: number): void {
   if (!initialized) {
-    logVerbose('Multi-step module not initialized, ignoring goToStep call');
+    console.error('❌ [MultiStep] Module not initialized, ignoring goToStep call', {
+      stepIndex,
+      initialized,
+      totalSteps: steps.length
+    });
     return;
   }
 
-  logVerbose(`Attempting to go to step index: ${stepIndex}`, {
+  console.log(`🎯 [MultiStep] Navigating to step index ${stepIndex}:`, {
     currentIndex: currentStepIndex,
     totalSteps: steps.length,
     requestedIndex: stepIndex
   });
 
   if (stepIndex < 0 || stepIndex >= steps.length) {
-    logVerbose(`Invalid step index: ${stepIndex}`, {
+    console.error(`❌ [MultiStep] Invalid step index: ${stepIndex}`, {
       min: 0,
       max: steps.length - 1,
       totalSteps: steps.length
@@ -759,44 +763,34 @@ export function goToStep(stepIndex: number): void {
     return;
   }
 
-  // Hide current step if there is one
-  if (currentStepIndex !== -1 && currentStepIndex < steps.length) {
-    const currentStep = steps[currentStepIndex];
-    logVerbose(`Hiding current step: ${currentStepIndex} (${currentStep.id})`);
-    hideStep(currentStepIndex);
-  }
-
-  // Show the new step
   const targetStep = steps[stepIndex];
-  logVerbose(`Showing target step: ${stepIndex} (${targetStep.id})`, {
-    stepElement: targetStep.element,
+  console.log(`🚀 [MultiStep] Showing target step: ${stepIndex} (${targetStep.id})`, {
+    stepElement: {
+      tagName: targetStep.element.tagName,
+      id: targetStep.element.id,
+      className: targetStep.element.className
+    },
     stepType: targetStep.type,
     stepSubtype: targetStep.subtype
   });
   
+  // showStep handles all the visibility state management
   showStep(stepIndex);
-  
-  // Update current step index
-  currentStepIndex = stepIndex;
-
-  // Update form state with current step
-  FormState.setCurrentStep(targetStep.id);
-  
-  // Update visibility of navigation buttons
-  updateNavigationButtons();
 
   // Debug: Verify step is actually visible
   const isStepVisible = isVisible(targetStep.element);
   const stepDisplay = getComputedStyle(targetStep.element).display;
   const stepVisibility = getComputedStyle(targetStep.element).visibility;
   
-  logVerbose(`Step navigation complete`, {
+  console.log(`✅ [MultiStep] Step navigation complete:`, {
     newCurrentIndex: currentStepIndex,
     stepId: targetStep.id,
     elementVisible: isStepVisible,
     elementDisplay: stepDisplay,
     elementVisibility: stepVisibility,
-    elementHasContent: targetStep.element.children.length > 0
+    elementHasContent: targetStep.element.children.length > 0,
+    formStateVisible: FormState.isStepVisible(targetStep.id),
+    formStateCurrentStep: FormState.getCurrentStep()
   });
 }
 
@@ -815,17 +809,38 @@ export function showStep(stepIndex: number): void {
     return;
   }
 
-  // Hide all other steps
-  steps.forEach((s, i) => {
-    if (i !== stepIndex) {
-      hideStep(i);
+  console.log(`🔄 [MultiStep] Showing step ${stepIndex}:`, {
+    stepId: step.id,
+    stepIndex,
+    element: {
+      tagName: step.element.tagName,
+      id: step.element.id,
+      className: step.element.className
     }
   });
 
+  // Hide all other steps and clean up their active classes
+  steps.forEach((s, i) => {
+    if (i !== stepIndex) {
+      hideStep(i);
+      // Remove active-step class from all other steps
+      s.element.classList.remove('active-step');
+    }
+  });
+
+  // Show the target step
   showElement(step.element);
   step.element.classList.add('active-step');
+  
+  // Update step visibility in FormState
+  FormState.setStepVisibility(step.id, true);
+  FormState.setStepInfo(step.id, { visited: true });
+  
+  // Update current step tracking
   currentStepIndex = stepIndex;
   FormState.setCurrentStep(step.id);
+  
+  // Update navigation buttons
   updateNavigationButtons();
 
   // Emit step change event
@@ -834,7 +849,13 @@ export function showStep(stepIndex: number): void {
     currentStepId: step.id,
   });
 
-  logVerbose(`Showing step ${stepIndex}: ${step.id}`);
+  console.log(`✅ [MultiStep] Step ${stepIndex} (${step.id}) is now visible:`, {
+    isVisible: isVisible(step.element),
+    hasActiveClass: step.element.classList.contains('active-step'),
+    formStateVisible: FormState.isStepVisible(step.id),
+    computedDisplay: getComputedStyle(step.element).display,
+    computedVisibility: getComputedStyle(step.element).visibility
+  });
 }
 
 /**
@@ -846,17 +867,42 @@ function hideStep(stepIndex: number): void {
   }
   
   const step = steps[stepIndex];
+  
+  console.log(`🔄 [MultiStep] Hiding step ${stepIndex}:`, {
+    stepId: step.id,
+    stepIndex,
+    element: {
+      tagName: step.element.tagName,
+      id: step.element.id,
+      className: step.element.className,
+      hadActiveClass: step.element.classList.contains('active-step')
+    }
+  });
+  
+  // Hide the step element
   hideElement(step.element);
+  
+  // Remove active class
+  step.element.classList.remove('active-step');
+  
+  // Update step visibility in FormState
   FormState.setStepVisibility(step.id, false);
   
   // Also hide all step_items within this step
   stepItems.forEach(item => {
     if (item.parentStepIndex === stepIndex) {
       hideElement(item.element);
+      FormState.setStepVisibility(item.id, false);
     }
   });
 
-  logVerbose(`Hiding step ${stepIndex} (${step.id})`);
+  console.log(`✅ [MultiStep] Step ${stepIndex} (${step.id}) is now hidden:`, {
+    isVisible: isVisible(step.element),
+    hasActiveClass: step.element.classList.contains('active-step'),
+    formStateVisible: FormState.isStepVisible(step.id),
+    computedDisplay: getComputedStyle(step.element).display,
+    computedVisibility: getComputedStyle(step.element).visibility
+  });
 }
 
 /**
