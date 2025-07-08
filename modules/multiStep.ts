@@ -32,7 +32,7 @@ let initialized = false;
 let cleanupFunctions: (() => void)[] = [];
 let steps: StepElement[] = [];
 let stepItems: StepElement[] = [];
-let currentStepIndex = 0;
+let currentStepIndex = -1; // Initialize to -1 to indicate no current step
 let currentStepItemId: string | null = null;
 
 /**
@@ -80,7 +80,7 @@ export function initMultiStep(root: Document | Element = document): void {
       type: stepInfo.type,
       subtype: stepInfo.subtype,
       number: stepInfo.number,
-      visible: index === 0, // First step is visible by default
+      visible: false, // All steps start hidden, goToStep(0) will show the first one
       visited: false
     });
 
@@ -126,13 +126,40 @@ export function initMultiStep(root: Document | Element = document): void {
   });
 
   // Hide all steps and step_items initially
-  steps.forEach((step) => {
+  logVerbose('Starting to hide all steps initially', { totalSteps: steps.length, totalStepItems: stepItems.length });
+  
+  steps.forEach((step, index) => {
+    logVerbose(`Hiding step ${index} (${step.id})`, {
+      element: step.element,
+      tagName: step.element.tagName,
+      id: step.element.id,
+      className: step.element.className,
+      beforeHide: {
+        display: step.element.style.display,
+        visibility: step.element.style.visibility,
+        computedDisplay: getComputedStyle(step.element).display,
+        isVisible: isVisible(step.element)
+      }
+    });
+    
     hideElement(step.element);
+    
+    logVerbose(`Step ${index} hidden`, {
+      afterHide: {
+        display: step.element.style.display,
+        visibility: step.element.style.visibility,
+        computedDisplay: getComputedStyle(step.element).display,
+        isVisible: isVisible(step.element)
+      }
+    });
   });
 
-  stepItems.forEach((stepItem) => {
+  stepItems.forEach((stepItem, index) => {
+    logVerbose(`Hiding stepItem ${index} (${stepItem.id})`);
     hideElement(stepItem.element);
   });
+  
+  logVerbose('Finished hiding all steps and step items');
 
   // Set up navigation event listeners
   setupNavigationListeners(root);
@@ -679,7 +706,7 @@ function resetMultiStep(): void {
   // Reset state variables
   steps = [];
   stepItems = [];
-  currentStepIndex = 0;
+  currentStepIndex = -1; // Reset to -1
   currentStepItemId = null;
   initialized = false;
   

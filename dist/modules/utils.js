@@ -110,8 +110,20 @@ export function hasClass(element, className) {
  */
 export function showElement(element) {
     removeClass(element, 'hidden-step');
-    element.style.display = '';
-    logVerbose(`Showing element:`, element);
+    // Use block instead of empty string to ensure visibility
+    element.style.display = 'block';
+    element.style.visibility = 'visible';
+    element.style.opacity = '1';
+    logVerbose(`Showing element:`, {
+        element: element,
+        tagName: element.tagName,
+        id: element.id,
+        className: element.className,
+        display: element.style.display,
+        visibility: element.style.visibility,
+        computedDisplay: getComputedStyle(element).display,
+        computedVisibility: getComputedStyle(element).visibility
+    });
 }
 /**
  * Hide element (add hidden-step class and set display none)
@@ -119,7 +131,18 @@ export function showElement(element) {
 export function hideElement(element) {
     addClass(element, 'hidden-step');
     element.style.display = 'none';
-    logVerbose(`Hiding element:`, element);
+    element.style.visibility = 'hidden';
+    element.style.opacity = '0';
+    logVerbose(`Hiding element:`, {
+        element: element,
+        tagName: element.tagName,
+        id: element.id,
+        className: element.className,
+        display: element.style.display,
+        visibility: element.style.visibility,
+        computedDisplay: getComputedStyle(element).display,
+        computedVisibility: getComputedStyle(element).visibility
+    });
 }
 /**
  * Check if element is visible
