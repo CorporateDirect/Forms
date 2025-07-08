@@ -286,7 +286,7 @@ function handleBackClick(event: Event): void {
 
 /**
  * Handle skip button click
- * Enhanced to use the new skip module
+ * Direct skip approach that doesn't interfere with normal validation
  */
 function handleSkipClick(event: Event): void {
   event.preventDefault();
@@ -297,12 +297,31 @@ function handleSkipClick(event: Event): void {
     return;
   }
 
-  // Use the enhanced skip functionality
-  const success = skipStep(currentStepId, 'User skipped step', true);
+  // Clear fields in current step (original behavior)
+  const stepElement = getCurrentStep()?.element;
+  if (stepElement) {
+    const fields = Array.from(stepElement.querySelectorAll('input, select, textarea')) as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)[];
+    fields.forEach(field => {
+      if (field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')) {
+        field.checked = false;
+      } else {
+        field.value = '';
+      }
+      if (field.name) {
+        FormState.setField(field.name, null);
+      }
+    });
+  }
+
+  // Add to skip tracking (enhanced functionality)
+  FormState.addSkippedStep(currentStepId, 'User skipped step', true);
   
-  if (success) {
-    // Navigate to next step after successful skip
-    goToNextStep(true); // Skip validation
+  // Use simple next step logic (bypass validation)
+  const nextIndex = currentStepIndex + 1;
+  if (nextIndex < steps.length) {
+    goToStep(nextIndex);
+  } else {
+    logVerbose('Cannot skip - already at last step');
   }
 }
 
@@ -472,7 +491,7 @@ function hideStep(stepIndex: number): void {
 }
 
 /**
- * Go to next step (sequential) with skip condition evaluation
+ * Go to next step (sequential) - restored original logic with skip integration
  */
 function goToNextStep(skipValidation: boolean = false): void {
   const currentStep = getCurrentStep();
@@ -481,22 +500,15 @@ function goToNextStep(skipValidation: boolean = false): void {
     return;
   }
 
-  // Validate current step unless skipping validation
-  if (!skipValidation && !validateStepElement(currentStep.element)) {
-    logVerbose('Step validation failed, cannot proceed');
-    return;
-  }
-
-  // Evaluate skip conditions before moving to next step
+  // Only evaluate skip conditions, don't add validation barriers
   evaluateSkipConditions();
 
-  // Find next available step (considering branching and skipped steps)
-  let nextIndex = findNextAvailableStep();
-  
-  if (nextIndex !== -1 && nextIndex < steps.length) {
+  // Use original simple next step logic
+  const nextIndex = currentStepIndex + 1;
+  if (nextIndex < steps.length) {
     goToStep(nextIndex);
   } else {
-    logVerbose('No next step available or already at last step');
+    logVerbose('Already at last step');
   }
 }
 
