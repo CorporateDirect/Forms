@@ -19,9 +19,9 @@ export declare function getSummaryByCategory(type?: string, subtype?: string, nu
  */
 export declare function clearSummary(fieldNames?: string[]): void;
 /**
- * Get all current summary values
+ * Get all summary values as an object
  */
-export declare function getAllSummaryValues(): Record<string, any>;
+export declare function getAllSummaryValues(): Record<string, unknown>;
 /**
  * Force refresh all summaries from current FormState
  */

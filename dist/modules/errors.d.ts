@@ -44,7 +44,7 @@ export declare function focusFirstError(): void;
 /**
  * Get error statistics
  */
-export declare function getErrorStats(): any;
+export declare function getErrorStats(): Record<string, unknown>;
 /**
  * Reset error handling
  */

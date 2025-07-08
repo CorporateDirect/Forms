@@ -2,7 +2,7 @@
  * Multi-step form navigation module
  */
 
-import { SELECTORS, CSS_CLASSES } from '../config.js';
+import { SELECTORS } from '../config.js';
 import { 
   logVerbose, 
   queryAllByAttr, 
@@ -11,12 +11,11 @@ import {
   showElement,
   hideElement,
   isVisible,
-  addClass,
   removeClass
 } from './utils.js';
 import { FormState } from './formState.js';
-import { getNextStep } from './branching.js';
-import { initSkip, evaluateSkipConditions, skipStep, resetSkip } from './skip.js';
+import { initSkip, evaluateSkipConditions, resetSkip, setNavigationFunctions } from './skip.js';
+import { setStepItemFunctions } from './branching.js';
 
 interface StepElement {
   element: HTMLElement;
@@ -127,11 +126,11 @@ export function initMultiStep(root: Document | Element = document): void {
   });
 
   // Hide all steps and step_items initially
-  steps.forEach((step, index) => {
+  steps.forEach((step) => {
     hideElement(step.element);
   });
 
-  stepItems.forEach((stepItem, index) => {
+  stepItems.forEach((stepItem) => {
     hideElement(stepItem.element);
   });
 
@@ -140,6 +139,12 @@ export function initMultiStep(root: Document | Element = document): void {
 
   // Initialize enhanced skip functionality
   initSkip(root);
+  
+  // Set navigation functions for skip module integration
+  setNavigationFunctions(goToStepById, goToNextStep);
+  
+  // Set step item functions for branching module integration
+  setStepItemFunctions(showStepItem, hideStepItem);
 
   // Initialize first step
   if (steps.length > 0) {
@@ -713,7 +718,7 @@ function hideStep(stepIndex: number): void {
 /**
  * Go to next step (sequential) - restored original logic with skip integration
  */
-function goToNextStep(skipValidation: boolean = false): void {
+function goToNextStep(): void {
   const currentStep = getCurrentStep();
   if (!currentStep) {
     logVerbose('No current step found');
@@ -730,30 +735,6 @@ function goToNextStep(skipValidation: boolean = false): void {
   } else {
     logVerbose('Already at last step');
   }
-}
-
-/**
- * Find next available step (not skipped)
- */
-function findNextAvailableStep(): number {
-  let nextIndex = currentStepIndex + 1;
-  
-  // Check for branching logic first
-  const branchingNext = findNextBranchingStep();
-  if (branchingNext !== -1) {
-    nextIndex = branchingNext;
-  }
-
-  // Skip over any skipped steps
-  while (nextIndex < steps.length) {
-    const stepId = steps[nextIndex].id;
-    if (!FormState.isStepSkipped(stepId)) {
-      return nextIndex;
-    }
-    nextIndex++;
-  }
-
-  return -1; // No available next step
 }
 
 /**
@@ -886,16 +867,4 @@ export function getMultiStepState(): Record<string, unknown> {
       number: step.number
     }))
   };
-}
-
-function findNextStepInSequence(): number {
-  return currentStepIndex + 1;
-}
-
-/**
- * Find the next step based on branching logic
- */
-function findNextBranchingStep(): number {
-  const nextStep = getNextStep(steps[currentStepIndex]?.id);
-  return nextStep ? findStepIndexById(nextStep) : -1;
 } 

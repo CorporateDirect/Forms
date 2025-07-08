@@ -16,7 +16,7 @@ import { initMultiStep, goToStep, showStep, getCurrentStepInfo, getMultiStepStat
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, getErrorState } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
-import { initSkip, resetSkip, getSkipState } from './modules/skip.js';
+import { resetSkip, getSkipState } from './modules/skip.js';
 
 /**
  * Main FormLib class - singleton instance

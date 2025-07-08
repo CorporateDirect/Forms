@@ -5,12 +5,10 @@
 import { CSS_CLASSES, SELECTORS } from '../config.js';
 import { 
   logVerbose, 
-  queryAllByAttr, 
   getAttrValue, 
   addClass,
   removeClass
 } from './utils.js';
-import { FormState } from './formState.js';
 
 interface ErrorConfig {
   fieldName: string;
@@ -27,8 +25,6 @@ interface ErrorState {
   element: HTMLElement;
 }
 
-let initialized = false;
-let cleanupFunctions: (() => void)[] = [];
 let errorStates: Map<string, ErrorState> = new Map();
 
 /**
@@ -284,14 +280,13 @@ export function focusFirstError(): void {
 /**
  * Get error statistics
  */
-export function getErrorStats(): any {
+export function getErrorStats(): Record<string, unknown> {
   const fieldsWithErrors = getFieldsWithErrors();
   
   return {
-    totalFields: errorConfigs.size,
-    fieldsWithErrors: fieldsWithErrors.length,
-    fieldsWithoutErrors: errorConfigs.size - fieldsWithErrors.length,
-    errorFields: fieldsWithErrors
+    totalErrors: fieldsWithErrors.length,
+    fieldsWithErrors,
+    hasErrors: fieldsWithErrors.length > 0
   };
 }
 

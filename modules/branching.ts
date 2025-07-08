@@ -14,10 +14,20 @@ import {
 } from './utils.js';
 import { FormState } from './formState.js';
 
-interface BranchCondition {
-  field: string;
-  value: string | number | boolean;
-  operator: 'equals' | 'not_equals' | 'contains' | 'greater_than' | 'less_than';
+// Forward declaration for multiStep integration
+let showStepItemFn: ((stepItemId: string) => void) | null = null;
+let hideStepItemFn: ((stepItemId: string) => void) | null = null;
+
+/**
+ * Set step item functions from multiStep module
+ */
+export function setStepItemFunctions(
+  showStepItemFunction: (stepItemId: string) => void,
+  hideStepItemFunction: (stepItemId: string) => void
+): void {
+  showStepItemFn = showStepItemFunction;
+  hideStepItemFn = hideStepItemFunction;
+  logVerbose('Step item functions set for branching module');
 }
 
 let initialized = false;
@@ -310,19 +320,29 @@ function handleRadioGroupSelection(selectedRadio: HTMLInputElement): void {
 }
 
 /**
- * Show a step item by updating its visibility in the form state
+ * Show a step item by calling the multiStep function
  */
 function showStepItem(stepItemId: string): void {
-  FormState.setStepVisibility(stepItemId, true);
-  logVerbose(`Set step item visibility to true in FormState: ${stepItemId}`);
+  if (showStepItemFn) {
+    showStepItemFn(stepItemId);
+  } else {
+    // Fallback to just updating FormState
+    FormState.setStepVisibility(stepItemId, true);
+    logVerbose(`Set step item visibility to true in FormState: ${stepItemId} (multiStep function not available)`);
+  }
 }
 
 /**
- * Hide a step item by updating its visibility in the form state
+ * Hide a step item by calling the multiStep function
  */
 function hideStepItem(stepItemId: string): void {
-  FormState.setStepVisibility(stepItemId, false);
-  logVerbose(`Set step item visibility to false in FormState: ${stepItemId}`);
+  if (hideStepItemFn) {
+    hideStepItemFn(stepItemId);
+  } else {
+    // Fallback to just updating FormState
+    FormState.setStepVisibility(stepItemId, false);
+    logVerbose(`Set step item visibility to false in FormState: ${stepItemId} (multiStep function not available)`);
+  }
 }
 
 /**
@@ -369,7 +389,7 @@ function deactivateBranch(target: string | null): void {
 /**
  * Get the next step based on branching logic
  */
-export function getNextStep(currentStep?: string): string | null {
+export function getNextStep(): string | null {
   const activeConditions = FormState.getBranchPath().activeConditions;
   
   // This logic can be enhanced to handle complex rules.
@@ -419,32 +439,27 @@ function shouldStepBeVisible(stepAnswer: string | null, activeConditions: Record
 }
 
 /**
- * Clear fields from inactive branches
- */
-function clearInactiveBranchFields(): void {
-  // This function can be expanded to clear data from fields
-  // that are part of now-inactive branches.
-}
-
-/**
- * Clear fields related to a specific branch target.
+ * Clear fields associated with inactive branches
  */
 function clearBranchFields(branchTarget: string): void {
-  const fieldsToClear: string[] = [];
+  // Find all fields that were set when this branch was active
+  const fieldsToCheck = document.querySelectorAll(`[data-step-field-name]`);
   
-  // Find all inputs that are part of the branch
-  const branchInputs = document.querySelectorAll(`[data-go-to="${branchTarget}"]`);
-  
-  branchInputs.forEach(input => {
-    if (isFormInput(input) && input.name) {
-      fieldsToClear.push(input.name);
+  fieldsToCheck.forEach(field => {
+    const fieldElement = field as HTMLInputElement;
+    const stepElement = fieldElement.closest(SELECTORS.STEP);
+    
+    if (stepElement) {
+      const stepAnswer = getAttrValue(stepElement, 'data-answer');
+      if (stepAnswer === branchTarget) {
+        // Clear field value
+        fieldElement.value = '';
+        if (fieldElement.name) {
+          FormState.setField(fieldElement.name, null);
+        }
+      }
     }
   });
-  
-  // Clear from FormState
-  if (fieldsToClear.length > 0) {
-    FormState.clearFields(fieldsToClear);
-  }
 }
 
 /**

@@ -4,8 +4,6 @@
 import { CSS_CLASSES, SELECTORS } from '../config.js';
 import { logVerbose, getAttrValue, addClass, removeClass } from './utils.js';
 let errorConfigs = new Map();
-let initialized = false;
-let cleanupFunctions = [];
 let errorStates = new Map();
 /**
  * Initialize error handling
@@ -222,10 +220,9 @@ export function focusFirstError() {
 export function getErrorStats() {
     const fieldsWithErrors = getFieldsWithErrors();
     return {
-        totalFields: errorConfigs.size,
-        fieldsWithErrors: fieldsWithErrors.length,
-        fieldsWithoutErrors: errorConfigs.size - fieldsWithErrors.length,
-        errorFields: fieldsWithErrors
+        totalErrors: fieldsWithErrors.length,
+        fieldsWithErrors,
+        hasErrors: fieldsWithErrors.length > 0
     };
 }
 /**

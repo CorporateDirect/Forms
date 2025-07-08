@@ -216,22 +216,21 @@ export function clearSummary(fieldNames) {
     }
 }
 /**
- * Get all current summary values
+ * Get all summary values as an object
  */
 export function getAllSummaryValues() {
     const summaryValues = {};
-    summaryFields.forEach((summaryField, index) => {
-        const key = summaryField.type && summaryField.subtype && summaryField.number
-            ? `${summaryField.type}-${summaryField.subtype}-${summaryField.number}`
-            : `summary-${index}`;
-        summaryValues[key] = {
-            fieldNames: summaryField.fieldNames,
-            value: summaryField.element.textContent || '',
-            joinType: summaryField.joinType,
-            type: summaryField.type,
-            subtype: summaryField.subtype,
-            number: summaryField.number
-        };
+    summaryFields.forEach(summaryField => {
+        const values = [];
+        summaryField.fieldNames.forEach(fieldName => {
+            const value = FormState.getField(fieldName);
+            if (value !== null && value !== undefined && value !== '') {
+                values.push(String(value));
+            }
+        });
+        const joinedValue = joinValues(values, summaryField.joinType);
+        const elementId = summaryField.element.id || `summary-${summaryField.fieldNames.join('-')}`;
+        summaryValues[elementId] = joinedValue;
     });
     return summaryValues;
 }

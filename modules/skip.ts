@@ -14,6 +14,22 @@ import {
 import { FormState } from './formState.js';
 import { clearFieldValidation } from './validation.js';
 
+// Forward declarations for multiStep integration
+let goToStepById: ((stepId: string) => void) | null = null;
+let goToNextStep: (() => void) | null = null;
+
+/**
+ * Set navigation functions from multiStep module
+ */
+export function setNavigationFunctions(
+  goToStepByIdFn: (stepId: string) => void,
+  goToNextStepFn: () => void
+): void {
+  goToStepById = goToStepByIdFn;
+  goToNextStep = goToNextStepFn;
+  logVerbose('Navigation functions set for skip module');
+}
+
 interface SkipRule {
   stepId: string;
   condition?: string;
@@ -470,23 +486,22 @@ function getStepsBetween(fromStepId: string, toStepId: string): string[] {
  * Navigate to a specific step
  */
 function navigateToStep(stepId: string): void {
-  // This would integrate with your existing navigation system
-  // For now, we'll just log the intent
-  logVerbose(`Navigation requested to step: ${stepId}`);
-  
-  // You would call your existing goToStepById function here
-  // goToStepById(stepId);
+  if (goToStepById) {
+    goToStepById(stepId);
+  } else {
+    logVerbose(`Navigation requested to step: ${stepId}, but goToStepById is not set.`);
+  }
 }
 
 /**
  * Navigate to the next available (non-skipped) step
  */
 function navigateToNextAvailableStep(): void {
-  // This would integrate with your existing navigation system
-  logVerbose('Navigation requested to next available step');
-  
-  // You would call your existing goToNextStep function here
-  // goToNextStep();
+  if (goToNextStep) {
+    goToNextStep();
+  } else {
+    logVerbose('Navigation requested to next available step, but goToNextStep is not set.');
+  }
 }
 
 /**

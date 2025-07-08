@@ -4,6 +4,17 @@
 import { SELECTORS } from '../config.js';
 import { logVerbose, queryAllByAttr, queryByAttr, getAttrValue, delegateEvent, getInputValue, isFormInput } from './utils.js';
 import { FormState } from './formState.js';
+// Forward declaration for multiStep integration
+let showStepItemFn = null;
+let hideStepItemFn = null;
+/**
+ * Set step item functions from multiStep module
+ */
+export function setStepItemFunctions(showStepItemFunction, hideStepItemFunction) {
+    showStepItemFn = showStepItemFunction;
+    hideStepItemFn = hideStepItemFunction;
+    logVerbose('Step item functions set for branching module');
+}
 let initialized = false;
 let cleanupFunctions = [];
 /**
@@ -238,18 +249,30 @@ function handleRadioGroupSelection(selectedRadio) {
     });
 }
 /**
- * Show a step item by updating its visibility in the form state
+ * Show a step item by calling the multiStep function
  */
 function showStepItem(stepItemId) {
-    FormState.setStepVisibility(stepItemId, true);
-    logVerbose(`Set step item visibility to true in FormState: ${stepItemId}`);
+    if (showStepItemFn) {
+        showStepItemFn(stepItemId);
+    }
+    else {
+        // Fallback to just updating FormState
+        FormState.setStepVisibility(stepItemId, true);
+        logVerbose(`Set step item visibility to true in FormState: ${stepItemId} (multiStep function not available)`);
+    }
 }
 /**
- * Hide a step item by updating its visibility in the form state
+ * Hide a step item by calling the multiStep function
  */
 function hideStepItem(stepItemId) {
-    FormState.setStepVisibility(stepItemId, false);
-    logVerbose(`Set step item visibility to false in FormState: ${stepItemId}`);
+    if (hideStepItemFn) {
+        hideStepItemFn(stepItemId);
+    }
+    else {
+        // Fallback to just updating FormState
+        FormState.setStepVisibility(stepItemId, false);
+        logVerbose(`Set step item visibility to false in FormState: ${stepItemId} (multiStep function not available)`);
+    }
 }
 /**
  * Trigger step_item visibility based on radio button selection
@@ -288,7 +311,7 @@ function deactivateBranch(target) {
 /**
  * Get the next step based on branching logic
  */
-export function getNextStep(currentStep) {
+export function getNextStep() {
     const activeConditions = FormState.getBranchPath().activeConditions;
     // This logic can be enhanced to handle complex rules.
     // For now, it returns the first active condition target.
@@ -330,28 +353,25 @@ function shouldStepBeVisible(stepAnswer, activeConditions) {
     return false;
 }
 /**
- * Clear fields from inactive branches
- */
-function clearInactiveBranchFields() {
-    // This function can be expanded to clear data from fields
-    // that are part of now-inactive branches.
-}
-/**
- * Clear fields related to a specific branch target.
+ * Clear fields associated with inactive branches
  */
 function clearBranchFields(branchTarget) {
-    const fieldsToClear = [];
-    // Find all inputs that are part of the branch
-    const branchInputs = document.querySelectorAll(`[data-go-to="${branchTarget}"]`);
-    branchInputs.forEach(input => {
-        if (isFormInput(input) && input.name) {
-            fieldsToClear.push(input.name);
+    // Find all fields that were set when this branch was active
+    const fieldsToCheck = document.querySelectorAll(`[data-step-field-name]`);
+    fieldsToCheck.forEach(field => {
+        const fieldElement = field;
+        const stepElement = fieldElement.closest(SELECTORS.STEP);
+        if (stepElement) {
+            const stepAnswer = getAttrValue(stepElement, 'data-answer');
+            if (stepAnswer === branchTarget) {
+                // Clear field value
+                fieldElement.value = '';
+                if (fieldElement.name) {
+                    FormState.setField(fieldElement.name, null);
+                }
+            }
         }
     });
-    // Clear from FormState
-    if (fieldsToClear.length > 0) {
-        FormState.clearFields(fieldsToClear);
-    }
 }
 /**
  * Reset branching module state

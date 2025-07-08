@@ -4,8 +4,8 @@
 import { SELECTORS } from '../config.js';
 import { logVerbose, queryAllByAttr, getAttrValue, delegateEvent, showElement, hideElement, isVisible, removeClass } from './utils.js';
 import { FormState } from './formState.js';
-import { getNextStep } from './branching.js';
-import { initSkip, evaluateSkipConditions, resetSkip } from './skip.js';
+import { initSkip, evaluateSkipConditions, resetSkip, setNavigationFunctions } from './skip.js';
+import { setStepItemFunctions } from './branching.js';
 let initialized = false;
 let cleanupFunctions = [];
 let steps = [];
@@ -88,16 +88,20 @@ export function initMultiStep(root = document) {
         });
     });
     // Hide all steps and step_items initially
-    steps.forEach((step, index) => {
+    steps.forEach((step) => {
         hideElement(step.element);
     });
-    stepItems.forEach((stepItem, index) => {
+    stepItems.forEach((stepItem) => {
         hideElement(stepItem.element);
     });
     // Set up navigation event listeners
     setupNavigationListeners(root);
     // Initialize enhanced skip functionality
     initSkip(root);
+    // Set navigation functions for skip module integration
+    setNavigationFunctions(goToStepById, goToNextStep);
+    // Set step item functions for branching module integration
+    setStepItemFunctions(showStepItem, hideStepItem);
     // Initialize first step
     if (steps.length > 0) {
         goToStep(0);
@@ -590,7 +594,7 @@ function hideStep(stepIndex) {
 /**
  * Go to next step (sequential) - restored original logic with skip integration
  */
-function goToNextStep(skipValidation = false) {
+function goToNextStep() {
     const currentStep = getCurrentStep();
     if (!currentStep) {
         logVerbose('No current step found');
@@ -606,26 +610,6 @@ function goToNextStep(skipValidation = false) {
     else {
         logVerbose('Already at last step');
     }
-}
-/**
- * Find next available step (not skipped)
- */
-function findNextAvailableStep() {
-    let nextIndex = currentStepIndex + 1;
-    // Check for branching logic first
-    const branchingNext = findNextBranchingStep();
-    if (branchingNext !== -1) {
-        nextIndex = branchingNext;
-    }
-    // Skip over any skipped steps
-    while (nextIndex < steps.length) {
-        const stepId = steps[nextIndex].id;
-        if (!FormState.isStepSkipped(stepId)) {
-            return nextIndex;
-        }
-        nextIndex++;
-    }
-    return -1; // No available next step
 }
 /**
  * Go to previous step
@@ -744,15 +728,5 @@ export function getMultiStepState() {
             number: step.number
         }))
     };
-}
-function findNextStepInSequence() {
-    return currentStepIndex + 1;
-}
-/**
- * Find the next step based on branching logic
- */
-function findNextBranchingStep() {
-    const nextStep = getNextStep(steps[currentStepIndex]?.id);
-    return nextStep ? findStepIndexById(nextStep) : -1;
 }
 //# sourceMappingURL=multiStep.js.map
