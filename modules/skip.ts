@@ -484,6 +484,28 @@ function navigateToStep(stepId: string): void {
     goToStepByIdType: typeof goToStepById
   });
 
+  // First, let's verify the target step exists in the DOM
+  const targetElement = document.querySelector(`[data-answer="${stepId}"]`);
+  const targetStepWrapper = document.querySelector(`.step_wrapper[data-answer="${stepId}"]`);
+  
+  logVerbose('Target step DOM verification', {
+    targetStepId: stepId,
+    targetElementExists: !!targetElement,
+    targetStepWrapperExists: !!targetStepWrapper,
+    targetElement: targetElement ? {
+      tagName: targetElement.tagName,
+      id: targetElement.id,
+      className: targetElement.className,
+      dataAnswer: targetElement.getAttribute('data-answer')
+    } : null,
+    targetStepWrapper: targetStepWrapper ? {
+      tagName: targetStepWrapper.tagName,
+      id: targetStepWrapper.id,
+      className: targetStepWrapper.className,
+      dataAnswer: targetStepWrapper.getAttribute('data-answer')
+    } : null
+  });
+
   if (goToStepById) {
     logVerbose(`Calling goToStepById with stepId: ${stepId}`);
     
@@ -502,6 +524,28 @@ function navigateToStep(stepId: string): void {
       expectedStep: stepId,
       actualStep: currentStepAfter
     });
+    
+    // If navigation failed, let's try to understand why
+    if (currentStepAfter !== stepId) {
+      logVerbose('❌ NAVIGATION FAILED - DEBUGGING', {
+        expectedStep: stepId,
+        actualStep: currentStepAfter,
+        targetElementExists: !!targetElement,
+        targetStepWrapperExists: !!targetStepWrapper,
+        possibleIssue: 'Step might not be properly initialized or goToStepById function has a bug'
+      });
+      
+      // Let's try to find all steps with data-answer attributes
+      const allStepsWithAnswers = document.querySelectorAll('[data-answer]');
+      const stepAnswers = Array.from(allStepsWithAnswers).map(el => el.getAttribute('data-answer'));
+      
+      logVerbose('All available steps with data-answer', {
+        totalSteps: allStepsWithAnswers.length,
+        stepAnswers: stepAnswers,
+        searchingFor: stepId,
+        foundInList: stepAnswers.includes(stepId)
+      });
+    }
     
     logVerbose('=== NAVIGATE TO STEP FUNCTION END ===');
   } else {
