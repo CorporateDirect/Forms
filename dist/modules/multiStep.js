@@ -201,7 +201,18 @@ function setupNavigationListeners(root) {
     const cleanup2 = delegateEvent(root, 'click', SELECTORS.BACK_BTN, handleBackClick);
     const cleanup3 = delegateEvent(root, 'click', SELECTORS.SKIP_BTN, handleSkipClick);
     const cleanup4 = delegateEvent(root, 'click', SELECTORS.SUBMIT_BTN, handleSubmitClick);
-    cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4);
+    // Also listen for generic skip selector as fallback
+    const cleanup5 = delegateEvent(root, 'click', SELECTORS.SKIP, handleSkipClick);
+    cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4, cleanup5);
+    // Debug: Log what skip buttons we found
+    const skipBtns = root.querySelectorAll(SELECTORS.SKIP_BTN);
+    const skipElements = root.querySelectorAll(SELECTORS.SKIP);
+    logVerbose('Skip button setup complete', {
+        skipBtnCount: skipBtns.length,
+        skipElementCount: skipElements.length,
+        skipBtnSelector: SELECTORS.SKIP_BTN,
+        skipSelector: SELECTORS.SKIP
+    });
 }
 /**
  * Handle next button click
@@ -224,13 +235,24 @@ function handleBackClick(event) {
  */
 function handleSkipClick(event) {
     event.preventDefault();
+    logVerbose('Skip button clicked!', {
+        target: event.target,
+        currentTarget: event.currentTarget,
+        currentStepIndex,
+        totalSteps: steps.length
+    });
     const currentStepId = FormState.getCurrentStep();
     if (!currentStepId) {
         logVerbose('No current step found for skip operation');
         return;
     }
+    logVerbose('Processing skip for step', {
+        stepId: currentStepId,
+        stepIndex: currentStepIndex
+    });
     // Clear fields in current step (original behavior)
     const stepElement = getCurrentStep()?.element;
+    let fieldsCleared = 0;
     if (stepElement) {
         const fields = Array.from(stepElement.querySelectorAll('input, select, textarea'));
         fields.forEach(field => {
@@ -242,15 +264,23 @@ function handleSkipClick(event) {
             }
             if (field.name) {
                 FormState.setField(field.name, null);
+                fieldsCleared++;
             }
         });
     }
+    logVerbose('Fields cleared during skip', { fieldsCleared });
     // Add to skip tracking (enhanced functionality)
     FormState.addSkippedStep(currentStepId, 'User skipped step', true);
     // Use simple next step logic (bypass validation)
     const nextIndex = currentStepIndex + 1;
+    logVerbose('Attempting to navigate to next step', {
+        currentIndex: currentStepIndex,
+        nextIndex: nextIndex,
+        totalSteps: steps.length
+    });
     if (nextIndex < steps.length) {
         goToStep(nextIndex);
+        logVerbose('Successfully navigated to next step', { newIndex: nextIndex });
     }
     else {
         logVerbose('Cannot skip - already at last step');
