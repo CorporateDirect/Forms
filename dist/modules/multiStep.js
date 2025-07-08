@@ -127,7 +127,37 @@ export function initMultiStep(root = document) {
     setStepItemFunctions(showStepItem, hideStepItem);
     // Initialize first step
     if (steps.length > 0) {
+        logVerbose('=== INITIALIZING FIRST STEP ===');
+        logVerbose('About to call goToStep(0)', {
+            totalSteps: steps.length,
+            currentStepIndex: currentStepIndex,
+            firstStepId: steps[0].id,
+            firstStepElement: {
+                tagName: steps[0].element.tagName,
+                id: steps[0].element.id,
+                className: steps[0].element.className,
+                display: steps[0].element.style.display,
+                visibility: steps[0].element.style.visibility,
+                computedDisplay: getComputedStyle(steps[0].element).display,
+                isVisible: isVisible(steps[0].element)
+            }
+        });
         goToStep(0);
+        logVerbose('=== FIRST STEP INITIALIZATION COMPLETE ===');
+        logVerbose('After goToStep(0) call', {
+            currentStepIndex: currentStepIndex,
+            firstStepElement: {
+                tagName: steps[0].element.tagName,
+                id: steps[0].element.id,
+                className: steps[0].element.className,
+                display: steps[0].element.style.display,
+                visibility: steps[0].element.style.visibility,
+                computedDisplay: getComputedStyle(steps[0].element).display,
+                isVisible: isVisible(steps[0].element)
+            },
+            formStateCurrentStep: FormState.getCurrentStep(),
+            formStateFirstStepVisible: FormState.isStepVisible(steps[0].id)
+        });
     }
     initialized = true;
     logVerbose('Multi-step initialization complete', {

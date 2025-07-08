@@ -50,7 +50,7 @@ export declare function toggleClass(element: Element, className: string, force?:
  */
 export declare function hasClass(element: Element, className: string): boolean;
 /**
- * Show element (remove hidden-step class and set display)
+ * Show element (remove hidden-step class and restore display)
  */
 export declare function showElement(element: HTMLElement): void;
 /**
