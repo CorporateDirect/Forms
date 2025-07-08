@@ -59,6 +59,13 @@ export function initMultiStep(root: Document | Element = document): void {
     // For parent steps, data-answer is optional (they may contain step_items)
     const stepId = dataAnswer || `step-${index}`;
     
+    // Debug: Log step ID assignment
+    logVerbose(`Assigning step ID for index ${index}`, {
+      dataAnswer: dataAnswer,
+      assignedStepId: stepId,
+      element: htmlElement.tagName + (htmlElement.id ? `#${htmlElement.id}` : '') + (htmlElement.className ? `.${htmlElement.className.split(' ').join('.')}` : '')
+    });
+    
     const stepInfo: StepElement = {
       element: htmlElement,
       id: stepId,
@@ -143,6 +150,12 @@ export function initMultiStep(root: Document | Element = document): void {
   logVerbose('Multi-step initialization complete', { 
     parentStepCount: steps.length, 
     stepItemCount: stepItems.length 
+  });
+  
+  // Debug: Log final step mapping for troubleshooting
+  logVerbose('Final step mapping created', {
+    parentSteps: steps.map(s => ({ index: s.index, id: s.id, dataAnswer: getAttrValue(s.element, 'data-answer') })),
+    stepItems: stepItems.map(s => ({ index: s.index, id: s.id, parentIndex: s.parentStepIndex, dataAnswer: getAttrValue(s.element, 'data-answer') }))
   });
 }
 
@@ -316,6 +329,15 @@ function handleSkipClick(event: Event): void {
     totalSteps: steps.length
   });
   
+  // Debug: Log the skip button element details
+  logVerbose('Skip button element analysis', {
+    tagName: skipButton.tagName,
+    id: skipButton.id,
+    className: skipButton.className,
+    outerHTML: skipButton.outerHTML,
+    attributes: Array.from(skipButton.attributes).map(attr => ({ name: attr.name, value: attr.value }))
+  });
+  
   const currentStepId = FormState.getCurrentStep();
   if (!currentStepId) {
     logVerbose('No current step found for skip operation');
@@ -326,11 +348,48 @@ function handleSkipClick(event: Event): void {
   const skipTo = getAttrValue(skipButton, 'data-skip-to');
   const skipValue = getAttrValue(skipButton, 'data-skip');
   
+  // Debug: Log the raw attribute values
+  logVerbose('Raw attribute value extraction', {
+    'data-skip-to': {
+      rawValue: skipTo,
+      type: typeof skipTo,
+      isNull: skipTo === null,
+      isEmpty: skipTo === '',
+      actualValue: skipTo
+    },
+    'data-skip': {
+      rawValue: skipValue,
+      type: typeof skipValue,
+      isNull: skipValue === null,
+      isEmpty: skipValue === '',
+      actualValue: skipValue
+    }
+  });
+  
+  // Debug: Try alternative attribute extraction methods
+  const skipToAlt = skipButton.getAttribute('data-skip-to');
+  const skipValueAlt = skipButton.getAttribute('data-skip');
+  
+  logVerbose('Alternative attribute extraction', {
+    'data-skip-to-alt': {
+      value: skipToAlt,
+      type: typeof skipToAlt,
+      isNull: skipToAlt === null
+    },
+    'data-skip-alt': {
+      value: skipValueAlt,
+      type: typeof skipValueAlt,
+      isNull: skipValueAlt === null
+    }
+  });
+  
   logVerbose('Processing skip for step', {
     stepId: currentStepId,
     stepIndex: currentStepIndex,
     skipTo: skipTo,
-    skipValue: skipValue
+    skipValue: skipValue,
+    skipToType: typeof skipTo,
+    skipValueType: typeof skipValue
   });
 
   // Clear fields in current step (original behavior)
@@ -374,7 +433,13 @@ function handleSkipClick(event: Event): void {
     const nextIndex = currentStepIndex + 1;
     if (nextIndex < steps.length) {
       targetStepId = steps[nextIndex].id;
-      logVerbose('Using default next step', { nextIndex, targetStepId });
+      logVerbose('Using default next step', { 
+        nextIndex, 
+        targetStepId,
+        reason: 'No valid skip target found',
+        skipToValue: skipTo,
+        skipValueValue: skipValue
+      });
     }
   }
 
@@ -426,9 +491,24 @@ function handleSubmitClick(event: Event): void {
 export function goToStepById(stepId: string): void {
   logVerbose(`Navigating to step: ${stepId}`);
   
+  // Debug: Log all available step IDs for comparison
+  const allStepIds = steps.map(s => s.id);
+  const allStepItemIds = stepItems.map(s => s.id);
+  logVerbose('Available steps for navigation', {
+    searchingFor: stepId,
+    parentStepIds: allStepIds,
+    stepItemIds: allStepItemIds,
+    totalParentSteps: steps.length,
+    totalStepItems: stepItems.length
+  });
+  
   // First check if it's a step_item
   const stepItem = stepItems.find(item => item.id === stepId);
   if (stepItem) {
+    logVerbose(`Found step_item: ${stepId}`, {
+      parentStepIndex: stepItem.parentStepIndex,
+      stepItemIndex: stepItem.index
+    });
     // Navigate to the parent step first
     if (stepItem.parentStepIndex !== undefined) {
       goToStep(stepItem.parentStepIndex);
@@ -436,17 +516,29 @@ export function goToStepById(stepId: string): void {
       showStepItem(stepId);
     }
     return;
+  } else {
+    logVerbose(`Step ID ${stepId} not found in step_items`);
   }
   
   // Then check if it's a parent step
   const parentStepIndex = findStepIndexById(stepId);
+  logVerbose(`findStepIndexById result for ${stepId}`, {
+    foundIndex: parentStepIndex,
+    isValidIndex: parentStepIndex !== -1
+  });
+  
   if (parentStepIndex !== -1) {
+    logVerbose(`Found parent step: ${stepId} at index ${parentStepIndex}`);
     currentStepItemId = null; // Clear step item tracking
     goToStep(parentStepIndex);
     return;
   }
   
-  logVerbose(`Step not found: ${stepId}`);
+  logVerbose(`Step not found: ${stepId}`, {
+    searchedIn: 'both parent steps and step_items',
+    availableParentSteps: allStepIds,
+    availableStepItems: allStepItemIds
+  });
 }
 
 /**
