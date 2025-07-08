@@ -232,10 +232,11 @@ function handleBackClick(event) {
 }
 /**
  * Handle skip button click
- * Direct skip approach that doesn't interfere with normal validation
+ * Enhanced to handle skip targets using the same logic as data-go-to
  */
 function handleSkipClick(event) {
     event.preventDefault();
+    const skipButton = event.target;
     logVerbose('Skip button clicked!', {
         target: event.target,
         currentTarget: event.currentTarget,
@@ -247,9 +248,14 @@ function handleSkipClick(event) {
         logVerbose('No current step found for skip operation');
         return;
     }
+    // Check for skip target in data attributes (same priority as branching)
+    const skipTo = getAttrValue(skipButton, 'data-skip-to');
+    const skipValue = getAttrValue(skipButton, 'data-skip');
     logVerbose('Processing skip for step', {
         stepId: currentStepId,
-        stepIndex: currentStepIndex
+        stepIndex: currentStepIndex,
+        skipTo: skipTo,
+        skipValue: skipValue
     });
     // Clear fields in current step (original behavior)
     const stepElement = getCurrentStep()?.element;
@@ -272,19 +278,41 @@ function handleSkipClick(event) {
     logVerbose('Fields cleared during skip', { fieldsCleared });
     // Add to skip tracking (enhanced functionality)
     FormState.addSkippedStep(currentStepId, 'User skipped step', true);
-    // Use simple next step logic (bypass validation)
-    const nextIndex = currentStepIndex + 1;
-    logVerbose('Attempting to navigate to next step', {
-        currentIndex: currentStepIndex,
-        nextIndex: nextIndex,
-        totalSteps: steps.length
-    });
-    if (nextIndex < steps.length) {
-        goToStep(nextIndex);
-        logVerbose('Successfully navigated to next step', { newIndex: nextIndex });
+    // Determine target step (same logic as data-go-to)
+    let targetStepId = null;
+    // Priority 1: data-skip-to attribute
+    if (skipTo) {
+        targetStepId = skipTo;
+        logVerbose('Using data-skip-to target', { targetStepId });
+    }
+    // Priority 2: data-skip value (if it's not just "true" or empty)
+    else if (skipValue && skipValue !== 'true' && skipValue !== '') {
+        targetStepId = skipValue;
+        logVerbose('Using data-skip value as target', { targetStepId });
+    }
+    // Priority 3: Default to next sequential step
+    else {
+        const nextIndex = currentStepIndex + 1;
+        if (nextIndex < steps.length) {
+            targetStepId = steps[nextIndex].id;
+            logVerbose('Using default next step', { nextIndex, targetStepId });
+        }
+    }
+    // Navigate to target using the same method as branching (goToStepById)
+    if (targetStepId) {
+        logVerbose('Navigating to target step using goToStepById', {
+            targetStepId,
+            navigationMethod: skipTo ? 'data-skip-to' : skipValue ? 'data-skip-value' : 'sequential'
+        });
+        // Use the same navigation method as branching logic
+        goToStepById(targetStepId);
+        logVerbose('Skip navigation complete', {
+            targetStepId,
+            newCurrentIndex: currentStepIndex
+        });
     }
     else {
-        logVerbose('Cannot skip - already at last step');
+        logVerbose('Cannot skip - no valid target found');
     }
 }
 /**
@@ -369,42 +397,92 @@ function validateStepElement(element) {
  * Go to a specific step by index
  */
 export function goToStep(stepIndex) {
-    logVerbose(`Attempting to go to step index: ${stepIndex}`);
+    logVerbose(`Attempting to go to step index: ${stepIndex}`, {
+        currentIndex: currentStepIndex,
+        totalSteps: steps.length,
+        requestedIndex: stepIndex
+    });
     if (stepIndex < 0 || stepIndex >= steps.length) {
-        logVerbose(`Invalid step index: ${stepIndex}`);
+        logVerbose(`Invalid step index: ${stepIndex}`, {
+            min: 0,
+            max: steps.length - 1,
+            totalSteps: steps.length
+        });
         return;
     }
     // Hide current step if there is one
     if (currentStepIndex !== -1 && currentStepIndex < steps.length) {
+        const currentStep = steps[currentStepIndex];
+        logVerbose(`Hiding current step: ${currentStepIndex} (${currentStep.id})`);
         hideStep(currentStepIndex);
     }
     // Show the new step
+    const targetStep = steps[stepIndex];
+    logVerbose(`Showing target step: ${stepIndex} (${targetStep.id})`, {
+        stepElement: targetStep.element,
+        stepType: targetStep.type,
+        stepSubtype: targetStep.subtype
+    });
     showStep(stepIndex);
     // Update current step index
     currentStepIndex = stepIndex;
     // Update form state with current step
-    const newStep = steps[stepIndex];
-    FormState.setCurrentStep(newStep.id);
+    FormState.setCurrentStep(targetStep.id);
     // Update visibility of navigation buttons
     updateNavigationButtons();
+    // Debug: Verify step is actually visible
+    const isStepVisible = isVisible(targetStep.element);
+    const stepDisplay = getComputedStyle(targetStep.element).display;
+    const stepVisibility = getComputedStyle(targetStep.element).visibility;
+    logVerbose(`Step navigation complete`, {
+        newCurrentIndex: currentStepIndex,
+        stepId: targetStep.id,
+        elementVisible: isStepVisible,
+        elementDisplay: stepDisplay,
+        elementVisibility: stepVisibility,
+        elementHasContent: targetStep.element.children.length > 0
+    });
 }
 /**
  * Show a step by its index
  */
 export function showStep(stepIndex) {
     if (stepIndex < 0 || stepIndex >= steps.length) {
+        logVerbose(`Cannot show step - invalid index: ${stepIndex}`);
         return;
     }
     const step = steps[stepIndex];
+    logVerbose(`Showing step ${stepIndex} (${step.id})`, {
+        elementBefore: {
+            display: getComputedStyle(step.element).display,
+            visibility: getComputedStyle(step.element).visibility,
+            isVisible: isVisible(step.element)
+        }
+    });
     showElement(step.element);
     FormState.setStepVisibility(step.id, true);
     // Also show any visible step_items within this step
+    const stepItemsInThisStep = stepItems.filter(item => item.parentStepIndex === stepIndex);
+    logVerbose(`Step ${stepIndex} contains ${stepItemsInThisStep.length} step items`);
     stepItems.forEach(item => {
         if (item.parentStepIndex === stepIndex && FormState.isStepVisible(item.id)) {
+            logVerbose(`Showing step item: ${item.id} within step ${stepIndex}`);
             showElement(item.element);
         }
     });
-    logVerbose(`Showing step ${stepIndex} (${step.id})`);
+    // Debug: Check final state
+    const elementAfter = {
+        display: getComputedStyle(step.element).display,
+        visibility: getComputedStyle(step.element).visibility,
+        isVisible: isVisible(step.element),
+        hasChildren: step.element.children.length,
+        innerHTML: step.element.innerHTML.length > 0
+    };
+    logVerbose(`Step ${stepIndex} show complete`, {
+        stepId: step.id,
+        elementAfter,
+        stepItemCount: stepItemsInThisStep.length
+    });
 }
 /**
  * Hide a step by its index
