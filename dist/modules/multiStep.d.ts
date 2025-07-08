@@ -14,7 +14,7 @@ export declare function showStepItem(stepItemId: string): void;
  */
 export declare function hideStepItem(stepItemId: string): void;
 /**
- * Go to a step by ID (works for both parent steps and step_items)
+ * Go to a step by ID (handles both regular steps and branching step_items)
  */
 export declare function goToStepById(stepId: string): void;
 /**

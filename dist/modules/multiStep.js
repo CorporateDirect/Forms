@@ -30,20 +30,17 @@ export function initMultiStep(root = document) {
             id: stepElement.id,
             className: stepElement.className
         });
-        // Look for data-answer on the step element itself first
-        let dataAnswer = getAttrValue(stepElement, 'data-answer');
-        // If not found, look for data-answer on step_wrapper child elements
-        if (!dataAnswer) {
-            const stepWrapper = stepElement.querySelector('.step_wrapper[data-answer]');
-            if (stepWrapper) {
-                dataAnswer = getAttrValue(stepWrapper, 'data-answer');
-                logVerbose(`Found data-answer on step_wrapper child: ${dataAnswer}`);
-            }
+        // Look for data-answer on step_wrapper child element (primary step identifier)
+        const stepWrapper = stepElement.querySelector('.step_wrapper[data-answer]');
+        let dataAnswer;
+        if (stepWrapper) {
+            dataAnswer = getAttrValue(stepWrapper, 'data-answer') || `step-${index}`;
+            logVerbose(`Found data-answer on step_wrapper: ${dataAnswer}`);
         }
-        // If still not found, generate a default ID
-        if (!dataAnswer) {
-            dataAnswer = `step-${index}`;
-            logVerbose(`Generated default step ID: ${dataAnswer}`);
+        else {
+            // Fallback: look for data-answer on the step element itself
+            dataAnswer = getAttrValue(stepElement, 'data-answer') || `step-${index}`;
+            logVerbose(`Using fallback step ID: ${dataAnswer}`);
         }
         const stepInfo = {
             element: stepElement,
@@ -64,44 +61,50 @@ export function initMultiStep(root = document) {
         });
         return stepInfo;
     });
-    // Find all step_item elements within parent steps
+    // Find all step_item elements within parent steps (for branching scenarios)
     stepItems = [];
     steps.forEach((parentStep, parentIndex) => {
-        // Look for step_item elements within this parent step
+        // Look for step_item elements within this parent step (branching options)
         const stepItemElements = parentStep.element.querySelectorAll('.step_item[data-answer], .step-item[data-answer]');
-        logVerbose(`Found ${stepItemElements.length} step_items in parent step ${parentIndex} (${parentStep.id})`);
-        stepItemElements.forEach((stepItemElement) => {
-            const htmlElement = stepItemElement;
-            const dataAnswer = getAttrValue(stepItemElement, 'data-answer');
-            if (!dataAnswer) {
-                logVerbose(`Step item in parent step ${parentIndex} missing required data-answer attribute`);
-                return;
-            }
-            const stepItemInfo = {
-                element: htmlElement,
-                id: dataAnswer,
-                index: stepItems.length, // Global step_item index
-                type: getAttrValue(stepItemElement, 'data-step-type') || undefined,
-                subtype: getAttrValue(stepItemElement, 'data-step-subtype') || undefined,
-                number: getAttrValue(stepItemElement, 'data-step-number') || undefined,
-                isStepItem: true,
-                parentStepIndex: parentIndex
-            };
-            // Register step_item in FormState
-            FormState.setStepInfo(dataAnswer, {
-                type: stepItemInfo.type,
-                subtype: stepItemInfo.subtype,
-                number: stepItemInfo.number,
-                visible: false, // Step items are hidden by default
-                visited: false
+        if (stepItemElements.length > 0) {
+            logVerbose(`Found ${stepItemElements.length} branching step_items in step ${parentIndex} (${parentStep.id})`);
+            stepItemElements.forEach((stepItemElement) => {
+                const htmlElement = stepItemElement;
+                const dataAnswer = getAttrValue(stepItemElement, 'data-answer');
+                if (!dataAnswer) {
+                    logVerbose(`Step item in parent step ${parentIndex} missing required data-answer attribute`);
+                    return;
+                }
+                const stepItemInfo = {
+                    element: htmlElement,
+                    id: dataAnswer,
+                    index: stepItems.length, // Global step_item index
+                    type: getAttrValue(stepItemElement, 'data-step-type') || undefined,
+                    subtype: getAttrValue(stepItemElement, 'data-step-subtype') || undefined,
+                    number: getAttrValue(stepItemElement, 'data-step-number') || undefined,
+                    isStepItem: true,
+                    parentStepIndex: parentIndex
+                };
+                // Register step_item in FormState as a branching option
+                FormState.setStepInfo(dataAnswer, {
+                    type: stepItemInfo.type,
+                    subtype: stepItemInfo.subtype,
+                    number: stepItemInfo.number,
+                    visible: false, // Step items are hidden by default until selected
+                    visited: false
+                });
+                stepItems.push(stepItemInfo);
+                logVerbose(`Registered branching step_item: ${dataAnswer}`, {
+                    parentStepIndex: parentIndex,
+                    parentStepId: parentStep.id,
+                    stepItemIndex: stepItemInfo.index,
+                    purpose: 'branching option within step'
+                });
             });
-            stepItems.push(stepItemInfo);
-            logVerbose(`Registered step_item: ${dataAnswer}`, {
-                parentStepIndex: parentIndex,
-                parentStepId: parentStep.id,
-                stepItemIndex: stepItemInfo.index
-            });
-        });
+        }
+        else {
+            logVerbose(`No branching step_items found in step ${parentIndex} (${parentStep.id}) - simple step`);
+        }
     });
     // Hide all steps and step_items initially
     logVerbose('Starting to hide all steps initially', { totalSteps: steps.length, totalStepItems: stepItems.length });
@@ -323,7 +326,7 @@ function handleSubmitClick(event) {
     logVerbose('Form validation passed, allowing submission');
 }
 /**
- * Go to a step by ID (works for both parent steps and step_items)
+ * Go to a step by ID (handles both regular steps and branching step_items)
  */
 export function goToStepById(stepId) {
     logVerbose('=== GO TO STEP BY ID FUNCTION START ===');
@@ -334,14 +337,14 @@ export function goToStepById(stepId) {
     logVerbose('Available steps for navigation', {
         searchingFor: stepId,
         parentStepIds: allStepIds,
-        stepItemIds: allStepItemIds,
+        branchingStepItemIds: allStepItemIds,
         totalParentSteps: steps.length,
-        totalStepItems: stepItems.length
+        totalBranchingItems: stepItems.length
     });
-    // First check if it's a step_item
+    // First check if it's a branching step_item
     const stepItem = stepItems.find(item => item.id === stepId);
     if (stepItem) {
-        logVerbose(`✓ FOUND STEP_ITEM: ${stepId}`, {
+        logVerbose(`✓ FOUND BRANCHING STEP_ITEM: ${stepId}`, {
             parentStepIndex: stepItem.parentStepIndex,
             stepItemIndex: stepItem.index,
             stepItemElement: {
@@ -351,28 +354,29 @@ export function goToStepById(stepId) {
                 dataAnswer: getAttrValue(stepItem.element, 'data-answer')
             }
         });
-        // Navigate to the parent step first
+        // Navigate to the parent step first (if not already there)
         if (stepItem.parentStepIndex !== undefined) {
-            logVerbose(`Navigating to parent step first: index ${stepItem.parentStepIndex}`);
+            const parentStep = steps[stepItem.parentStepIndex];
+            logVerbose(`Navigating to parent step: ${parentStep.id} (index ${stepItem.parentStepIndex})`);
             goToStep(stepItem.parentStepIndex);
-            // Then show the specific step_item
-            logVerbose(`Now showing specific step_item: ${stepId}`);
+            // Then show the specific branching option
+            logVerbose(`Now showing branching option: ${stepId}`);
             showStepItem(stepId);
         }
-        logVerbose('=== GO TO STEP BY ID FUNCTION END (STEP_ITEM) ===');
+        logVerbose('=== GO TO STEP BY ID FUNCTION END (BRANCHING_ITEM) ===');
         return;
     }
     else {
-        logVerbose(`Step ID ${stepId} not found in step_items`);
+        logVerbose(`Step ID ${stepId} not found in branching step_items`);
     }
-    // Then check if it's a parent step
+    // Then check if it's a regular step
     const parentStepIndex = findStepIndexById(stepId);
     logVerbose(`findStepIndexById result for ${stepId}`, {
         foundIndex: parentStepIndex,
         isValidIndex: parentStepIndex !== -1
     });
     if (parentStepIndex !== -1) {
-        logVerbose(`✓ FOUND PARENT STEP: ${stepId} at index ${parentStepIndex}`, {
+        logVerbose(`✓ FOUND REGULAR STEP: ${stepId} at index ${parentStepIndex}`, {
             stepElement: {
                 tagName: steps[parentStepIndex].element.tagName,
                 id: steps[parentStepIndex].element.id,
@@ -383,13 +387,13 @@ export function goToStepById(stepId) {
         currentStepItemId = null; // Clear step item tracking
         logVerbose(`Calling goToStep with index: ${parentStepIndex}`);
         goToStep(parentStepIndex);
-        logVerbose('=== GO TO STEP BY ID FUNCTION END (PARENT_STEP) ===');
+        logVerbose('=== GO TO STEP BY ID FUNCTION END (REGULAR_STEP) ===');
         return;
     }
     logVerbose(`❌ STEP NOT FOUND: ${stepId}`, {
-        searchedIn: 'both parent steps and step_items',
-        availableParentSteps: allStepIds,
-        availableStepItems: allStepItemIds,
+        searchedIn: 'both regular steps and branching step_items',
+        availableRegularSteps: allStepIds,
+        availableBranchingItems: allStepItemIds,
         suggestion: 'Check if the data-answer attribute exists on the target element'
     });
     logVerbose('=== GO TO STEP BY ID FUNCTION END (NOT_FOUND) ===');
