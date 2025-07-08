@@ -214,21 +214,9 @@ function setupNavigationListeners(root) {
     // Use event delegation for navigation buttons
     const cleanup1 = delegateEvent(root, 'click', SELECTORS.NEXT_BTN, handleNextClick);
     const cleanup2 = delegateEvent(root, 'click', SELECTORS.BACK_BTN, handleBackClick);
-    // Primary skip listener - for data-skip attribute (Webflow standard)
-    const cleanup3 = delegateEvent(root, 'click', SELECTORS.SKIP, handleSkipClick);
-    // Secondary skip listener - for data-form="skip-btn" (fallback)
-    const cleanup4 = delegateEvent(root, 'click', SELECTORS.SKIP_BTN, handleSkipClick);
-    const cleanup5 = delegateEvent(root, 'click', SELECTORS.SUBMIT_BTN, handleSubmitClick);
-    cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4, cleanup5);
-    // Debug: Log what skip buttons we found
-    const skipElements = root.querySelectorAll(SELECTORS.SKIP);
-    const skipBtns = root.querySelectorAll(SELECTORS.SKIP_BTN);
-    logVerbose('Skip button setup complete', {
-        dataSkipCount: skipElements.length,
-        dataFormSkipBtnCount: skipBtns.length,
-        primarySelector: SELECTORS.SKIP,
-        fallbackSelector: SELECTORS.SKIP_BTN
-    });
+    const cleanup3 = delegateEvent(root, 'click', SELECTORS.SUBMIT_BTN, handleSubmitClick);
+    cleanupFunctions.push(cleanup1, cleanup2, cleanup3);
+    logVerbose('Navigation listeners setup complete (skip handling delegated to skip module)');
 }
 /**
  * Handle next button click
@@ -244,139 +232,6 @@ function handleNextClick(event) {
 function handleBackClick(event) {
     event.preventDefault();
     goToPreviousStep();
-}
-/**
- * Handle skip button click
- * Enhanced to handle skip targets using the same logic as data-go-to
- */
-function handleSkipClick(event) {
-    event.preventDefault();
-    const skipButton = event.target;
-    logVerbose('Skip button clicked!', {
-        target: event.target,
-        currentTarget: event.currentTarget,
-        currentStepIndex,
-        totalSteps: steps.length
-    });
-    // Debug: Log the skip button element details
-    logVerbose('Skip button element analysis', {
-        tagName: skipButton.tagName,
-        id: skipButton.id,
-        className: skipButton.className,
-        outerHTML: skipButton.outerHTML,
-        attributes: Array.from(skipButton.attributes).map(attr => ({ name: attr.name, value: attr.value }))
-    });
-    const currentStepId = FormState.getCurrentStep();
-    if (!currentStepId) {
-        logVerbose('No current step found for skip operation');
-        return;
-    }
-    // Check for skip target in data attributes (same priority as branching)
-    const skipTo = getAttrValue(skipButton, 'data-skip-to');
-    const skipValue = getAttrValue(skipButton, 'data-skip');
-    // Debug: Log the raw attribute values
-    logVerbose('Raw attribute value extraction', {
-        'data-skip-to': {
-            rawValue: skipTo,
-            type: typeof skipTo,
-            isNull: skipTo === null,
-            isEmpty: skipTo === '',
-            actualValue: skipTo
-        },
-        'data-skip': {
-            rawValue: skipValue,
-            type: typeof skipValue,
-            isNull: skipValue === null,
-            isEmpty: skipValue === '',
-            actualValue: skipValue
-        }
-    });
-    // Debug: Try alternative attribute extraction methods
-    const skipToAlt = skipButton.getAttribute('data-skip-to');
-    const skipValueAlt = skipButton.getAttribute('data-skip');
-    logVerbose('Alternative attribute extraction', {
-        'data-skip-to-alt': {
-            value: skipToAlt,
-            type: typeof skipToAlt,
-            isNull: skipToAlt === null
-        },
-        'data-skip-alt': {
-            value: skipValueAlt,
-            type: typeof skipValueAlt,
-            isNull: skipValueAlt === null
-        }
-    });
-    logVerbose('Processing skip for step', {
-        stepId: currentStepId,
-        stepIndex: currentStepIndex,
-        skipTo: skipTo,
-        skipValue: skipValue,
-        skipToType: typeof skipTo,
-        skipValueType: typeof skipValue
-    });
-    // Clear fields in current step (original behavior)
-    const stepElement = getCurrentStep()?.element;
-    let fieldsCleared = 0;
-    if (stepElement) {
-        const fields = Array.from(stepElement.querySelectorAll('input, select, textarea'));
-        fields.forEach(field => {
-            if (field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')) {
-                field.checked = false;
-            }
-            else {
-                field.value = '';
-            }
-            if (field.name) {
-                FormState.setField(field.name, null);
-                fieldsCleared++;
-            }
-        });
-    }
-    logVerbose('Fields cleared during skip', { fieldsCleared });
-    // Add to skip tracking (enhanced functionality)
-    FormState.addSkippedStep(currentStepId, 'User skipped step', true);
-    // Determine target step (same logic as data-go-to)
-    let targetStepId = null;
-    // Priority 1: data-skip-to attribute
-    if (skipTo) {
-        targetStepId = skipTo;
-        logVerbose('Using data-skip-to target', { targetStepId });
-    }
-    // Priority 2: data-skip value (if it's not just "true" or empty)
-    else if (skipValue && skipValue !== 'true' && skipValue !== '') {
-        targetStepId = skipValue;
-        logVerbose('Using data-skip value as target', { targetStepId });
-    }
-    // Priority 3: Default to next sequential step
-    else {
-        const nextIndex = currentStepIndex + 1;
-        if (nextIndex < steps.length) {
-            targetStepId = steps[nextIndex].id;
-            logVerbose('Using default next step', {
-                nextIndex,
-                targetStepId,
-                reason: 'No valid skip target found',
-                skipToValue: skipTo,
-                skipValueValue: skipValue
-            });
-        }
-    }
-    // Navigate to target using the same method as branching (goToStepById)
-    if (targetStepId) {
-        logVerbose('Navigating to target step using goToStepById', {
-            targetStepId,
-            navigationMethod: skipTo ? 'data-skip-to' : skipValue ? 'data-skip-value' : 'sequential'
-        });
-        // Use the same navigation method as branching logic
-        goToStepById(targetStepId);
-        logVerbose('Skip navigation complete', {
-            targetStepId,
-            newCurrentIndex: currentStepIndex
-        });
-    }
-    else {
-        logVerbose('Cannot skip - no valid target found');
-    }
 }
 /**
  * Handle form submission

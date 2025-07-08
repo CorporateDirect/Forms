@@ -179,6 +179,13 @@ function setupSkipListeners(root: Document | Element): void {
 function handleSkipButtonClick(event: Event, target: Element): void {
   event.preventDefault();
   
+  logVerbose('Skip button clicked in skip module', {
+    target: target,
+    tagName: target.tagName,
+    className: target.className,
+    attributes: Array.from(target.attributes).map(attr => ({ name: attr.name, value: attr.value }))
+  });
+  
   const currentStepId = FormState.getCurrentStep();
   if (!currentStepId) {
     logVerbose('No current step found for skip operation');
@@ -188,8 +195,24 @@ function handleSkipButtonClick(event: Event, target: Element): void {
   const skipReason = getAttrValue(target, 'data-skip-reason') || 'User skipped';
   const allowUndo = getAttrValue(target, 'data-allow-skip-undo') !== 'false';
   const skipTo = getAttrValue(target, 'data-skip-to');
+  const skipValue = getAttrValue(target, 'data-skip');
 
-  skipStep(currentStepId, skipReason, allowUndo, skipTo || undefined);
+  logVerbose('Skip button analysis', {
+    currentStepId,
+    skipReason,
+    allowUndo,
+    skipTo,
+    skipValue,
+    hasSkipTo: !!skipTo,
+    hasSkipValue: !!skipValue && skipValue !== 'true' && skipValue !== ''
+  });
+
+  // Use skipStep function which has better navigation logic
+  const success = skipStep(currentStepId, skipReason, allowUndo, skipTo || (skipValue && skipValue !== 'true' && skipValue !== '' ? skipValue : undefined));
+  
+  if (!success) {
+    logVerbose('Skip operation failed');
+  }
 }
 
 /**
@@ -487,6 +510,7 @@ function getStepsBetween(fromStepId: string, toStepId: string): string[] {
  */
 function navigateToStep(stepId: string): void {
   if (goToStepById) {
+    logVerbose(`Navigating to specific step: ${stepId}`);
     goToStepById(stepId);
   } else {
     logVerbose(`Navigation requested to step: ${stepId}, but goToStepById is not set.`);
@@ -497,6 +521,61 @@ function navigateToStep(stepId: string): void {
  * Navigate to the next available (non-skipped) step
  */
 function navigateToNextAvailableStep(): void {
+  logVerbose('Finding next available step...');
+  
+  // Get current step info
+  const currentStepId = FormState.getCurrentStep();
+  if (!currentStepId) {
+    logVerbose('No current step found for navigation');
+    return;
+  }
+
+  // Find all steps in the form
+  const allSteps = Array.from(document.querySelectorAll(SELECTORS.STEP));
+  const stepIds: string[] = [];
+  
+  allSteps.forEach(stepElement => {
+    const stepId = getAttrValue(stepElement, 'data-answer');
+    if (stepId) {
+      stepIds.push(stepId);
+    }
+  });
+
+  logVerbose('Available steps for navigation', {
+    currentStepId,
+    allStepIds: stepIds,
+    totalSteps: stepIds.length
+  });
+
+  // Find current step index
+  const currentIndex = stepIds.indexOf(currentStepId);
+  if (currentIndex === -1) {
+    logVerbose(`Current step ${currentStepId} not found in step list`);
+    return;
+  }
+
+  // Look for next non-skipped step
+  for (let i = currentIndex + 1; i < stepIds.length; i++) {
+    const nextStepId = stepIds[i];
+    const isSkipped = FormState.isStepSkipped(nextStepId);
+    const isVisible = FormState.isStepVisible(nextStepId);
+    
+    logVerbose(`Checking step ${nextStepId}`, {
+      index: i,
+      isSkipped,
+      isVisible,
+      stepId: nextStepId
+    });
+
+    if (!isSkipped) {
+      logVerbose(`Found next available step: ${nextStepId}`);
+      navigateToStep(nextStepId);
+      return;
+    }
+  }
+
+  // If no next step found, try using the simple next step function
+  logVerbose('No specific next step found, using default navigation');
   if (goToNextStep) {
     goToNextStep();
   } else {
