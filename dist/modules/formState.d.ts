@@ -10,12 +10,23 @@ export interface StepInfo {
     number?: string;
     visible: boolean;
     visited: boolean;
+    skipped?: boolean;
+    skipReason?: string;
+    allowSkipUndo?: boolean;
 }
 export interface BranchPath {
     currentStep: string;
     previousSteps: string[];
     skippedSteps: string[];
+    skipHistory: SkipHistoryEntry[];
     activeConditions: Record<string, unknown>;
+}
+export interface SkipHistoryEntry {
+    stepId: string;
+    reason?: string;
+    timestamp: number;
+    canUndo: boolean;
+    fieldsCleared: string[];
 }
 declare class FormStateManager {
     private static instance;
@@ -40,7 +51,7 @@ declare class FormStateManager {
      */
     getAll(): FormStateData;
     /**
-     * Clear all data
+     * Clear all data (enhanced to handle skip history)
      */
     clear(): void;
     /**
@@ -72,13 +83,41 @@ declare class FormStateManager {
      */
     getCurrentStep(): string;
     /**
-     * Get branch path information
+     * Get branch path (for skip condition evaluation)
      */
     getBranchPath(): BranchPath;
     /**
-     * Add skipped step
+     * Add skipped step with enhanced tracking
      */
-    addSkippedStep(stepId: string): void;
+    addSkippedStep(stepId: string, reason?: string, canUndo?: boolean): void;
+    /**
+     * Remove step from skipped list (undo skip)
+     */
+    undoSkipStep(stepId: string): boolean;
+    /**
+     * Check if step is skipped
+     */
+    isStepSkipped(stepId: string): boolean;
+    /**
+     * Get skip history
+     */
+    getSkipHistory(): SkipHistoryEntry[];
+    /**
+     * Get all skipped steps
+     */
+    getSkippedSteps(): string[];
+    /**
+     * Clear skip history
+     */
+    clearSkipHistory(): void;
+    /**
+     * Get skip statistics
+     */
+    getSkipStats(): {
+        totalSkipped: number;
+        canUndoCount: number;
+        skipReasons: Record<string, number>;
+    };
     /**
      * Set active condition
      */

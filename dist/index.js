@@ -14,6 +14,7 @@ import { initMultiStep, goToStep, showStep, getCurrentStepInfo, getMultiStepStat
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, getErrorState } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
+import { resetSkip, getSkipState } from './modules/skip.js';
 /**
  * Main FormLib class - singleton instance
  */
@@ -41,7 +42,7 @@ class FormLibrary {
             this.destroy();
         }
         this.rootElement = root;
-        logVerbose('Initializing FormLibrary', {
+        logVerbose('Initializing FormLibrary with enhanced skip functionality', {
             root: root === document ? 'document' : 'custom element'
         });
         // Check if we have any forms to work with
@@ -67,14 +68,14 @@ class FormLibrary {
             if (logicForms.length > 0) {
                 initBranching(root);
             }
-            // 4. Initialize multi-step navigation (coordinates with branching)
+            // 4. Initialize multi-step navigation (coordinates with branching and includes skip)
             if (multistepForms.length > 0 || stepElements.length > 0) {
-                initMultiStep(root);
+                initMultiStep(root); // This now includes skip initialization
             }
             // 5. Initialize summary functionality (listens to field changes)
             initSummary(root);
             this.initialized = true;
-            logVerbose('FormLibrary initialization complete');
+            logVerbose('FormLibrary initialization complete with enhanced skip functionality');
             // Log initial state
             this.logCurrentState();
         }
@@ -95,6 +96,7 @@ class FormLibrary {
         // Reset all modules (they handle their own cleanup)
         try {
             resetBranching();
+            resetSkip(); // Reset skip functionality
             // Note: Other modules will be reset when re-initialized
         }
         catch (error) {
@@ -124,7 +126,8 @@ class FormLibrary {
             multiStep: getMultiStepState(),
             validation: getValidationState(),
             errors: getErrorState(),
-            summary: getSummaryState()
+            summary: getSummaryState(),
+            skip: getSkipState()
         };
     }
     /**

@@ -16,6 +16,7 @@ import {
 } from './utils.js';
 import { FormState } from './formState.js';
 import { getNextStep } from './branching.js';
+import { initSkip, evaluateSkipConditions, skipStep, resetSkip } from './skip.js';
 
 interface StepElement {
   element: HTMLElement;
@@ -129,6 +130,9 @@ export function initMultiStep(root: Document | Element = document): void {
 
   // Set up navigation event listeners
   setupNavigationListeners(root);
+
+  // Initialize enhanced skip functionality
+  initSkip(root);
 
   // Initialize first step
   if (steps.length > 0) {
@@ -282,25 +286,24 @@ function handleBackClick(event: Event): void {
 
 /**
  * Handle skip button click
- * Skips the current step and moves to the next one without validation.
+ * Enhanced to use the new skip module
  */
 function handleSkipClick(event: Event): void {
   event.preventDefault();
-  const stepElement = getCurrentStep()?.element;
-  if (stepElement) {
-    const fields = Array.from(stepElement.querySelectorAll('input, select, textarea')) as (HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement)[];
-    fields.forEach(field => {
-      if (field instanceof HTMLInputElement && (field.type === 'checkbox' || field.type === 'radio')) {
-        field.checked = false;
-      } else {
-        field.value = '';
-      }
-      if (field.name) {
-        FormState.setField(field.name, null);
-      }
-    });
+  
+  const currentStepId = FormState.getCurrentStep();
+  if (!currentStepId) {
+    logVerbose('No current step found for skip operation');
+    return;
   }
-  goToNextStep(true); // Skip validation
+
+  // Use the enhanced skip functionality
+  const success = skipStep(currentStepId, 'User skipped step', true);
+  
+  if (success) {
+    // Navigate to next step after successful skip
+    goToNextStep(true); // Skip validation
+  }
 }
 
 /**
@@ -469,7 +472,7 @@ function hideStep(stepIndex: number): void {
 }
 
 /**
- * Go to next step (sequential)
+ * Go to next step (sequential) with skip condition evaluation
  */
 function goToNextStep(skipValidation: boolean = false): void {
   const currentStep = getCurrentStep();
@@ -478,12 +481,47 @@ function goToNextStep(skipValidation: boolean = false): void {
     return;
   }
 
-  const nextIndex = currentStepIndex + 1;
-  if (nextIndex < steps.length) {
+  // Validate current step unless skipping validation
+  if (!skipValidation && !validateStepElement(currentStep.element)) {
+    logVerbose('Step validation failed, cannot proceed');
+    return;
+  }
+
+  // Evaluate skip conditions before moving to next step
+  evaluateSkipConditions();
+
+  // Find next available step (considering branching and skipped steps)
+  let nextIndex = findNextAvailableStep();
+  
+  if (nextIndex !== -1 && nextIndex < steps.length) {
     goToStep(nextIndex);
   } else {
-    logVerbose('Already at last step');
+    logVerbose('No next step available or already at last step');
   }
+}
+
+/**
+ * Find next available step (not skipped)
+ */
+function findNextAvailableStep(): number {
+  let nextIndex = currentStepIndex + 1;
+  
+  // Check for branching logic first
+  const branchingNext = findNextBranchingStep();
+  if (branchingNext !== -1) {
+    nextIndex = branchingNext;
+  }
+
+  // Skip over any skipped steps
+  while (nextIndex < steps.length) {
+    const stepId = steps[nextIndex].id;
+    if (!FormState.isStepSkipped(stepId)) {
+      return nextIndex;
+    }
+    nextIndex++;
+  }
+
+  return -1; // No available next step
 }
 
 /**
@@ -585,6 +623,9 @@ function resetMultiStep(): void {
   // Clear all event listeners
   cleanupFunctions.forEach(cleanup => cleanup());
   cleanupFunctions = [];
+
+  // Reset skip functionality
+  resetSkip();
 
   // Reset state variables
   steps = [];

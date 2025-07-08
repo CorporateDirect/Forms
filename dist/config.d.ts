@@ -11,6 +11,12 @@ export declare const DATA_ATTRS: {
     readonly SUBMIT: "data-form=\"submit\"";
     readonly SKIP: "data-skip";
     readonly ERROR_DISPLAY: "data-form=\"error\"";
+    readonly SKIP_TO: "data-skip-to";
+    readonly SKIP_IF: "data-skip-if";
+    readonly SKIP_UNLESS: "data-skip-unless";
+    readonly SKIP_SECTION: "data-skip-section";
+    readonly ALLOW_SKIP_UNDO: "data-allow-skip-undo";
+    readonly SKIP_REASON: "data-skip-reason";
     readonly GO_TO: "data-go-to";
     readonly STEP_TYPE: "data-step-type";
     readonly STEP_SUBTYPE: "data-step-subtype";
@@ -34,6 +40,12 @@ export declare const SELECTORS: {
     readonly SUBMIT: "[data-form=\"submit\"]";
     readonly SKIP: "[data-skip]";
     readonly ERROR_DISPLAY: "[data-form=\"error\"]";
+    readonly SKIP_TO: "[data-skip-to]";
+    readonly SKIP_IF: "[data-skip-if]";
+    readonly SKIP_UNLESS: "[data-skip-unless]";
+    readonly SKIP_SECTION: "[data-skip-section]";
+    readonly ALLOW_SKIP_UNDO: "[data-allow-skip-undo]";
+    readonly SKIP_REASON: "[data-skip-reason]";
     readonly GO_TO: "[data-go-to]";
     readonly SHOW_IF: "[data-show-if]";
     readonly SKIP_BTN: "[data-form=\"skip-btn\"]";
@@ -72,6 +84,9 @@ export declare const CSS_CLASSES: {
     readonly ERROR_FIELD: "error-field";
     readonly ACTIVE_ERROR: "active-error";
     readonly DISABLED: "disabled";
+    readonly SKIPPED_STEP: "skipped-step";
+    readonly SKIP_AVAILABLE: "skip-available";
+    readonly SKIP_DISABLED: "skip-disabled";
 };
 export type JoinType = keyof typeof DEFAULTS.JOIN_SEPARATOR;
 //# sourceMappingURL=config.d.ts.map
