@@ -87,6 +87,10 @@ export function initMultiStep(root = document) {
         });
         return stepInfo;
     }).filter(step => step !== null); // Filter out steps that were skipped
+    // Fix step indices after filtering
+    steps.forEach((step, index) => {
+        step.index = index;
+    });
     // Find all step_item elements within parent steps (for branching scenarios)
     stepItems = [];
     steps.forEach((parentStep, parentIndex) => {
