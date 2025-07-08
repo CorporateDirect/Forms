@@ -1,5 +1,23 @@
 /**
  * Configuration constants and defaults for the form functionality library
+ * 
+ * NAVIGATION SYSTEM:
+ * ==================
+ * The navigation system uses a simple source → destination pattern:
+ * 
+ * DESTINATIONS (targets):
+ * - data-answer="step-id" → Identifies a step as a navigation target
+ * 
+ * SOURCES (navigation triggers):
+ * - data-go-to="step-id" → Navigate to step with data-answer="step-id"
+ * - data-skip="step-id" → Skip to step with data-answer="step-id"
+ * 
+ * EXAMPLES:
+ * - <button data-go-to="step-5">Go to Step 5</button>
+ *   → Navigates to: <div data-form="step" data-answer="step-5">
+ * 
+ * - <button data-skip="step-10">Skip to Step 10</button>
+ *   → Navigates to: <div data-form="step" data-answer="step-10">
  */
 
 export const DATA_ATTRS = {
@@ -7,15 +25,19 @@ export const DATA_ATTRS = {
   MULTISTEP: 'data-form="multistep"',
   LOGIC: 'data-logic',
   
-  // Step elements
+  // Step elements and navigation targets
   STEP: 'data-form="step"',
-  ANSWER: 'data-answer',
+  ANSWER: 'data-answer', // Target identifier for steps (destination)
   
-  // Navigation buttons
+  // Navigation sources (these reference ANSWER values)
+  GO_TO: 'data-go-to',   // Points to data-answer value
+  SKIP: 'data-skip',     // Points to data-answer value
+  
+  // Standard navigation buttons
   NEXT_BTN: 'data-form="next-btn"',
   BACK_BTN: 'data-form="back-btn"',
   SUBMIT: 'data-form="submit"',
-  SKIP: 'data-skip',
+  SUBMIT_BTN: 'data-form="submit-btn"',
   ERROR_DISPLAY: 'data-form="error"',
   
   // Enhanced skip functionality
@@ -24,9 +46,6 @@ export const DATA_ATTRS = {
   SKIP_SECTION: 'data-skip-section',
   ALLOW_SKIP_UNDO: 'data-allow-skip-undo',
   SKIP_REASON: 'data-skip-reason',
-  
-  // Branching logic
-  GO_TO: 'data-go-to',
   
   // Step categorization
   STEP_TYPE: 'data-step-type',
@@ -51,15 +70,19 @@ export const SELECTORS = {
   MULTISTEP: '[data-form="multistep"]',
   LOGIC: '[data-logic]',
   
-  // Step elements
+  // Step elements and navigation targets
   STEP: '[data-form="step"]',
-  ANSWER: '[data-answer]',
+  ANSWER: '[data-answer]', // Target identifier for steps (destination)
   
-  // Navigation buttons
+  // Navigation sources (these reference ANSWER values)
+  GO_TO: '[data-go-to]',   // Points to data-answer value
+  SKIP: '[data-skip]',     // Points to data-answer value
+  
+  // Standard navigation buttons
   NEXT_BTN: '[data-form="next-btn"]',
   BACK_BTN: '[data-form="back-btn"]',
   SUBMIT: '[data-form="submit"]',
-  SKIP: '[data-skip]',
+  SUBMIT_BTN: '[data-form="submit-btn"]',
   ERROR_DISPLAY: '[data-form="error"]',
   
   // Enhanced skip functionality
@@ -69,10 +92,8 @@ export const SELECTORS = {
   ALLOW_SKIP_UNDO: '[data-allow-skip-undo]',
   SKIP_REASON: '[data-skip-reason]',
   
-  // Branching logic
-  GO_TO: '[data-go-to]',
+  // Conditional display
   SHOW_IF: '[data-show-if]',
-  SUBMIT_BTN: '[data-form="submit-btn"]',
   
   // Step categorization
   STEP_TYPE: '[data-step-type]',
