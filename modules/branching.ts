@@ -355,9 +355,20 @@ function triggerStepItemVisibility(stepItemId: string): void {
     return;
   }
 
+  logVerbose('=== BRANCHING: TRIGGER STEP ITEM VISIBILITY ===');
   logVerbose(`Triggering visibility for step_item: ${stepItemId}`);
 
+  // Check if this might conflict with skip navigation
+  const currentStep = FormState.getCurrentStep();
+  logVerbose('Branching visibility trigger context', {
+    targetStepItem: stepItemId,
+    currentStep,
+    isSkipOperation: false // This is branching, not skip
+  });
+
   showStepItem(stepItemId);
+  
+  logVerbose('=== BRANCHING: TRIGGER STEP ITEM VISIBILITY END ===');
 }
 
 /**

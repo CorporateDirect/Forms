@@ -280,6 +280,7 @@ function handleSubmitClick(event) {
  * Go to a step by ID (works for both parent steps and step_items)
  */
 export function goToStepById(stepId) {
+    logVerbose('=== GO TO STEP BY ID FUNCTION START ===');
     logVerbose(`Navigating to step: ${stepId}`);
     // Debug: Log all available step IDs for comparison
     const allStepIds = steps.map(s => s.id);
@@ -294,16 +295,25 @@ export function goToStepById(stepId) {
     // First check if it's a step_item
     const stepItem = stepItems.find(item => item.id === stepId);
     if (stepItem) {
-        logVerbose(`Found step_item: ${stepId}`, {
+        logVerbose(`✓ FOUND STEP_ITEM: ${stepId}`, {
             parentStepIndex: stepItem.parentStepIndex,
-            stepItemIndex: stepItem.index
+            stepItemIndex: stepItem.index,
+            stepItemElement: {
+                tagName: stepItem.element.tagName,
+                id: stepItem.element.id,
+                className: stepItem.element.className,
+                dataAnswer: getAttrValue(stepItem.element, 'data-answer')
+            }
         });
         // Navigate to the parent step first
         if (stepItem.parentStepIndex !== undefined) {
+            logVerbose(`Navigating to parent step first: index ${stepItem.parentStepIndex}`);
             goToStep(stepItem.parentStepIndex);
             // Then show the specific step_item
+            logVerbose(`Now showing specific step_item: ${stepId}`);
             showStepItem(stepId);
         }
+        logVerbose('=== GO TO STEP BY ID FUNCTION END (STEP_ITEM) ===');
         return;
     }
     else {
@@ -316,16 +326,27 @@ export function goToStepById(stepId) {
         isValidIndex: parentStepIndex !== -1
     });
     if (parentStepIndex !== -1) {
-        logVerbose(`Found parent step: ${stepId} at index ${parentStepIndex}`);
+        logVerbose(`✓ FOUND PARENT STEP: ${stepId} at index ${parentStepIndex}`, {
+            stepElement: {
+                tagName: steps[parentStepIndex].element.tagName,
+                id: steps[parentStepIndex].element.id,
+                className: steps[parentStepIndex].element.className,
+                dataAnswer: getAttrValue(steps[parentStepIndex].element, 'data-answer')
+            }
+        });
         currentStepItemId = null; // Clear step item tracking
+        logVerbose(`Calling goToStep with index: ${parentStepIndex}`);
         goToStep(parentStepIndex);
+        logVerbose('=== GO TO STEP BY ID FUNCTION END (PARENT_STEP) ===');
         return;
     }
-    logVerbose(`Step not found: ${stepId}`, {
+    logVerbose(`❌ STEP NOT FOUND: ${stepId}`, {
         searchedIn: 'both parent steps and step_items',
         availableParentSteps: allStepIds,
-        availableStepItems: allStepItemIds
+        availableStepItems: allStepItemIds,
+        suggestion: 'Check if the data-answer attribute exists on the target element'
     });
+    logVerbose('=== GO TO STEP BY ID FUNCTION END (NOT_FOUND) ===');
 }
 /**
  * Validate a step element (works for both parent steps and step_items)
@@ -473,21 +494,40 @@ function hideStep(stepIndex) {
  * Go to next step (sequential) - restored original logic with skip integration
  */
 function goToNextStep() {
+    logVerbose('=== GO TO NEXT STEP FUNCTION START ===');
     const currentStep = getCurrentStep();
     if (!currentStep) {
         logVerbose('No current step found');
         return;
     }
+    logVerbose('Current step info', {
+        stepId: currentStep.id,
+        stepIndex: currentStepIndex,
+        stepElement: {
+            tagName: currentStep.element.tagName,
+            id: currentStep.element.id,
+            className: currentStep.element.className
+        }
+    });
     // Only evaluate skip conditions, don't add validation barriers
+    logVerbose('Evaluating skip conditions...');
     evaluateSkipConditions();
     // Use original simple next step logic
     const nextIndex = currentStepIndex + 1;
+    logVerbose('Sequential navigation logic', {
+        currentIndex: currentStepIndex,
+        nextIndex,
+        totalSteps: steps.length,
+        hasNextStep: nextIndex < steps.length
+    });
     if (nextIndex < steps.length) {
+        logVerbose(`Going to next sequential step: index ${nextIndex}`);
         goToStep(nextIndex);
     }
     else {
         logVerbose('Already at last step');
     }
+    logVerbose('=== GO TO NEXT STEP FUNCTION END ===');
 }
 /**
  * Go to previous step

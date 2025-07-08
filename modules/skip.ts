@@ -164,13 +164,10 @@ function setupSkipSections(root: Document | Element): void {
  * Set up skip event listeners
  */
 function setupSkipListeners(root: Document | Element): void {
-  // Enhanced skip button handling
-  const cleanup1 = delegateEvent(root, 'click', SELECTORS.SKIP_BTN, handleSkipButtonClick);
-  
-  // Skip-to button handling
-  const cleanup2 = delegateEvent(root, 'click', SELECTORS.SKIP_TO, handleSkipToClick);
+  // Skip button handling - use the main SKIP selector for buttons with data-skip attribute
+  const cleanup1 = delegateEvent(root, 'click', SELECTORS.SKIP, handleSkipButtonClick);
 
-  cleanupFunctions.push(cleanup1, cleanup2);
+  cleanupFunctions.push(cleanup1);
 }
 
 /**
@@ -179,6 +176,7 @@ function setupSkipListeners(root: Document | Element): void {
 function handleSkipButtonClick(event: Event, target: Element): void {
   event.preventDefault();
   
+  logVerbose('=== SKIP BUTTON CLICK START ===');
   logVerbose('Skip button clicked in skip module', {
     target: target,
     tagName: target.tagName,
@@ -194,49 +192,70 @@ function handleSkipButtonClick(event: Event, target: Element): void {
 
   const skipReason = getAttrValue(target, 'data-skip-reason') || 'User skipped';
   const allowUndo = getAttrValue(target, 'data-allow-skip-undo') !== 'false';
-  const skipTo = getAttrValue(target, 'data-skip-to');
   const skipValue = getAttrValue(target, 'data-skip');
 
-  logVerbose('Skip button analysis', {
+  logVerbose('=== SKIP BUTTON ANALYSIS ===', {
     currentStepId,
     skipReason,
     allowUndo,
-    skipTo,
     skipValue,
-    hasSkipTo: !!skipTo,
-    hasSkipValue: !!skipValue && skipValue !== 'true' && skipValue !== ''
+    hasSkipValue: !!skipValue && skipValue !== 'true' && skipValue !== '',
+    rawSkipValue: skipValue,
+    skipValueType: typeof skipValue,
+    skipValueLength: skipValue?.length || 0
+  });
+
+  // Determine target step with detailed logging
+  let targetStep: string | undefined;
+  if (skipValue && skipValue !== 'true' && skipValue !== '') {
+    targetStep = skipValue;
+    logVerbose('Using data-skip as target', { targetStep });
+  } else {
+    logVerbose('No specific target found, will use next available step');
+  }
+
+  // Verify target step exists in DOM
+  if (targetStep) {
+    const targetElement = document.querySelector(`[data-answer="${targetStep}"]`);
+    logVerbose('Target step verification', {
+      targetStep,
+      targetElementExists: !!targetElement,
+      targetElement: targetElement ? {
+        tagName: targetElement.tagName,
+        id: targetElement.id,
+        className: targetElement.className,
+        dataAnswer: getAttrValue(targetElement, 'data-answer')
+      } : null
+    });
+  }
+
+  logVerbose('=== CALLING SKIP STEP FUNCTION ===', {
+    stepId: currentStepId,
+    reason: skipReason,
+    allowUndo,
+    targetStep
   });
 
   // Use skipStep function which has better navigation logic
-  const success = skipStep(currentStepId, skipReason, allowUndo, skipTo || (skipValue && skipValue !== 'true' && skipValue !== '' ? skipValue : undefined));
+  const success = skipStep(currentStepId, skipReason, allowUndo, targetStep);
+  
+  logVerbose('=== SKIP OPERATION RESULT ===', {
+    success,
+    finalCurrentStep: FormState.getCurrentStep()
+  });
   
   if (!success) {
     logVerbose('Skip operation failed');
   }
-}
-
-/**
- * Handle skip-to button click
- */
-function handleSkipToClick(event: Event, target: Element): void {
-  event.preventDefault();
   
-  const targetStepId = getAttrValue(target, 'data-skip-to');
-  if (!targetStepId) {
-    logVerbose('No target step specified for skip-to operation');
-    return;
-  }
-
-  const reason = getAttrValue(target, 'data-skip-reason') || `Skipped to ${targetStepId}`;
-  const allowUndo = getAttrValue(target, 'data-allow-skip-undo') !== 'false';
-
-  skipToStep(targetStepId, reason, allowUndo);
+  logVerbose('=== SKIP BUTTON CLICK END ===');
 }
 
 /**
  * Skip a specific step
  */
 export function skipStep(stepId: string, reason?: string, allowUndo: boolean = true, targetStep?: string): boolean {
+  logVerbose('=== SKIP STEP FUNCTION START ===');
   logVerbose(`Attempting to skip step: ${stepId}`, { reason, allowUndo, targetStep });
 
   // Check if step is already skipped
@@ -247,9 +266,11 @@ export function skipStep(stepId: string, reason?: string, allowUndo: boolean = t
 
   // Clear fields in the step being skipped
   const fieldsCleared = clearStepFields(stepId);
+  logVerbose('Fields cleared from skipped step', { fieldsCleared });
   
   // Add to skip tracking
   FormState.addSkippedStep(stepId, reason, allowUndo);
+  logVerbose('Step added to skip tracking in FormState');
   
   // Update skip history with cleared fields
   const skipHistory = FormState.getSkipHistory();
@@ -260,51 +281,29 @@ export function skipStep(stepId: string, reason?: string, allowUndo: boolean = t
 
   // Apply skip styling
   applySkipStyling(stepId, true);
+  logVerbose('Skip styling applied');
 
   // Navigate to target step or next step
+  logVerbose('=== NAVIGATION DECISION ===', {
+    hasTargetStep: !!targetStep,
+    targetStep,
+    willNavigateToTarget: !!targetStep,
+    willNavigateToNext: !targetStep
+  });
+
   if (targetStep) {
+    logVerbose('Navigating to specific target step', { targetStep });
     navigateToStep(targetStep);
   } else {
+    logVerbose('No target step specified, navigating to next available step');
     navigateToNextAvailableStep();
   }
 
-  logVerbose(`Step skipped successfully: ${stepId}`, {
+  logVerbose(`=== SKIP STEP FUNCTION END ===`, {
+    stepId,
     fieldsCleared: fieldsCleared.length,
-    targetStep
-  });
-
-  return true;
-}
-
-/**
- * Skip to a specific step (skipping all steps in between)
- */
-export function skipToStep(targetStepId: string, reason?: string, allowUndo: boolean = true): boolean {
-  const currentStepId = FormState.getCurrentStep();
-  if (!currentStepId) {
-    logVerbose('No current step found for skip-to operation');
-    return false;
-  }
-
-  // Get all steps between current and target
-  const stepsToSkip = getStepsBetween(currentStepId, targetStepId);
-  
-  if (stepsToSkip.length === 0) {
-    logVerbose(`No steps to skip between ${currentStepId} and ${targetStepId}`);
-    return false;
-  }
-
-  // Skip all intermediate steps
-  stepsToSkip.forEach(stepId => {
-    skipStep(stepId, reason, allowUndo);
-  });
-
-  // Navigate to target step
-  navigateToStep(targetStepId);
-
-  logVerbose(`Skipped to step: ${targetStepId}`, {
-    stepsSkipped: stepsToSkip.length,
-    skippedSteps: stepsToSkip
+    targetStep,
+    success: true
   });
 
   return true;
@@ -473,47 +472,41 @@ function evaluateCondition(condition: string, activeConditions: Record<string, u
 }
 
 /**
- * Get steps between two step IDs
- */
-function getStepsBetween(fromStepId: string, toStepId: string): string[] {
-  // This is a simplified implementation
-  // In a real scenario, you'd need to determine the actual step order
-  const allSteps = Array.from(document.querySelectorAll(SELECTORS.STEP));
-  const stepIds: string[] = [];
-  
-  let capturing = false;
-  
-  allSteps.forEach(stepElement => {
-    const stepId = getAttrValue(stepElement, 'data-answer');
-    if (!stepId) return;
-
-    if (stepId === fromStepId) {
-      capturing = true;
-      return; // Don't include the starting step
-    }
-    
-    if (stepId === toStepId) {
-      capturing = false;
-      return; // Don't include the target step
-    }
-    
-    if (capturing) {
-      stepIds.push(stepId);
-    }
-  });
-
-  return stepIds;
-}
-
-/**
  * Navigate to a specific step
  */
 function navigateToStep(stepId: string): void {
+  logVerbose('=== NAVIGATE TO STEP FUNCTION START ===');
+  logVerbose(`Navigation requested to step: ${stepId}`);
+  
+  // Check if navigation function is available
+  logVerbose('Navigation function availability', {
+    goToStepByIdAvailable: !!goToStepById,
+    goToStepByIdType: typeof goToStepById
+  });
+
   if (goToStepById) {
-    logVerbose(`Navigating to specific step: ${stepId}`);
+    logVerbose(`Calling goToStepById with stepId: ${stepId}`);
+    
+    // Get current step before navigation
+    const currentStepBefore = FormState.getCurrentStep();
+    logVerbose('State before navigation', { currentStepBefore });
+    
+    // Call the navigation function
     goToStepById(stepId);
+    
+    // Get current step after navigation
+    const currentStepAfter = FormState.getCurrentStep();
+    logVerbose('State after navigation', { 
+      currentStepAfter,
+      navigationSuccessful: currentStepAfter === stepId,
+      expectedStep: stepId,
+      actualStep: currentStepAfter
+    });
+    
+    logVerbose('=== NAVIGATE TO STEP FUNCTION END ===');
   } else {
-    logVerbose(`Navigation requested to step: ${stepId}, but goToStepById is not set.`);
+    logVerbose(`ERROR: Navigation requested to step: ${stepId}, but goToStepById is not set.`);
+    logVerbose('=== NAVIGATE TO STEP FUNCTION END (FAILED) ===');
   }
 }
 
@@ -581,6 +574,13 @@ function navigateToNextAvailableStep(): void {
   } else {
     logVerbose('Navigation requested to next available step, but goToNextStep is not set.');
   }
+}
+
+/**
+ * Check if a step can be skipped
+ */
+export function canSkipStep(stepId: string): boolean {
+  return FormState.isStepSkipped(stepId);
 }
 
 /**

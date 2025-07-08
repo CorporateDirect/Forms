@@ -11,7 +11,6 @@ export declare const DATA_ATTRS: {
     readonly SUBMIT: "data-form=\"submit\"";
     readonly SKIP: "data-skip";
     readonly ERROR_DISPLAY: "data-form=\"error\"";
-    readonly SKIP_TO: "data-skip-to";
     readonly SKIP_IF: "data-skip-if";
     readonly SKIP_UNLESS: "data-skip-unless";
     readonly SKIP_SECTION: "data-skip-section";
@@ -40,7 +39,6 @@ export declare const SELECTORS: {
     readonly SUBMIT: "[data-form=\"submit\"]";
     readonly SKIP: "[data-skip]";
     readonly ERROR_DISPLAY: "[data-form=\"error\"]";
-    readonly SKIP_TO: "[data-skip-to]";
     readonly SKIP_IF: "[data-skip-if]";
     readonly SKIP_UNLESS: "[data-skip-unless]";
     readonly SKIP_SECTION: "[data-skip-section]";
@@ -48,7 +46,6 @@ export declare const SELECTORS: {
     readonly SKIP_REASON: "[data-skip-reason]";
     readonly GO_TO: "[data-go-to]";
     readonly SHOW_IF: "[data-show-if]";
-    readonly SKIP_BTN: "[data-form=\"skip-btn\"]";
     readonly SUBMIT_BTN: "[data-form=\"submit-btn\"]";
     readonly STEP_TYPE: "[data-step-type]";
     readonly STEP_SUBTYPE: "[data-step-subtype]";

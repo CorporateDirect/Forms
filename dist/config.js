@@ -15,7 +15,6 @@ export const DATA_ATTRS = {
     SKIP: 'data-skip',
     ERROR_DISPLAY: 'data-form="error"',
     // Enhanced skip functionality
-    SKIP_TO: 'data-skip-to',
     SKIP_IF: 'data-skip-if',
     SKIP_UNLESS: 'data-skip-unless',
     SKIP_SECTION: 'data-skip-section',
@@ -52,7 +51,6 @@ export const SELECTORS = {
     SKIP: '[data-skip]',
     ERROR_DISPLAY: '[data-form="error"]',
     // Enhanced skip functionality
-    SKIP_TO: '[data-skip-to]',
     SKIP_IF: '[data-skip-if]',
     SKIP_UNLESS: '[data-skip-unless]',
     SKIP_SECTION: '[data-skip-section]',
@@ -61,7 +59,6 @@ export const SELECTORS = {
     // Branching logic
     GO_TO: '[data-go-to]',
     SHOW_IF: '[data-show-if]',
-    SKIP_BTN: '[data-form="skip-btn"]',
     SUBMIT_BTN: '[data-form="submit-btn"]',
     // Step categorization
     STEP_TYPE: '[data-step-type]',
