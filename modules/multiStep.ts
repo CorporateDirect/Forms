@@ -48,35 +48,45 @@ export function initMultiStep(root: Document | Element = document): void {
 
   // Find all parent step elements
   const stepElements = queryAllByAttr(SELECTORS.STEP, root);
-  logVerbose(`Found ${stepElements.length} parent steps`);
-
-  // Build parent steps array
-  steps = Array.from(stepElements).map((element, index) => {
-    const htmlElement = element as HTMLElement;
-    const dataAnswer = getAttrValue(element, 'data-answer');
-    
-    // For parent steps, data-answer is optional (they may contain step_items)
-    const stepId = dataAnswer || `step-${index}`;
-    
-    // Debug: Log step ID assignment
-    logVerbose(`Assigning step ID for index ${index}`, {
-      dataAnswer: dataAnswer,
-      assignedStepId: stepId,
-      element: htmlElement.tagName + (htmlElement.id ? `#${htmlElement.id}` : '') + (htmlElement.className ? `.${htmlElement.className.split(' ').join('.')}` : '')
+  
+  steps = Array.from(stepElements).map((stepElement, index) => {
+    logVerbose(`Processing step ${index}`, {
+      element: stepElement,
+      tagName: stepElement.tagName,
+      id: stepElement.id,
+      className: stepElement.className
     });
+
+    // Look for data-answer on the step element itself first
+    let dataAnswer = getAttrValue(stepElement, 'data-answer');
     
+    // If not found, look for data-answer on step_wrapper child elements
+    if (!dataAnswer) {
+      const stepWrapper = stepElement.querySelector('.step_wrapper[data-answer]');
+      if (stepWrapper) {
+        dataAnswer = getAttrValue(stepWrapper, 'data-answer');
+        logVerbose(`Found data-answer on step_wrapper child: ${dataAnswer}`);
+      }
+    }
+    
+    // If still not found, generate a default ID
+    if (!dataAnswer) {
+      dataAnswer = `step-${index}`;
+      logVerbose(`Generated default step ID: ${dataAnswer}`);
+    }
+
     const stepInfo: StepElement = {
-      element: htmlElement,
-      id: stepId,
-      index,
-      type: getAttrValue(element, 'data-step-type') || undefined,
-      subtype: getAttrValue(element, 'data-step-subtype') || undefined,
-      number: getAttrValue(element, 'data-step-number') || undefined,
+      element: stepElement as HTMLElement,
+      id: dataAnswer,
+      index: index,
+      type: getAttrValue(stepElement, 'data-step-type') || undefined,
+      subtype: getAttrValue(stepElement, 'data-step-subtype') || undefined,
+      number: getAttrValue(stepElement, 'data-step-number') || undefined,
       isStepItem: false
     };
 
     // Register step in FormState
-    FormState.setStepInfo(stepId, {
+    FormState.setStepInfo(dataAnswer, {
       type: stepInfo.type,
       subtype: stepInfo.subtype,
       number: stepInfo.number,
@@ -90,14 +100,17 @@ export function initMultiStep(root: Document | Element = document): void {
   // Find all step_item elements within parent steps
   stepItems = [];
   steps.forEach((parentStep, parentIndex) => {
-    const stepItemElements = parentStep.element.querySelectorAll('.step_item, .step-item');
+    // Look for step_item elements within this parent step
+    const stepItemElements = parentStep.element.querySelectorAll('.step_item[data-answer], .step-item[data-answer]');
+    
+    logVerbose(`Found ${stepItemElements.length} step_items in parent step ${parentIndex} (${parentStep.id})`);
     
     stepItemElements.forEach((stepItemElement) => {
       const htmlElement = stepItemElement as HTMLElement;
       const dataAnswer = getAttrValue(stepItemElement, 'data-answer');
       
       if (!dataAnswer) {
-        logVerbose(`Step item ${parentIndex} in parent step ${parentIndex} missing required data-answer attribute`);
+        logVerbose(`Step item in parent step ${parentIndex} missing required data-answer attribute`);
         return;
       }
       
@@ -122,6 +135,12 @@ export function initMultiStep(root: Document | Element = document): void {
       });
 
       stepItems.push(stepItemInfo);
+      
+      logVerbose(`Registered step_item: ${dataAnswer}`, {
+        parentStepIndex: parentIndex,
+        parentStepId: parentStep.id,
+        stepItemIndex: stepItemInfo.index
+      });
     });
   });
 
