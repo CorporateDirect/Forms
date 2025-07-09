@@ -277,16 +277,27 @@ function setupEventListeners() {
         goToStepById(targetStepId);
     });
     const skipRequestCleanup = formEvents.on('skip:request', ({ targetStepId }) => {
-        logVerbose(`Received skip:request event`, { targetStepId });
+        console.log('🎯 [MultiStep] Received skip:request event', {
+            targetStepId,
+            currentStepId: FormState.getCurrentStep(),
+            hasTargetStep: !!targetStepId
+        });
         const currentStepId = FormState.getCurrentStep();
+        if (!currentStepId) {
+            console.error('❌ [MultiStep] No current step found for skip operation');
+            return;
+        }
+        // Skip the current step
         if (currentStepId) {
             skipStep(currentStepId, 'User skipped', true, targetStepId || undefined);
         }
+        // Navigate to target step - targetStepId should always be valid now
         if (targetStepId) {
+            console.log('🚀 [MultiStep] Navigating to target step:', targetStepId);
             goToStepById(targetStepId);
         }
         else {
-            goToNextStep();
+            console.error('❌ [MultiStep] No target step provided in skip:request - this should not happen with the new validation');
         }
     });
     // Store cleanup functions for proper cleanup

@@ -182,22 +182,64 @@ function handleSkipButtonClick(event: Event, target: Element): void {
     return;
   }
   
-  // Detailed data attribute analysis
+  // Get the data-skip value - this MUST match a data-answer value
   const dataSkip = getAttrValue(target, 'data-skip');
   const dataSkipReason = getAttrValue(target, 'data-skip-reason');
   const dataAllowUndo = getAttrValue(target, 'data-allow-skip-undo');
-  const dataSkipTo = getAttrValue(target, 'data-skip-to');
   
   console.log('📋 [Skip] Data attributes analysis:', {
     'data-skip': dataSkip,
     'data-skip-reason': dataSkipReason,
     'data-allow-skip-undo': dataAllowUndo,
-    'data-skip-to': dataSkipTo,
     allAttributes: Array.from(target.attributes).map(attr => ({ 
       name: attr.name, 
       value: attr.value 
     }))
   });
+  
+  // Validate that data-skip has a value and it's not just "true" or empty
+  if (!dataSkip || dataSkip === 'true' || dataSkip === '') {
+    console.error('❌ [Skip] Invalid data-skip value - must specify target step', {
+      dataSkip,
+      isEmpty: dataSkip === '',
+      isTrue: dataSkip === 'true',
+      isNull: dataSkip === null,
+      isUndefined: dataSkip === undefined,
+      requirement: 'data-skip must contain a value that matches an existing data-answer'
+    });
+    return;
+  }
+  
+  // Verify the target step exists in the DOM
+  const targetElement = document.querySelector(`[data-answer="${dataSkip}"]`);
+  const allAnswerElements = document.querySelectorAll('[data-answer]');
+  const allAnswerValues = Array.from(allAnswerElements).map(el => getAttrValue(el, 'data-answer'));
+  
+  console.log('🔍 [Skip] Target step verification:', {
+    targetStep: dataSkip,
+    targetElementExists: !!targetElement,
+    targetElement: targetElement ? {
+      tagName: targetElement.tagName,
+      id: targetElement.id,
+      className: targetElement.className,
+      dataAnswer: getAttrValue(targetElement, 'data-answer'),
+      isVisible: targetElement instanceof HTMLElement ? isVisible(targetElement) : false
+    } : null,
+    availableSteps: allAnswerValues,
+    totalStepsWithDataAnswer: allAnswerElements.length,
+    searchQuery: `[data-answer="${dataSkip}"]`
+  });
+  
+  if (!targetElement) {
+    console.error('❌ [Skip] Target step not found in DOM! Skip operation cancelled.', {
+      searchedFor: dataSkip,
+      availableSteps: allAnswerValues,
+      suggestion: `Check if element with data-answer="${dataSkip}" exists`,
+      possibleMatches: allAnswerValues.filter(val => val && val.includes(dataSkip)),
+      fix: `Ensure your skip button data-skip="${dataSkip}" matches an existing data-answer="${dataSkip}"`
+    });
+    return;
+  }
   
   const currentStepId = FormState.getCurrentStep();
   if (!currentStepId) {
@@ -211,76 +253,23 @@ function handleSkipButtonClick(event: Event, target: Element): void {
 
   const skipReason = dataSkipReason || 'User skipped';
   const allowUndo = dataAllowUndo !== 'false';
-  const skipValue = dataSkip;
 
-  console.log('🎯 [Skip] Processing skip request:', {
+  console.log('🎯 [Skip] Processing valid skip request:', {
     currentStepId,
+    targetStepId: dataSkip,
     skipReason,
     allowUndo,
-    skipValue,
-    hasSkipValue: !!skipValue && skipValue !== 'true' && skipValue !== '',
-    rawSkipValue: skipValue,
-    skipValueType: typeof skipValue,
-    skipValueLength: skipValue?.length || 0
+    targetExists: true
   });
 
-  // Determine target step with detailed logging
-  let targetStep: string | null = null;
-  if (skipValue && skipValue !== 'true' && skipValue !== '') {
-    targetStep = skipValue;
-    console.log('✅ [Skip] Using data-skip as target step:', { 
-      targetStep,
-      originalValue: skipValue 
-    });
-  } else {
-    console.log('ℹ️ [Skip] No specific target found, will use next available step', {
-      skipValue,
-      isEmptyString: skipValue === '',
-      isTrueString: skipValue === 'true',
-      isNull: skipValue === null,
-      isUndefined: skipValue === undefined
-    });
-  }
-
-  // Verify target step exists in DOM
-  if (targetStep) {
-    const targetElement = document.querySelector(`[data-answer="${targetStep}"]`);
-    const allAnswerElements = document.querySelectorAll('[data-answer]');
-    const allAnswerValues = Array.from(allAnswerElements).map(el => getAttrValue(el, 'data-answer'));
-    
-    console.log('🔍 [Skip] Target step verification:', {
-      targetStep,
-      targetElementExists: !!targetElement,
-      targetElement: targetElement ? {
-        tagName: targetElement.tagName,
-        id: targetElement.id,
-        className: targetElement.className,
-        dataAnswer: getAttrValue(targetElement, 'data-answer'),
-        isVisible: targetElement instanceof HTMLElement ? isVisible(targetElement) : false
-      } : null,
-      availableSteps: allAnswerValues,
-      totalStepsWithDataAnswer: allAnswerElements.length,
-      searchQuery: `[data-answer="${targetStep}"]`
-    });
-    
-    if (!targetElement) {
-      console.error('❌ [Skip] Target step not found in DOM!', {
-        searchedFor: targetStep,
-        availableSteps: allAnswerValues,
-        suggestion: `Check if element with data-answer="${targetStep}" exists`,
-        possibleMatches: allAnswerValues.filter(val => val && val.includes(targetStep))
-      });
-    }
-  }
-
   console.log('🚀 [Skip] Emitting skip:request event:', {
-    targetStepId: targetStep,
+    targetStepId: dataSkip,
     currentStep: currentStepId,
     reason: skipReason,
     allowUndo: allowUndo
   });
   
-  formEvents.emit('skip:request', { targetStepId: targetStep });
+  formEvents.emit('skip:request', { targetStepId: dataSkip });
   
   console.log('✅ [Skip] Skip request emitted successfully');
 }
