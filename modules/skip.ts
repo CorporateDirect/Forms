@@ -165,17 +165,17 @@ function setupSkipListeners(root: Document | Element): void {
 function handleSkipButtonClick(event: Event, target: Element): void {
   event.preventDefault();
   
-  console.log('🔘 [Skip v2.0] Button clicked - NEW VALIDATION ACTIVE', {
+  console.log('🔘 [Skip v2.1] Button clicked - NEW VALIDATION ACTIVE', {
     element: target,
     tagName: target.tagName,
     className: target.className,
     id: target.id,
-    version: 'NEW_SKIP_VALIDATION_2024',
+    version: 'NEW_SKIP_VALIDATION_2024_v2.1',
     timestamp: new Date().toISOString()
   });
   
   if (!initialized) {
-    console.error('❌ [Skip v2.0] Module not initialized, ignoring skip button click', {
+    console.error('❌ [Skip v2.1] Module not initialized, ignoring skip button click', {
       target: target,
       initialized: initialized,
       skipRulesCount: skipRules.size,
@@ -189,7 +189,7 @@ function handleSkipButtonClick(event: Event, target: Element): void {
   const dataSkipReason = getAttrValue(target, 'data-skip-reason');
   const dataAllowUndo = getAttrValue(target, 'data-allow-skip-undo');
   
-  console.log('📋 [Skip v2.0] Data attributes analysis:', {
+  console.log('📋 [Skip v2.1] Data attributes analysis:', {
     'data-skip': dataSkip,
     'data-skip-reason': dataSkipReason,
     'data-allow-skip-undo': dataAllowUndo,
