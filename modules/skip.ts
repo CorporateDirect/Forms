@@ -165,15 +165,17 @@ function setupSkipListeners(root: Document | Element): void {
 function handleSkipButtonClick(event: Event, target: Element): void {
   event.preventDefault();
   
-  console.log('🔘 [Skip] Button clicked - starting analysis', {
+  console.log('🔘 [Skip v2.0] Button clicked - NEW VALIDATION ACTIVE', {
     element: target,
     tagName: target.tagName,
     className: target.className,
-    id: target.id
+    id: target.id,
+    version: 'NEW_SKIP_VALIDATION_2024',
+    timestamp: new Date().toISOString()
   });
   
   if (!initialized) {
-    console.error('❌ [Skip] Module not initialized, ignoring skip button click', {
+    console.error('❌ [Skip v2.0] Module not initialized, ignoring skip button click', {
       target: target,
       initialized: initialized,
       skipRulesCount: skipRules.size,
@@ -187,7 +189,7 @@ function handleSkipButtonClick(event: Event, target: Element): void {
   const dataSkipReason = getAttrValue(target, 'data-skip-reason');
   const dataAllowUndo = getAttrValue(target, 'data-allow-skip-undo');
   
-  console.log('📋 [Skip] Data attributes analysis:', {
+  console.log('📋 [Skip v2.0] Data attributes analysis:', {
     'data-skip': dataSkip,
     'data-skip-reason': dataSkipReason,
     'data-allow-skip-undo': dataAllowUndo,
@@ -199,7 +201,7 @@ function handleSkipButtonClick(event: Event, target: Element): void {
   
   // Validate that data-skip has a value and it's not just "true" or empty
   if (!dataSkip || dataSkip === 'true' || dataSkip === '') {
-    console.error('❌ [Skip] Invalid data-skip value - must specify target step', {
+    console.error('❌ [Skip v2.0] Invalid data-skip value - must specify target step', {
       dataSkip,
       isEmpty: dataSkip === '',
       isTrue: dataSkip === 'true',
@@ -215,7 +217,7 @@ function handleSkipButtonClick(event: Event, target: Element): void {
   const allAnswerElements = document.querySelectorAll('[data-answer]');
   const allAnswerValues = Array.from(allAnswerElements).map(el => getAttrValue(el, 'data-answer'));
   
-  console.log('🔍 [Skip] Target step verification:', {
+  console.log('🔍 [Skip v2.0] Target step verification:', {
     targetStep: dataSkip,
     targetElementExists: !!targetElement,
     targetElement: targetElement ? {
@@ -223,7 +225,9 @@ function handleSkipButtonClick(event: Event, target: Element): void {
       id: targetElement.id,
       className: targetElement.className,
       dataAnswer: getAttrValue(targetElement, 'data-answer'),
-      isVisible: targetElement instanceof HTMLElement ? isVisible(targetElement) : false
+      isVisible: targetElement instanceof HTMLElement ? isVisible(targetElement) : false,
+      hasContent: targetElement.children.length > 0 || targetElement.innerHTML.trim() !== '',
+      innerHTML: targetElement.innerHTML.length > 0 ? `${targetElement.innerHTML.substring(0, 100)}...` : 'EMPTY'
     } : null,
     availableSteps: allAnswerValues,
     totalStepsWithDataAnswer: allAnswerElements.length,
@@ -231,7 +235,7 @@ function handleSkipButtonClick(event: Event, target: Element): void {
   });
   
   if (!targetElement) {
-    console.error('❌ [Skip] Target step not found in DOM! Skip operation cancelled.', {
+    console.error('❌ [Skip v2.0] Target step not found in DOM! Skip operation cancelled.', {
       searchedFor: dataSkip,
       availableSteps: allAnswerValues,
       suggestion: `Check if element with data-answer="${dataSkip}" exists`,
@@ -241,9 +245,25 @@ function handleSkipButtonClick(event: Event, target: Element): void {
     return;
   }
   
+  // Check if target step has content
+  if (targetElement.children.length === 0 && targetElement.innerHTML.trim() === '') {
+    console.warn('⚠️ [Skip v2.0] Target step appears to be empty - this may cause blank step issue!', {
+      targetStepId: dataSkip,
+      targetElement: {
+        tagName: targetElement.tagName,
+        id: targetElement.id,
+        className: targetElement.className,
+        innerHTML: targetElement.innerHTML,
+        textContent: targetElement.textContent,
+        childrenCount: targetElement.children.length
+      },
+      possibleIssue: 'This step may be a blank wrapper without content'
+    });
+  }
+  
   const currentStepId = FormState.getCurrentStep();
   if (!currentStepId) {
-    console.error('❌ [Skip] No current step found for skip operation', {
+    console.error('❌ [Skip v2.0] No current step found for skip operation', {
       formState: FormState.getDebugInfo(),
       branchPath: FormState.getBranchPath(),
       allSteps: FormState.getAllSteps()
@@ -254,15 +274,16 @@ function handleSkipButtonClick(event: Event, target: Element): void {
   const skipReason = dataSkipReason || 'User skipped';
   const allowUndo = dataAllowUndo !== 'false';
 
-  console.log('🎯 [Skip] Processing valid skip request:', {
+  console.log('🎯 [Skip v2.0] Processing valid skip request:', {
     currentStepId,
     targetStepId: dataSkip,
     skipReason,
     allowUndo,
-    targetExists: true
+    targetExists: true,
+    targetHasContent: targetElement.children.length > 0 || targetElement.innerHTML.trim() !== ''
   });
 
-  console.log('🚀 [Skip] Emitting skip:request event:', {
+  console.log('🚀 [Skip v2.0] Emitting skip:request event:', {
     targetStepId: dataSkip,
     currentStep: currentStepId,
     reason: skipReason,
@@ -271,7 +292,7 @@ function handleSkipButtonClick(event: Event, target: Element): void {
   
   formEvents.emit('skip:request', { targetStepId: dataSkip });
   
-  console.log('✅ [Skip] Skip request emitted successfully');
+  console.log('✅ [Skip v2.0] Skip request emitted successfully');
 }
 
 /**

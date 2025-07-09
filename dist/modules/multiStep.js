@@ -635,52 +635,110 @@ function validateStepElement(element) {
  */
 export function goToStep(stepIndex) {
     if (!initialized) {
-        console.error('❌ [MultiStep] Module not initialized, ignoring goToStep call', {
-            stepIndex,
-            initialized,
-            totalSteps: steps.length
-        });
+        logVerbose('Multi-step module not initialized, ignoring goToStep call');
         return;
     }
-    console.log(`🎯 [MultiStep] Navigating to step index ${stepIndex}:`, {
+    console.log('🎯 [STEP NAVIGATION] Starting goToStep:', {
+        requestedIndex: stepIndex,
         currentIndex: currentStepIndex,
         totalSteps: steps.length,
-        requestedIndex: stepIndex
+        stepExists: stepIndex >= 0 && stepIndex < steps.length
     });
     if (stepIndex < 0 || stepIndex >= steps.length) {
-        console.error(`❌ [MultiStep] Invalid step index: ${stepIndex}`, {
-            min: 0,
-            max: steps.length - 1,
-            totalSteps: steps.length
+        console.error('❌ [STEP NAVIGATION] Invalid step index:', {
+            requestedIndex: stepIndex,
+            validRange: `0 to ${steps.length - 1}`,
+            totalSteps: steps.length,
+            availableStepIds: steps.map(s => s.id)
         });
         return;
     }
     const targetStep = steps[stepIndex];
-    console.log(`🚀 [MultiStep] Showing target step: ${stepIndex} (${targetStep.id})`, {
-        stepElement: {
+    console.log('📋 [STEP NAVIGATION] Target step details:', {
+        stepIndex,
+        stepId: targetStep.id,
+        element: {
             tagName: targetStep.element.tagName,
             id: targetStep.element.id,
-            className: targetStep.element.className
+            className: targetStep.element.className,
+            dataAnswer: getAttrValue(targetStep.element, 'data-answer'),
+            innerHTML: targetStep.element.innerHTML.length > 0 ? `${targetStep.element.innerHTML.substring(0, 100)}...` : 'EMPTY',
+            hasContent: targetStep.element.children.length > 0,
+            childrenCount: targetStep.element.children.length
         },
-        stepType: targetStep.type,
-        stepSubtype: targetStep.subtype
+        visibility: {
+            isVisible: isVisible(targetStep.element),
+            display: getComputedStyle(targetStep.element).display,
+            visibility: getComputedStyle(targetStep.element).visibility,
+            opacity: getComputedStyle(targetStep.element).opacity,
+            hasHiddenClass: targetStep.element.classList.contains('hidden-step')
+        }
     });
-    // showStep handles all the visibility state management
-    showStep(stepIndex);
-    // Debug: Verify step is actually visible
-    const isStepVisible = isVisible(targetStep.element);
-    const stepDisplay = getComputedStyle(targetStep.element).display;
-    const stepVisibility = getComputedStyle(targetStep.element).visibility;
-    console.log(`✅ [MultiStep] Step navigation complete:`, {
-        newCurrentIndex: currentStepIndex,
+    // Check if target step has content
+    if (targetStep.element.children.length === 0 && targetStep.element.innerHTML.trim() === '') {
+        console.warn('⚠️ [STEP NAVIGATION] Target step appears to be empty!', {
+            stepId: targetStep.id,
+            stepIndex,
+            innerHTML: targetStep.element.innerHTML,
+            textContent: targetStep.element.textContent,
+            childrenCount: targetStep.element.children.length,
+            possibleIssue: 'This step may be a blank wrapper'
+        });
+    }
+    logVerbose(`Attempting to go to step index: ${stepIndex}`);
+    // Hide current step
+    if (currentStepIndex !== -1) {
+        const currentStep = steps[currentStepIndex];
+        console.log('👋 [STEP NAVIGATION] Hiding current step:', {
+            currentIndex: currentStepIndex,
+            currentStepId: currentStep.id,
+            beforeHide: {
+                isVisible: isVisible(currentStep.element),
+                display: getComputedStyle(currentStep.element).display
+            }
+        });
+        hideStep(currentStepIndex);
+        console.log('✅ [STEP NAVIGATION] Current step hidden:', {
+            stepId: currentStep.id,
+            afterHide: {
+                isVisible: isVisible(currentStep.element),
+                display: getComputedStyle(currentStep.element).display
+            }
+        });
+    }
+    // Show target step
+    console.log('👁️ [STEP NAVIGATION] Showing target step:', {
+        stepIndex,
         stepId: targetStep.id,
-        elementVisible: isStepVisible,
-        elementDisplay: stepDisplay,
-        elementVisibility: stepVisibility,
-        elementHasContent: targetStep.element.children.length > 0,
-        formStateVisible: FormState.isStepVisible(targetStep.id),
-        formStateCurrentStep: FormState.getCurrentStep()
+        beforeShow: {
+            isVisible: isVisible(targetStep.element),
+            display: getComputedStyle(targetStep.element).display,
+            hasHiddenClass: targetStep.element.classList.contains('hidden-step')
+        }
     });
+    showStep(stepIndex);
+    console.log('✅ [STEP NAVIGATION] Target step shown:', {
+        stepId: targetStep.id,
+        afterShow: {
+            isVisible: isVisible(targetStep.element),
+            display: getComputedStyle(targetStep.element).display,
+            hasHiddenClass: targetStep.element.classList.contains('hidden-step'),
+            actuallyVisible: targetStep.element.offsetHeight > 0 && targetStep.element.offsetWidth > 0
+        }
+    });
+    // Update current step tracking
+    currentStepIndex = stepIndex;
+    FormState.setCurrentStep(targetStep.id);
+    // Update navigation buttons
+    updateNavigationButtons();
+    console.log('🎉 [STEP NAVIGATION] Navigation complete:', {
+        newCurrentIndex: currentStepIndex,
+        newCurrentStepId: targetStep.id,
+        formStateCurrentStep: FormState.getCurrentStep(),
+        stepIsVisibleInDOM: isVisible(targetStep.element),
+        stepHasContent: targetStep.element.children.length > 0 || targetStep.element.innerHTML.trim() !== ''
+    });
+    logVerbose(`Successfully navigated to step ${stepIndex} (${targetStep.id})`);
 }
 /**
  * Show a step by its index
