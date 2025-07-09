@@ -724,6 +724,11 @@ export function showStep(stepIndex) {
         computedDisplay: getComputedStyle(step.element).display,
         computedVisibility: getComputedStyle(step.element).visibility
     });
+    // Run diagnostics if step is still not visible
+    if (!isVisible(step.element)) {
+        console.error(`❌ [MultiStep] Step ${stepIndex} (${step.id}) is still not visible after showElement!`);
+        diagnoseVisibilityIssues(step.element, step.id);
+    }
 }
 /**
  * Hide a step by its index
@@ -938,5 +943,50 @@ export function getMultiStepState() {
             number: step.number
         }))
     };
+}
+/**
+ * Diagnostic function to check for CSS conflicts that might prevent visibility
+ */
+function diagnoseVisibilityIssues(element, stepId) {
+    const computedStyle = getComputedStyle(element);
+    const parentElements = [];
+    // Walk up the DOM tree to find potential conflicting styles
+    let currentElement = element;
+    while (currentElement && currentElement !== document.body) {
+        parentElements.push(currentElement);
+        currentElement = currentElement.parentElement;
+    }
+    console.log(`🔍 [MultiStep] Diagnosing visibility issues for step ${stepId}:`, {
+        targetElement: {
+            tagName: element.tagName,
+            id: element.id,
+            className: element.className,
+            computedDisplay: computedStyle.display,
+            computedVisibility: computedStyle.visibility,
+            computedOpacity: computedStyle.opacity,
+            inlineDisplay: element.style.display,
+            inlineVisibility: element.style.visibility,
+            inlineOpacity: element.style.opacity,
+            hasHiddenClass: element.classList.contains('hidden-step'),
+            isVisible: isVisible(element)
+        },
+        parentChain: parentElements.map(el => ({
+            tagName: el.tagName,
+            id: el.id,
+            className: el.className,
+            computedDisplay: getComputedStyle(el).display,
+            computedVisibility: getComputedStyle(el).visibility,
+            computedOpacity: getComputedStyle(el).opacity,
+            hasHiddenClass: el.classList.contains('hidden-step')
+        })),
+        possibleConflicts: {
+            hasDisplayNone: computedStyle.display === 'none',
+            hasVisibilityHidden: computedStyle.visibility === 'hidden',
+            hasZeroOpacity: computedStyle.opacity === '0',
+            hasHiddenClass: element.classList.contains('hidden-step'),
+            parentWithDisplayNone: parentElements.some(el => getComputedStyle(el).display === 'none'),
+            parentWithVisibilityHidden: parentElements.some(el => getComputedStyle(el).visibility === 'hidden')
+        }
+    });
 }
 //# sourceMappingURL=multiStep.js.map
