@@ -129,19 +129,24 @@ export function showElement(element: HTMLElement): void {
   // Get the original display value from data attribute or compute it
   const originalDisplay = element.getAttribute('data-original-display') || '';
   
-  // If we have an original display value, use it; otherwise remove the style property
-  if (originalDisplay) {
-    element.style.display = originalDisplay;
+  // If we have an original display value, use it; otherwise set to block as fallback
+  if (originalDisplay && originalDisplay !== 'none') {
+    element.style.setProperty('display', originalDisplay, 'important');
   } else {
-    // Remove the display style to let CSS take over
-    element.style.removeProperty('display');
+    // Fallback to block, but check if it should be flex based on CSS classes
+    const shouldBeFlex = element.classList.contains('flex') || 
+                        element.classList.contains('d-flex') ||
+                        element.classList.contains('step_wrapper') ||
+                        getComputedStyle(element).display === 'flex';
+    
+    element.style.setProperty('display', shouldBeFlex ? 'flex' : 'block', 'important');
   }
   
-  // Ensure visibility is set correctly
-  element.style.removeProperty('visibility');
-  element.style.removeProperty('opacity');
+  // Force visibility for critical elements with !important
+  element.style.setProperty('visibility', 'visible', 'important');
+  element.style.setProperty('opacity', '1', 'important');
   
-  logVerbose(`Showing element:`, {
+  console.log(`🔄 [Utils] Showing element:`, {
     element: element,
     tagName: element.tagName,
     id: element.id,
@@ -149,7 +154,9 @@ export function showElement(element: HTMLElement): void {
     originalDisplay: originalDisplay || 'none stored',
     currentDisplay: element.style.display,
     computedDisplay: getComputedStyle(element).display,
-    computedVisibility: getComputedStyle(element).visibility
+    computedVisibility: getComputedStyle(element).visibility,
+    hasHiddenClass: element.classList.contains('hidden-step'),
+    isVisible: isVisible(element)
   });
 }
 
@@ -164,11 +171,11 @@ export function hideElement(element: HTMLElement): void {
   }
   
   addClass(element, 'hidden-step');
-  element.style.display = 'none';
-  element.style.visibility = 'hidden';
-  element.style.opacity = '0';
+  element.style.setProperty('display', 'none', 'important');
+  element.style.setProperty('visibility', 'hidden', 'important');
+  element.style.setProperty('opacity', '0', 'important');
   
-  logVerbose(`Hiding element:`, {
+  console.log(`🔄 [Utils] Hiding element:`, {
     element: element,
     tagName: element.tagName,
     id: element.id,
@@ -176,7 +183,9 @@ export function hideElement(element: HTMLElement): void {
     originalDisplay: computedDisplay,
     currentDisplay: element.style.display,
     computedDisplay: getComputedStyle(element).display,
-    computedVisibility: getComputedStyle(element).visibility
+    computedVisibility: getComputedStyle(element).visibility,
+    hasHiddenClass: element.classList.contains('hidden-step'),
+    isVisible: isVisible(element)
   });
 }
 

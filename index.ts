@@ -11,7 +11,7 @@ import { clearQueryCache } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
 
 // Import all modules
-import { initBranching, resetBranching, getNextStep, getBranchingState } from './modules/branching.js';
+import { initBranching, resetBranching, getBranchingState } from './modules/branching.js';
 import { initMultiStep, goToStep, showStep, getCurrentStepInfo, getMultiStepState } from './modules/multiStep.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, getErrorState } from './modules/errors.js';
@@ -246,7 +246,6 @@ export {
   // Branching
   initBranching,
   resetBranching,
-  getNextStep,
   
   // Multi-step
   initMultiStep,

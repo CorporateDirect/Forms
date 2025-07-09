@@ -31,6 +31,14 @@ export function initBranching(root: Document | Element = document): void {
 
   logVerbose('Initializing branching logic');
 
+  // Check if multiStep will be initialized to handle branch events
+  const multistepForms = root.querySelectorAll(SELECTORS.MULTISTEP);
+  const stepElements = root.querySelectorAll(SELECTORS.STEP);
+  
+  if (multistepForms.length === 0 && stepElements.length === 0) {
+    logVerbose('Warning: Branching initialized but no multi-step forms found. Branch events may not be handled.');
+  }
+
   // Set up event listeners for branching triggers
   setupBranchingListeners(root);
 
@@ -452,18 +460,6 @@ function deactivateBranch(target: string | null): void {
 }
 
 /**
- * Get the next step based on branching logic
- * (This might still be useful for complex scenarios, but core navigation is event-based)
- */
-export function getNextStep(): string | null {
-  const activeConditions = FormState.getBranchPath().activeConditions;
-  const activeTargets = Object.keys(activeConditions).filter(
-    key => activeConditions[key]
-  );
-  return activeTargets.length > 0 ? activeTargets[0] : null;
-}
-
-/**
  * Update visibility of all conditional steps based on active branches
  */
 function updateStepVisibility(): void {
@@ -472,13 +468,45 @@ function updateStepVisibility(): void {
 
   allConditionalSteps.forEach(step => {
     const condition = getAttrValue(step, 'data-show-if');
-    if (condition) {
+    const stepId = getAttrValue(step, 'data-answer');
+    
+    if (condition && stepId) {
       if (evaluateCondition(condition, activeConditions)) {
         showElement(step as HTMLElement);
+        FormState.setStepVisibility(stepId, true);
+        enableRequiredFields(step as HTMLElement);
       } else {
         hideElement(step as HTMLElement);
+        FormState.setStepVisibility(stepId, false);
+        disableRequiredFields(step as HTMLElement);
       }
     }
+  });
+}
+
+/**
+ * Enable required fields that were originally required
+ */
+function enableRequiredFields(stepElement: HTMLElement): void {
+  const fields = stepElement.querySelectorAll('input, select, textarea');
+  fields.forEach(field => {
+    const input = field as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    const originalRequired = input.getAttribute('data-original-required');
+    if (originalRequired === 'true') {
+      (input as HTMLInputElement).required = true;
+    }
+  });
+}
+
+/**
+ * Disable required fields when step is hidden
+ */
+function disableRequiredFields(stepElement: HTMLElement): void {
+  const fields = stepElement.querySelectorAll('input[required], select[required], textarea[required]');
+  fields.forEach(field => {
+    const input = field as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    input.setAttribute('data-original-required', 'true');
+    (input as HTMLInputElement).required = false;
   });
 }
 
