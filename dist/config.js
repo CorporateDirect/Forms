@@ -35,12 +35,6 @@ export const DATA_ATTRS = {
     SUBMIT: 'data-form="submit"',
     SUBMIT_BTN: 'data-form="submit-btn"',
     ERROR_DISPLAY: 'data-form="error"',
-    // Enhanced skip functionality
-    SKIP_IF: 'data-skip-if',
-    SKIP_UNLESS: 'data-skip-unless',
-    SKIP_SECTION: 'data-skip-section',
-    ALLOW_SKIP_UNDO: 'data-allow-skip-undo',
-    SKIP_REASON: 'data-skip-reason',
     // Step categorization
     STEP_TYPE: 'data-step-type',
     STEP_SUBTYPE: 'data-step-subtype',
@@ -72,12 +66,6 @@ export const SELECTORS = {
     SUBMIT: '[data-form="submit"]',
     SUBMIT_BTN: '[data-form="submit-btn"]',
     ERROR_DISPLAY: '[data-form="error"]',
-    // Enhanced skip functionality
-    SKIP_IF: '[data-skip-if]',
-    SKIP_UNLESS: '[data-skip-unless]',
-    SKIP_SECTION: '[data-skip-section]',
-    ALLOW_SKIP_UNDO: '[data-allow-skip-undo]',
-    SKIP_REASON: '[data-skip-reason]',
     // Conditional display
     SHOW_IF: '[data-show-if]',
     // Step categorization
@@ -118,9 +106,6 @@ export const CSS_CLASSES = {
     HIDDEN_STEP_ITEM: 'hidden-step-item',
     ERROR_FIELD: 'error-field',
     ACTIVE_ERROR: 'active-error',
-    DISABLED: 'disabled',
-    SKIPPED_STEP: 'skipped-step',
-    SKIP_AVAILABLE: 'skip-available',
-    SKIP_DISABLED: 'skip-disabled'
+    DISABLED: 'disabled'
 };
 //# sourceMappingURL=config.js.map

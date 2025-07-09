@@ -1,32 +1,16 @@
 /**
- * Enhanced skip functionality module
+ * Basic skip functionality module
  */
 /**
- * Initialize enhanced skip functionality
+ * Initialize basic skip functionality
  */
 export declare function initSkip(root?: Document | Element): void;
 /**
- * Skip a specific step
+ * Skip a specific step (basic functionality)
  */
-export declare function skipStep(stepId: string, reason?: string, allowUndo?: boolean, targetStep?: string): boolean;
+export declare function skipStep(stepId: string): boolean;
 /**
- * Skip an entire section
- */
-export declare function skipSection(sectionId: string, reason?: string): boolean;
-/**
- * Undo skip for a specific step
- */
-export declare function undoSkipStep(stepId: string): boolean;
-/**
- * Check if conditional skip should be applied
- */
-export declare function evaluateSkipConditions(): void;
-/**
- * Check if a step can be skipped
- */
-export declare function canSkipStep(stepId: string): boolean;
-/**
- * Get skip statistics and state
+ * Get skip state for debugging
  */
 export declare function getSkipState(): Record<string, unknown>;
 /**

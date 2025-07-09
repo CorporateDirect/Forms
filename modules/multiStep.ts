@@ -14,7 +14,7 @@ import {
   removeClass
 } from './utils.js';
 import { FormState } from './formState.js';
-import { initSkip, skipStep, resetSkip } from './skip.js';
+import { initSkip, resetSkip } from './skip.js';
 import { formEvents } from './events.js';
 
 interface StepElement {
@@ -337,29 +337,14 @@ function setupEventListeners(): void {
   });
 
   const skipRequestCleanup = formEvents.on('skip:request', ({ targetStepId }) => {
-    console.log('🎯 [MultiStep] Received skip:request event', { 
-      targetStepId,
-      currentStepId: FormState.getCurrentStep(),
-      hasTargetStep: !!targetStepId
-    });
+    logVerbose('Received skip:request event', { targetStepId });
     
-    const currentStepId = FormState.getCurrentStep();
-    if (!currentStepId) {
-      console.error('❌ [MultiStep] No current step found for skip operation');
-      return;
-    }
-    
-    // Skip the current step
-    if (currentStepId) {
-      skipStep(currentStepId, 'User skipped', true, targetStepId || undefined);
-    }
-    
-    // Navigate to target step - targetStepId should always be valid now
+    // Navigate to target step
     if (targetStepId) {
-      console.log('🚀 [MultiStep] Navigating to target step:', targetStepId);
+      logVerbose('Navigating to target step:', targetStepId);
       goToStepById(targetStepId);
     } else {
-      console.error('❌ [MultiStep] No target step provided in skip:request - this should not happen with the new validation');
+      logVerbose('No target step provided in skip:request');
     }
   });
 
@@ -1024,11 +1009,7 @@ function goToNextStep(): void {
     }
   });
 
-  // Only evaluate skip conditions, don't add validation barriers
-  logVerbose('Evaluating skip conditions...');
-  // The evaluateSkipConditions function is now part of the skip module,
-  // so we just call it directly.
-  // The setNavigationFunctions call is removed as per the new_code.
+  // Skip conditions removed - using basic skip functionality only
 
   // Use original simple next step logic
   const nextIndex = currentStepIndex + 1;
@@ -1165,7 +1146,7 @@ function resetMultiStep(): void {
   currentStepItemId = null;
   initialized = false;
   
-  // Reset other modules that depend on multi-step
+  // Reset skip module
   resetSkip();
 
   // Clean up event listeners

@@ -5,7 +5,7 @@
  * preventing circular dependencies and improving modularity.
  */
 type Listener<T> = (data: T) => void;
-declare class EventEmitter<E extends Record<string, any>> {
+declare class EventEmitter<E extends Record<string, unknown>> {
     private events;
     private moduleStates;
     /**
@@ -33,7 +33,7 @@ declare class EventEmitter<E extends Record<string, any>> {
      */
     emit<K extends keyof E>(event: K, data: E[K]): void;
 }
-interface FormEvents {
+interface FormEvents extends Record<string, unknown> {
     'branch:change': {
         targetStepId: string;
     };

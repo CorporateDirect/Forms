@@ -96,7 +96,7 @@ class FormLibrary {
         // Reset all modules (they handle their own cleanup)
         try {
             resetBranching();
-            resetSkip(); // Reset skip functionality
+            resetSkip();
             // Note: Other modules will be reset when re-initialized
         }
         catch (error) {

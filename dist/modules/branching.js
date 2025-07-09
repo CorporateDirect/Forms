@@ -235,7 +235,7 @@ function handleBranchTrigger(event, target) {
                 // Apply active class styling
                 applyRadioActiveClass(target);
                 // Activate branch and emit event
-                activateBranch(goToValue, target.value);
+                activateBranch(goToValue);
                 console.log('🚀 [Branch] Emitting branch:change event:', {
                     targetStepId: goToValue,
                     triggerValue: target.value,
@@ -253,7 +253,7 @@ function handleBranchTrigger(event, target) {
                 if (goToValue) {
                     if (target.checked) {
                         console.log('✅ [Branch] Checkbox checked, activating branch:', { goToValue });
-                        activateBranch(goToValue, target.value);
+                        activateBranch(goToValue);
                     }
                     else {
                         console.log('❌ [Branch] Checkbox unchecked, deactivating branch:', { goToValue });
@@ -272,7 +272,7 @@ function handleBranchTrigger(event, target) {
                 if (goToValue) {
                     if (inputValue) {
                         console.log('✅ [Branch] Input has value, activating branch:', { goToValue, inputValue });
-                        activateBranch(goToValue, inputValue);
+                        activateBranch(goToValue);
                     }
                     else {
                         console.log('❌ [Branch] Input is empty, deactivating branch:', { goToValue });
@@ -291,7 +291,7 @@ function handleBranchTrigger(event, target) {
             if (goToValue) {
                 if (inputValue) {
                     console.log('✅ [Branch] Element has value, activating branch:', { goToValue, inputValue });
-                    activateBranch(goToValue, inputValue);
+                    activateBranch(goToValue);
                 }
                 else {
                     console.log('❌ [Branch] Element is empty, deactivating branch:', { goToValue });
@@ -312,7 +312,8 @@ function handleBranchTrigger(event, target) {
         });
     }
     // Update step visibility if we have active conditions
-    const activeConditions = FormState.getBranchPath().activeConditions;
+    // Active conditions removed (was part of advanced skip logic)
+    const activeConditions = {};
     if (Object.keys(activeConditions).length > 0) {
         console.log('🔄 [Branch] Updating step visibility based on active conditions:', {
             activeConditions,
@@ -368,10 +369,10 @@ function handleRadioGroupSelection(selectedRadio) {
 /**
  * Activate a branch target
  */
-function activateBranch(target, value) {
+function activateBranch(target) {
     if (!target)
         return;
-    FormState.setActiveCondition(target, value);
+    // Active condition tracking removed (was part of advanced skip logic)
 }
 /**
  * Deactivate a branch target
@@ -379,7 +380,7 @@ function activateBranch(target, value) {
 function deactivateBranch(target) {
     if (!target)
         return;
-    FormState.setActiveCondition(target, null);
+    // Active condition tracking removed (was part of advanced skip logic)
     clearBranchFields(target);
 }
 /**
@@ -387,7 +388,8 @@ function deactivateBranch(target) {
  */
 function updateStepVisibility() {
     const allConditionalSteps = queryAllByAttr('[data-show-if]');
-    const activeConditions = FormState.getBranchPath().activeConditions;
+    // Active conditions removed (was part of advanced skip logic)
+    const activeConditions = {};
     allConditionalSteps.forEach(step => {
         const condition = getAttrValue(step, 'data-show-if');
         const stepId = getAttrValue(step, 'data-answer');
@@ -462,8 +464,7 @@ export function resetBranching() {
     cleanupFunctions.forEach(fn => fn());
     cleanupFunctions = [];
     // Clear relevant parts of FormState
-    const branchPath = FormState.getBranchPath();
-    branchPath.activeConditions = {};
+    // Active conditions removed (was part of advanced skip logic)
     initialized = false;
     logVerbose('Branching module reset');
 }
@@ -473,7 +474,7 @@ export function resetBranching() {
 export function getBranchingState() {
     return {
         initialized,
-        activeConditions: FormState.getBranchPath().activeConditions
+        // activeConditions removed (was part of advanced skip logic)
     };
 }
 //# sourceMappingURL=branching.js.map

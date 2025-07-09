@@ -10,23 +10,10 @@ export interface StepInfo {
     number?: string;
     visible: boolean;
     visited: boolean;
-    skipped?: boolean;
-    skipReason?: string;
-    allowSkipUndo?: boolean;
 }
 export interface BranchPath {
     currentStep: string;
     previousSteps: string[];
-    skippedSteps: string[];
-    skipHistory: SkipHistoryEntry[];
-    activeConditions: Record<string, unknown>;
-}
-export interface SkipHistoryEntry {
-    stepId: string;
-    reason?: string;
-    timestamp: number;
-    canUndo: boolean;
-    fieldsCleared: string[];
 }
 declare class FormStateManager {
     private static instance;
@@ -51,7 +38,7 @@ declare class FormStateManager {
      */
     getAll(): FormStateData;
     /**
-     * Clear all data (enhanced to handle skip history)
+     * Clear all data
      */
     clear(): void;
     /**
@@ -83,49 +70,9 @@ declare class FormStateManager {
      */
     getCurrentStep(): string;
     /**
-     * Get branch path (for skip condition evaluation)
+     * Get branch path
      */
     getBranchPath(): BranchPath;
-    /**
-     * Add skipped step with enhanced tracking
-     */
-    addSkippedStep(stepId: string, reason?: string, canUndo?: boolean): void;
-    /**
-     * Remove step from skipped list (undo skip)
-     */
-    undoSkipStep(stepId: string): boolean;
-    /**
-     * Check if step is skipped
-     */
-    isStepSkipped(stepId: string): boolean;
-    /**
-     * Get skip history
-     */
-    getSkipHistory(): SkipHistoryEntry[];
-    /**
-     * Get all skipped steps
-     */
-    getSkippedSteps(): string[];
-    /**
-     * Clear skip history
-     */
-    clearSkipHistory(): void;
-    /**
-     * Get skip statistics
-     */
-    getSkipStats(): {
-        totalSkipped: number;
-        canUndoCount: number;
-        skipReasons: Record<string, number>;
-    };
-    /**
-     * Set active condition
-     */
-    setActiveCondition(key: string, value: unknown): void;
-    /**
-     * Get active condition
-     */
-    getActiveCondition(key: string): unknown;
     /**
      * Get fields by step type/subtype/number
      */

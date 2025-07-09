@@ -8,10 +8,7 @@ class FormStateManager {
         this.steps = {};
         this.branchPath = {
             currentStep: '',
-            previousSteps: [],
-            skippedSteps: [],
-            skipHistory: [],
-            activeConditions: {}
+            previousSteps: []
         };
         logVerbose('FormState initialized');
     }
@@ -50,7 +47,7 @@ class FormStateManager {
         return { ...this.data };
     }
     /**
-     * Clear all data (enhanced to handle skip history)
+     * Clear all data
      */
     clear() {
         const oldData = { ...this.data };
@@ -58,10 +55,7 @@ class FormStateManager {
         this.steps = {};
         this.branchPath = {
             currentStep: '',
-            previousSteps: [],
-            skippedSteps: [],
-            skipHistory: [],
-            activeConditions: {}
+            previousSteps: []
         };
         logVerbose('FormState cleared', { oldData });
     }
@@ -131,137 +125,10 @@ class FormStateManager {
         return this.branchPath.currentStep;
     }
     /**
-     * Get branch path (for skip condition evaluation)
+     * Get branch path
      */
     getBranchPath() {
         return { ...this.branchPath };
-    }
-    /**
-     * Add skipped step with enhanced tracking
-     */
-    addSkippedStep(stepId, reason, canUndo = true) {
-        if (!this.branchPath.skippedSteps.includes(stepId)) {
-            this.branchPath.skippedSteps.push(stepId);
-            // Add to skip history
-            const skipEntry = {
-                stepId,
-                reason,
-                timestamp: Date.now(),
-                canUndo,
-                fieldsCleared: []
-            };
-            this.branchPath.skipHistory.push(skipEntry);
-            // Mark step as skipped
-            this.setStepInfo(stepId, {
-                skipped: true,
-                skipReason: reason,
-                allowSkipUndo: canUndo
-            });
-            logVerbose(`Step skipped: ${stepId}`, {
-                reason,
-                canUndo,
-                totalSkipped: this.branchPath.skippedSteps.length
-            });
-        }
-    }
-    /**
-     * Remove step from skipped list (undo skip)
-     */
-    undoSkipStep(stepId) {
-        const skipIndex = this.branchPath.skippedSteps.indexOf(stepId);
-        if (skipIndex === -1) {
-            logVerbose(`Cannot undo skip - step not in skipped list: ${stepId}`);
-            return false;
-        }
-        // Check if undo is allowed
-        const stepInfo = this.getStepInfo(stepId);
-        if (stepInfo && stepInfo.allowSkipUndo === false) {
-            logVerbose(`Cannot undo skip - undo not allowed for step: ${stepId}`);
-            return false;
-        }
-        // Remove from skipped steps
-        this.branchPath.skippedSteps.splice(skipIndex, 1);
-        // Update step info
-        this.setStepInfo(stepId, {
-            skipped: false,
-            skipReason: undefined
-        });
-        // Update skip history
-        const historyEntry = this.branchPath.skipHistory.find(entry => entry.stepId === stepId);
-        if (historyEntry) {
-            historyEntry.canUndo = false; // Mark as undone
-        }
-        logVerbose(`Skip undone for step: ${stepId}`, {
-            remainingSkipped: this.branchPath.skippedSteps.length
-        });
-        return true;
-    }
-    /**
-     * Check if step is skipped
-     */
-    isStepSkipped(stepId) {
-        return this.branchPath.skippedSteps.includes(stepId);
-    }
-    /**
-     * Get skip history
-     */
-    getSkipHistory() {
-        return [...this.branchPath.skipHistory];
-    }
-    /**
-     * Get all skipped steps
-     */
-    getSkippedSteps() {
-        return [...this.branchPath.skippedSteps];
-    }
-    /**
-     * Clear skip history
-     */
-    clearSkipHistory() {
-        this.branchPath.skippedSteps = [];
-        this.branchPath.skipHistory = [];
-        // Update all step info to remove skip status
-        Object.keys(this.steps).forEach(stepId => {
-            if (this.steps[stepId].skipped) {
-                this.setStepInfo(stepId, {
-                    skipped: false,
-                    skipReason: undefined
-                });
-            }
-        });
-        logVerbose('Skip history cleared');
-    }
-    /**
-     * Get skip statistics
-     */
-    getSkipStats() {
-        const stats = {
-            totalSkipped: this.branchPath.skippedSteps.length,
-            canUndoCount: 0,
-            skipReasons: {}
-        };
-        this.branchPath.skipHistory.forEach(entry => {
-            if (entry.canUndo) {
-                stats.canUndoCount++;
-            }
-            if (entry.reason) {
-                stats.skipReasons[entry.reason] = (stats.skipReasons[entry.reason] || 0) + 1;
-            }
-        });
-        return stats;
-    }
-    /**
-     * Set active condition
-     */
-    setActiveCondition(key, value) {
-        this.branchPath.activeConditions[key] = value;
-        logVerbose(`Active condition set: ${key}`, value);
-    }
-    /**
-     * Get active condition
-     */
-    getActiveCondition(key) {
-        return this.branchPath.activeConditions[key];
     }
     /**
      * Get fields by step type/subtype/number

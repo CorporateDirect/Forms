@@ -308,7 +308,7 @@ function handleBranchTrigger(event: Event, target: Element): void {
         applyRadioActiveClass(target);
         
         // Activate branch and emit event
-        activateBranch(goToValue, target.value);
+        activateBranch(goToValue);
         
         console.log('🚀 [Branch] Emitting branch:change event:', {
           targetStepId: goToValue,
@@ -329,7 +329,7 @@ function handleBranchTrigger(event: Event, target: Element): void {
         if (goToValue) {
           if (target.checked) {
             console.log('✅ [Branch] Checkbox checked, activating branch:', { goToValue });
-            activateBranch(goToValue, target.value);
+            activateBranch(goToValue);
           } else {
             console.log('❌ [Branch] Checkbox unchecked, deactivating branch:', { goToValue });
             deactivateBranch(goToValue);
@@ -347,7 +347,7 @@ function handleBranchTrigger(event: Event, target: Element): void {
         if (goToValue) {
           if (inputValue) {
             console.log('✅ [Branch] Input has value, activating branch:', { goToValue, inputValue });
-            activateBranch(goToValue, inputValue);
+            activateBranch(goToValue);
           } else {
             console.log('❌ [Branch] Input is empty, deactivating branch:', { goToValue });
             deactivateBranch(goToValue);
@@ -365,7 +365,7 @@ function handleBranchTrigger(event: Event, target: Element): void {
       if (goToValue) {
         if (inputValue) {
           console.log('✅ [Branch] Element has value, activating branch:', { goToValue, inputValue });
-          activateBranch(goToValue, inputValue);
+          activateBranch(goToValue);
         } else {
           console.log('❌ [Branch] Element is empty, deactivating branch:', { goToValue });
           deactivateBranch(goToValue);
@@ -385,7 +385,8 @@ function handleBranchTrigger(event: Event, target: Element): void {
   }
 
   // Update step visibility if we have active conditions
-  const activeConditions = FormState.getBranchPath().activeConditions;
+  // Active conditions removed (was part of advanced skip logic)
+  const activeConditions = {};
   if (Object.keys(activeConditions).length > 0) {
     console.log('🔄 [Branch] Updating step visibility based on active conditions:', {
       activeConditions,
@@ -445,9 +446,9 @@ function handleRadioGroupSelection(selectedRadio: HTMLInputElement): void {
 /**
  * Activate a branch target
  */
-function activateBranch(target: string | null, value: string | string[]): void {
+function activateBranch(target: string | null): void {
   if (!target) return;
-  FormState.setActiveCondition(target, value);
+  // Active condition tracking removed (was part of advanced skip logic)
 }
 
 /**
@@ -455,7 +456,7 @@ function activateBranch(target: string | null, value: string | string[]): void {
  */
 function deactivateBranch(target: string | null): void {
   if (!target) return;
-  FormState.setActiveCondition(target, null);
+  // Active condition tracking removed (was part of advanced skip logic)
   clearBranchFields(target);
 }
 
@@ -464,7 +465,8 @@ function deactivateBranch(target: string | null): void {
  */
 function updateStepVisibility(): void {
   const allConditionalSteps = queryAllByAttr('[data-show-if]');
-  const activeConditions = FormState.getBranchPath().activeConditions;
+  // Active conditions removed (was part of advanced skip logic)
+  const activeConditions = {};
 
   allConditionalSteps.forEach(step => {
     const condition = getAttrValue(step, 'data-show-if');
@@ -550,8 +552,7 @@ export function resetBranching(): void {
   cleanupFunctions = [];
   
   // Clear relevant parts of FormState
-  const branchPath = FormState.getBranchPath();
-  branchPath.activeConditions = {};
+  // Active conditions removed (was part of advanced skip logic)
   
   initialized = false;
   logVerbose('Branching module reset');
@@ -563,6 +564,6 @@ export function resetBranching(): void {
 export function getBranchingState(): Record<string, unknown> {
   return {
     initialized,
-    activeConditions: FormState.getBranchPath().activeConditions
+    // activeConditions removed (was part of advanced skip logic)
   };
 } 

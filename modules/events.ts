@@ -12,7 +12,7 @@ interface ModuleState {
   name: string;
 }
 
-class EventEmitter<E extends Record<string, any>> {
+class EventEmitter<E extends Record<string, unknown>> {
   private events: { [K in keyof E]?: Listener<E[K]>[] } = {};
   private moduleStates: Map<string, ModuleState> = new Map();
 
@@ -130,7 +130,7 @@ class EventEmitter<E extends Record<string, any>> {
 }
 
 // Define event types
-interface FormEvents {
+interface FormEvents extends Record<string, unknown> {
   'branch:change': { targetStepId: string };
   'skip:request': { targetStepId: string | null };
   'step:change': { currentStepIndex: number; currentStepId: string; };
