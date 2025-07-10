@@ -4,12 +4,17 @@
  * A modular, flexible form functionality library for Webflow forms
  * supporting single-step, multi-step, and branching forms.
  *
- * Cache-busted version: 2025-01-10-14:40
+ * Version: CACHE_BUST_2025_01_10_14_45_FRESH
  */
 import { SELECTORS } from './config.js';
 import { logVerbose } from './modules/utils.js';
 import { clearQueryCache } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
+// Add version logging to verify which script is loading
+console.log('🚀 [FormLib] === SCRIPT VERSION CHECK ===');
+console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_10_14_45_FRESH');
+console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
+console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 // Import all modules
 import { initBranching, resetBranching, getBranchingState } from './modules/branching.js';
 import { initMultiStep, goToStep, showStep, getCurrentStepInfo, getMultiStepState } from './modules/multiStep.js';
