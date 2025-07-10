@@ -45,10 +45,48 @@ export function initMultiStep(root: Document | Element = document): void {
     resetMultiStep();
   }
 
+  console.log('🚀 [MultiStep] === INITIALIZATION START ===');
+  console.log('🔍 [MultiStep] Root element:', {
+    isDocument: root === document,
+    elementType: root.constructor.name,
+    hasQuerySelector: typeof root.querySelector === 'function'
+  });
+
   logVerbose('Initializing multi-step navigation with step/step_item architecture');
 
   // Find all parent step elements
   const stepElements = queryAllByAttr(SELECTORS.STEP, root);
+  
+  console.log('📋 [MultiStep] Step detection results:', {
+    selector: SELECTORS.STEP,
+    foundElements: stepElements.length,
+    elements: Array.from(stepElements).map((el, i) => ({
+      index: i,
+      tagName: el.tagName,
+      id: el.id,
+      className: el.className,
+      hasDataForm: el.hasAttribute('data-form'),
+      dataFormValue: el.getAttribute('data-form'),
+      innerHTML: el.innerHTML.substring(0, 100) + '...'
+    }))
+  });
+
+  if (stepElements.length === 0) {
+    console.error('❌ [MultiStep] CRITICAL: No step elements found!', {
+      selector: SELECTORS.STEP,
+      searchedIn: root === document ? 'entire document' : 'custom root element',
+      possibleIssues: [
+        'Form missing data-form="multistep" attribute',
+        'Steps missing data-form="step" attributes',
+        'Script loading before DOM is ready'
+      ],
+      troubleshooting: {
+        checkForm: 'document.querySelector(\'[data-form="multistep"]\')',
+        checkSteps: 'document.querySelectorAll(\'[data-form="step"]\')',
+        checkAllDataForm: 'document.querySelectorAll(\'[data-form]\')'
+      }
+    });
+  }
   
   steps = Array.from(stepElements).map((stepElement, index) => {
     console.log(`🔍 [MultiStep] Processing step ${index}:`, {
@@ -63,6 +101,16 @@ export function initMultiStep(root: Document | Element = document): void {
     // Look for data-answer on step_wrapper child element (primary step identifier)
     const stepWrapper = stepElement.querySelector('.step_wrapper[data-answer]');
     let dataAnswer: string | null = null;
+    
+    console.log(`🔍 [MultiStep] Step ${index} data-answer search:`, {
+      hasStepWrapper: !!stepWrapper,
+      stepWrapperInfo: stepWrapper ? {
+        tagName: stepWrapper.tagName,
+        id: stepWrapper.id,
+        className: stepWrapper.className,
+        dataAnswer: stepWrapper.getAttribute('data-answer')
+      } : null
+    });
     
     if (stepWrapper) {
       dataAnswer = getAttrValue(stepWrapper, 'data-answer');
@@ -83,6 +131,14 @@ export function initMultiStep(root: Document | Element = document): void {
         console.log(`📋 [MultiStep] Found data-answer on step element:`, {
           stepIndex: index,
           dataAnswer
+        });
+      } else {
+        console.log(`⚠️ [MultiStep] No data-answer found on step element either:`, {
+          stepIndex: index,
+          allAttributes: Array.from(stepElement.attributes).map(attr => ({
+            name: attr.name,
+            value: attr.value
+          }))
         });
       }
     }
@@ -144,6 +200,13 @@ export function initMultiStep(root: Document | Element = document): void {
 
     return stepInfo;
   }); // Remove the filter since we're no longer returning null values
+  
+  console.log('📊 [MultiStep] Step initialization summary:', {
+    totalStepsFound: stepElements.length,
+    totalStepsInitialized: steps.length,
+    stepIds: steps.map(s => s.id),
+    stepIndices: steps.map(s => s.index)
+  });
   
   // No need to fix indices since we're not filtering anymore
 
@@ -247,39 +310,48 @@ export function initMultiStep(root: Document | Element = document): void {
   }).filter(stepItem => stepItem !== null) as StepElement[]; // Filter out step_items that were skipped
 
   // Hide all steps and step_items initially
+  console.log('👁️ [MultiStep] === INITIAL STEP HIDING ===');
   logVerbose('Starting to hide all steps initially', { totalSteps: steps.length, totalStepItems: stepItems.length });
   
   steps.forEach((step, index) => {
-    logVerbose(`Hiding step ${index} (${step.id})`, {
-      element: step.element,
-      tagName: step.element.tagName,
-      id: step.element.id,
-      className: step.element.className,
+    console.log(`🫥 [MultiStep] Hiding step ${index} (${step.id}):`, {
+      stepId: step.id,
+      element: {
+        tagName: step.element.tagName,
+        id: step.element.id,
+        className: step.element.className
+      },
       beforeHide: {
         display: step.element.style.display,
         visibility: step.element.style.visibility,
         computedDisplay: getComputedStyle(step.element).display,
-        isVisible: isVisible(step.element)
+        isVisible: isVisible(step.element),
+        offsetHeight: step.element.offsetHeight,
+        offsetWidth: step.element.offsetWidth
       }
     });
     
     hideElement(step.element);
     
-    logVerbose(`Step ${index} hidden`, {
+    console.log(`✅ [MultiStep] Step ${index} hidden:`, {
+      stepId: step.id,
       afterHide: {
         display: step.element.style.display,
         visibility: step.element.style.visibility,
         computedDisplay: getComputedStyle(step.element).display,
-        isVisible: isVisible(step.element)
+        isVisible: isVisible(step.element),
+        offsetHeight: step.element.offsetHeight,
+        offsetWidth: step.element.offsetWidth
       }
     });
   });
 
   stepItems.forEach((stepItem, index) => {
-    logVerbose(`Hiding stepItem ${index} (${stepItem.id})`);
+    console.log(`🫥 [MultiStep] Hiding stepItem ${index} (${stepItem.id})`);
     hideElement(stepItem.element);
   });
   
+  console.log('✅ [MultiStep] Finished hiding all steps and step items');
   logVerbose('Finished hiding all steps and step items');
 
   // Set up navigation event listeners
@@ -293,6 +365,7 @@ export function initMultiStep(root: Document | Element = document): void {
   initSkip(root);
 
   // Show initial step
+  console.log('🎬 [MultiStep] === INITIAL STEP SHOWING ===');
   if (steps.length > 0) {
     // Start at step 0 unless there's a specific start step defined
     const multistepElement = root.querySelector(SELECTORS.MULTISTEP);
@@ -300,8 +373,23 @@ export function initMultiStep(root: Document | Element = document): void {
     const startStepId = startStepAttr || steps[0].id;
     const startIndex = findStepIndexById(startStepId);
     
-    goToStep(startIndex !== -1 ? startIndex : 0);
+    console.log('🎯 [MultiStep] Initial step selection:', {
+      totalSteps: steps.length,
+      multistepElement: !!multistepElement,
+      startStepAttr,
+      defaultFirstStepId: steps[0].id,
+      selectedStartStepId: startStepId,
+      selectedStartIndex: startIndex,
+      isValidIndex: startIndex !== -1,
+      allStepIds: steps.map(s => s.id)
+    });
+    
+    const finalStartIndex = startIndex !== -1 ? startIndex : 0;
+    console.log(`🚀 [MultiStep] Showing initial step: index ${finalStartIndex} (${steps[finalStartIndex]?.id})`);
+    
+    goToStep(finalStartIndex);
   } else {
+    console.error('❌ [MultiStep] CRITICAL: No steps found to initialize - cannot show initial step!');
     logVerbose('No steps found to initialize');
   }
 
@@ -723,17 +811,20 @@ function validateStepElement(element: HTMLElement): boolean {
  * Go to a specific step by index
  */
 export function goToStep(stepIndex: number): void {
-  if (!initialized) {
-    logVerbose('Multi-step module not initialized, ignoring goToStep call');
-    return;
-  }
-
+  console.log('🎯 [STEP NAVIGATION] === GO TO STEP START ===');
   console.log('🎯 [STEP NAVIGATION] Starting goToStep:', {
     requestedIndex: stepIndex,
     currentIndex: currentStepIndex,
     totalSteps: steps.length,
-    stepExists: stepIndex >= 0 && stepIndex < steps.length
+    stepExists: stepIndex >= 0 && stepIndex < steps.length,
+    initialized: initialized
   });
+
+  if (!initialized) {
+    console.error('❌ [STEP NAVIGATION] Module not initialized!');
+    logVerbose('Multi-step module not initialized, ignoring goToStep call');
+    return;
+  }
 
   if (stepIndex < 0 || stepIndex >= steps.length) {
     console.error('❌ [STEP NAVIGATION] Invalid step index:', {
@@ -764,7 +855,9 @@ export function goToStep(stepIndex: number): void {
       display: getComputedStyle(targetStep.element).display,
       visibility: getComputedStyle(targetStep.element).visibility,
       opacity: getComputedStyle(targetStep.element).opacity,
-      hasHiddenClass: targetStep.element.classList.contains('hidden-step')
+      hasHiddenClass: targetStep.element.classList.contains('hidden-step'),
+      offsetHeight: targetStep.element.offsetHeight,
+      offsetWidth: targetStep.element.offsetWidth
     }
   });
 
@@ -828,22 +921,7 @@ export function goToStep(stepIndex: number): void {
     }
   });
 
-  // Update current step tracking
-  currentStepIndex = stepIndex;
-  FormState.setCurrentStep(targetStep.id);
-
-  // Update navigation buttons
-  updateNavigationButtons();
-
-  console.log('🎉 [STEP NAVIGATION] Navigation complete:', {
-    newCurrentIndex: currentStepIndex,
-    newCurrentStepId: targetStep.id,
-    formStateCurrentStep: FormState.getCurrentStep(),
-    stepIsVisibleInDOM: isVisible(targetStep.element),
-    stepHasContent: targetStep.element.children.length > 0 || targetStep.element.innerHTML.trim() !== ''
-  });
-
-  logVerbose(`Successfully navigated to step ${stepIndex} (${targetStep.id})`);
+  console.log('🎯 [STEP NAVIGATION] === GO TO STEP END ===');
 }
 
 /**

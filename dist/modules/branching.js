@@ -15,16 +15,59 @@ export function initBranching(root = document) {
         logVerbose('Branching already initialized, cleaning up first');
         resetBranching();
     }
+    console.log('🌿 [Branching] === INITIALIZATION START ===');
+    console.log('🔍 [Branching] Root element:', {
+        isDocument: root === document,
+        elementType: root.constructor.name
+    });
     logVerbose('Initializing branching logic');
     // Check if multiStep will be initialized to handle branch events
     const multistepForms = root.querySelectorAll(SELECTORS.MULTISTEP);
     const stepElements = root.querySelectorAll(SELECTORS.STEP);
+    console.log('📋 [Branching] Form detection:', {
+        multistepForms: multistepForms.length,
+        stepElements: stepElements.length,
+        multistepSelector: SELECTORS.MULTISTEP,
+        stepSelector: SELECTORS.STEP
+    });
     if (multistepForms.length === 0 && stepElements.length === 0) {
+        console.warn('⚠️ [Branching] Warning: Branching initialized but no multi-step forms found. Branch events may not be handled.');
         logVerbose('Warning: Branching initialized but no multi-step forms found. Branch events may not be handled.');
     }
+    // Find all elements with data-go-to attributes
+    const goToElements = root.querySelectorAll(SELECTORS.GO_TO);
+    console.log('🎯 [Branching] data-go-to elements found:', {
+        count: goToElements.length,
+        selector: SELECTORS.GO_TO,
+        elements: Array.from(goToElements).map((el, i) => ({
+            index: i,
+            tagName: el.tagName,
+            id: el.id,
+            className: el.className,
+            dataGoTo: el.getAttribute('data-go-to'),
+            name: el.name,
+            type: el.type || el.tagName,
+            value: el.value
+        }))
+    });
+    // Find all elements with data-answer attributes
+    const answerElements = root.querySelectorAll(SELECTORS.ANSWER);
+    console.log('🎯 [Branching] data-answer elements found:', {
+        count: answerElements.length,
+        selector: SELECTORS.ANSWER,
+        elements: Array.from(answerElements).map((el, i) => ({
+            index: i,
+            tagName: el.tagName,
+            id: el.id,
+            className: el.className,
+            dataAnswer: el.getAttribute('data-answer'),
+            isStep: el.hasAttribute('data-form') && el.getAttribute('data-form') === 'step'
+        }))
+    });
     // Set up event listeners for branching triggers
     setupBranchingListeners(root);
     initialized = true;
+    console.log('✅ [Branching] Initialization complete');
     logVerbose('Branching initialization complete');
     // Register this module as initialized
     formEvents.registerModule('branching');
