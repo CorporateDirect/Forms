@@ -13,8 +13,6 @@ import {
   isVisible,
   removeClass
 } from './utils.js';
-import { FormState } from './formState.js';
-import { initSkip, resetSkip } from './skip.js';
 import { formEvents } from './events.js';
 
 interface StepElement {
@@ -35,6 +33,8 @@ let steps: StepElement[] = [];
 let stepItems: StepElement[] = [];
 let currentStepIndex = -1; // Initialize to -1 to indicate no current step
 let currentStepItemId: string | null = null;
+let currentStepId = '';
+let stepHistory: string[] = [];
 
 /**
  * Initialize multi-step functionality
@@ -189,14 +189,7 @@ export function initMultiStep(root: Document | Element = document): void {
       }
     });
 
-    // Register step in FormState
-    FormState.setStepInfo(dataAnswer, {
-      type: stepInfo.type,
-      subtype: stepInfo.subtype,
-      number: stepInfo.number,
-      visible: false, // All steps start hidden, goToStep(0) will show the first one
-      visited: false
-    });
+    // Note: Step info no longer stored in FormState (simplified)
 
     return stepInfo;
   }); // Remove the filter since we're no longer returning null values
@@ -297,14 +290,7 @@ export function initMultiStep(root: Document | Element = document): void {
       }
     });
 
-    // Register step_item in FormState
-    FormState.setStepInfo(dataAnswer, {
-      type: stepItemInfo.type,
-      subtype: stepItemInfo.subtype,
-      number: stepItemInfo.number,
-      visible: false, // All step_items start hidden
-      visited: false
-    });
+    // Note: Step item info no longer stored in FormState (simplified)
 
     return stepItemInfo;
   }).filter(stepItem => stepItem !== null) as StepElement[]; // Filter out step_items that were skipped
@@ -361,8 +347,8 @@ export function initMultiStep(root: Document | Element = document): void {
   // This ensures we're ready to handle skip:request events immediately
   setupEventListeners();
 
-  // Initialize enhanced skip functionality
-  initSkip(root);
+  // Set up skip functionality (integrated)
+  setupSkipListeners(root);
 
   // Show initial step
   console.log('🎬 [MultiStep] === INITIAL STEP SHOWING ===');
@@ -421,8 +407,55 @@ function setupEventListeners(): void {
     }
   });
 
+  // Listen for branching show/hide events
+  const branchShowCleanup = formEvents.on('branch:show', ({ stepId }) => {
+    logVerbose('Received branch:show event', { stepId });
+    const stepElement = document.querySelector(`[data-answer="${stepId}"]`) as HTMLElement;
+    if (stepElement) {
+      showElement(stepElement);
+      // Enable required fields in this step
+      updateRequiredFieldsInStep(stepElement, true);
+    }
+  });
+
+  const branchHideCleanup = formEvents.on('branch:hide', ({ stepId }) => {
+    logVerbose('Received branch:hide event', { stepId });
+    const stepElement = document.querySelector(`[data-answer="${stepId}"]`) as HTMLElement;
+    if (stepElement) {
+      hideElement(stepElement);
+      // Disable required fields in this step
+      updateRequiredFieldsInStep(stepElement, false);
+    }
+  });
+
   // Store cleanup functions for proper cleanup
-  eventCleanupFunctions.push(branchChangeCleanup, skipRequestCleanup);
+  eventCleanupFunctions.push(branchChangeCleanup, skipRequestCleanup, branchShowCleanup, branchHideCleanup);
+}
+
+/**
+ * Update required fields in a step or step_item (unified function)
+ */
+function updateRequiredFieldsInStep(stepElement: HTMLElement, enable: boolean = true): void {
+  const fields = stepElement.querySelectorAll('input, select, textarea');
+  fields.forEach(field => {
+    const input = field as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    if (enable) {
+      // Restore original required state
+      const originalRequired = input.getAttribute('data-original-required');
+      if (originalRequired === 'true') {
+        input.required = true;
+        input.disabled = false;
+      }
+    } else {
+      // Save original required state and disable
+      if (input.required) {
+        input.setAttribute('data-original-required', 'true');
+      }
+      input.required = false;
+      input.disabled = true;
+      input.value = ''; // Clear value when hiding
+    }
+  });
 }
 
 /**
@@ -488,7 +521,7 @@ export function showStepItem(stepItemId: string): void {
   allStepItemsInParent.forEach(item => {
     hideElement(item.element);
     updateRequiredFields(item.element, false);
-    FormState.setStepVisibility(item.id, false);
+    // Note: Step visibility tracking simplified
   });
 
   // Show the target step_item
@@ -507,8 +540,7 @@ export function showStepItem(stepItemId: string): void {
   }
   
   updateRequiredFields(stepItem.element, true);
-  FormState.setStepVisibility(stepItemId, true);
-  FormState.setStepInfo(stepItemId, { visited: true });
+  // Note: Step visibility and visit tracking simplified
   
   currentStepItemId = stepItemId;
   
@@ -526,7 +558,7 @@ export function hideStepItem(stepItemId: string): void {
 
   hideElement(stepItem.element);
   updateRequiredFields(stepItem.element, false);
-  FormState.setStepVisibility(stepItemId, false);
+  // Note: Step visibility tracking simplified
   
   if (currentStepItemId === stepItemId) {
     currentStepItemId = null;
@@ -544,7 +576,73 @@ function setupNavigationListeners(root: Document | Element): void {
 
   cleanupFunctions.push(cleanup1, cleanup2, cleanup3);
   
-  logVerbose('Navigation listeners setup complete (skip handling delegated to skip module)');
+  logVerbose('Navigation listeners setup complete');
+}
+
+/**
+ * Set up skip functionality (integrated from skip.ts)
+ */
+function setupSkipListeners(root: Document | Element): void {
+  // Skip button handling - use the main SKIP selector for buttons with data-skip attribute
+  const cleanup = delegateEvent(root, 'click', SELECTORS.SKIP, handleSkipButtonClick);
+  cleanupFunctions.push(cleanup);
+  logVerbose('Skip listeners setup complete');
+}
+
+/**
+ * Handle skip button click (integrated from skip.ts)
+ */
+function handleSkipButtonClick(event: Event, target: Element): void {
+  event.preventDefault();
+  
+  if (!initialized) {
+    logVerbose('MultiStep module not initialized, ignoring skip button click');
+    return;
+  }
+  
+  // Get the data-skip value - this MUST match a data-answer value
+  const dataSkip = getAttrValue(target, 'data-skip');
+  
+  // Validate that data-skip has a value
+  if (!dataSkip || dataSkip === 'true' || dataSkip === '') {
+    logVerbose('Invalid data-skip value - must specify target step', { dataSkip });
+    return;
+  }
+  
+  // Verify the target step exists in the DOM
+  const targetElement = document.querySelector(`[data-answer="${dataSkip}"]`);
+  
+  if (!targetElement) {
+    logVerbose('Target step not found in DOM', { targetStepId: dataSkip });
+    return;
+  }
+  
+  logVerbose('Processing skip request', {
+    currentStepId,
+    targetStepId: dataSkip
+  });
+  
+  // Navigate to target step directly
+  goToStepById(dataSkip);
+}
+
+/**
+ * Skip a specific step (basic functionality)
+ */
+export function skipStep(stepId: string): boolean {
+  if (!initialized) {
+    logVerbose('MultiStep module not initialized, cannot skip step');
+    return false;
+  }
+
+  if (!stepId) {
+    logVerbose('Invalid stepId provided to skipStep');
+    return false;
+  }
+
+  logVerbose(`Skipping step: ${stepId}`);
+  goToStepById(stepId);
+  return true;
 }
 
 /**
@@ -624,7 +722,7 @@ export function goToStepById(stepId: string): void {
   console.log('🎯 [MultiStep] Navigation request received:', {
     targetStepId: stepId,
     currentStepIndex,
-    currentStepId: FormState.getCurrentStep(),
+    currentStepId: currentStepId,
     totalSteps: steps.length,
     totalStepItems: stepItems.length
   });
@@ -962,13 +1060,14 @@ export function showStep(stepIndex: number): void {
   showElement(step.element);
   step.element.classList.add('active-step');
   
-  // Update step visibility in FormState
-  FormState.setStepVisibility(step.id, true);
-  FormState.setStepInfo(step.id, { visited: true });
-  
   // Update current step tracking
   currentStepIndex = stepIndex;
-  FormState.setCurrentStep(step.id);
+  currentStepId = step.id;
+  
+  // Track step history for back navigation
+  if (stepHistory[stepHistory.length - 1] !== step.id) {
+    stepHistory.push(step.id);
+  }
   
   // Update navigation buttons
   updateNavigationButtons();
@@ -982,7 +1081,7 @@ export function showStep(stepIndex: number): void {
   console.log(`✅ [MultiStep] Step ${stepIndex} (${step.id}) is now visible:`, {
     isVisible: isVisible(step.element),
     hasActiveClass: step.element.classList.contains('active-step'),
-    formStateVisible: FormState.isStepVisible(step.id),
+    currentlyTracked: currentStepId === step.id,
     computedDisplay: getComputedStyle(step.element).display,
     computedVisibility: getComputedStyle(step.element).visibility
   });
@@ -1021,21 +1120,20 @@ function hideStep(stepIndex: number): void {
   // Remove active class
   step.element.classList.remove('active-step');
   
-  // Update step visibility in FormState
-  FormState.setStepVisibility(step.id, false);
+  // Note: Step visibility tracking simplified
   
   // Also hide all step_items within this step
   stepItems.forEach(item => {
     if (item.parentStepIndex === stepIndex) {
       hideElement(item.element);
-      FormState.setStepVisibility(item.id, false);
+      // Note: Step item visibility tracking simplified
     }
   });
 
   console.log(`✅ [MultiStep] Step ${stepIndex} (${step.id}) is now hidden:`, {
     isVisible: isVisible(step.element),
     hasActiveClass: step.element.classList.contains('active-step'),
-    formStateVisible: FormState.isStepVisible(step.id),
+    currentlyTracked: currentStepId === step.id,
     computedDisplay: getComputedStyle(step.element).display,
     computedVisibility: getComputedStyle(step.element).visibility
   });
@@ -1099,14 +1197,16 @@ function goToNextStep(): void {
  * Go to previous step
  */
 function goToPreviousStep(): void {
-  // Try to get previous step from FormState (handles branching)
-  const previousStepId = FormState.goToPreviousStep();
-  
-  if (previousStepId) {
-    const previousIndex = findStepIndexById(previousStepId);
-    if (previousIndex !== -1) {
-      goToStep(previousIndex);
-      return;
+  // Try to get previous step from history
+  if (stepHistory.length > 1) {
+    stepHistory.pop(); // Remove current step
+    const previousStepId = stepHistory[stepHistory.length - 1];
+    if (previousStepId) {
+      const previousIndex = findStepIndexById(previousStepId);
+      if (previousIndex !== -1) {
+        goToStep(previousIndex);
+        return;
+      }
     }
   }
 
@@ -1164,7 +1264,7 @@ function updateNavigationButtons(): void {
  */
 function validateAllVisibleSteps(): boolean {
   for (const step of steps) {
-    if (FormState.isStepVisible(step.id)) {
+    if (step.id === currentStepId || isVisible(step.element)) {
       if (!validateStepElement(step.element)) {
         return false;
       }
@@ -1207,10 +1307,9 @@ function resetMultiStep(): void {
   stepItems = [];
   currentStepIndex = -1;
   currentStepItemId = null;
+  currentStepId = '';
+  stepHistory = [];
   initialized = false;
-  
-  // Reset skip module
-  resetSkip();
 
   // Clean up event listeners
   eventCleanupFunctions.forEach(fn => fn());

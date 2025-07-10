@@ -1,5 +1,6 @@
 /**
- * Singleton FormState class for managing form data in memory
+ * Simple FormState singleton for managing form data in memory
+ * Per instructions: Only handles form data with 4 required methods
  */
 
 import { logVerbose } from './utils.js';
@@ -8,30 +9,12 @@ export interface FormStateData {
   [key: string]: unknown;
 }
 
-export interface StepInfo {
-  type?: string;
-  subtype?: string;
-  number?: string;
-  visible: boolean;
-  visited: boolean;
-}
-
-export interface BranchPath {
-  currentStep: string;
-  previousSteps: string[];
-}
-
 class FormStateManager {
   private static instance: FormStateManager;
   private data: FormStateData = {};
-  private steps: Record<string, StepInfo> = {};
-  private branchPath: BranchPath = {
-    currentStep: '',
-    previousSteps: []
-  };
 
   private constructor() {
-    logVerbose('FormState initialized');
+    logVerbose('FormState initialized (simplified)');
   }
 
   /**
@@ -46,6 +29,8 @@ class FormStateManager {
 
   /**
    * Set field value
+   * @param name - Field name
+   * @param value - Field value
    */
   public setField(name: string, value: unknown): void {
     const oldValue = this.data[name];
@@ -55,13 +40,12 @@ class FormStateManager {
       oldValue,
       newValue: value
     });
-
-    // Trigger change event for dependent logic
-    this.onFieldChange(name, value, oldValue);
   }
 
   /**
    * Get field value
+   * @param name - Field name
+   * @returns Field value or undefined
    */
   public getField(name: string): unknown {
     return this.data[name];
@@ -69,6 +53,7 @@ class FormStateManager {
 
   /**
    * Get all field data
+   * @returns Copy of all form data
    */
   public getAll(): FormStateData {
     return { ...this.data };
@@ -80,17 +65,13 @@ class FormStateManager {
   public clear(): void {
     const oldData = { ...this.data };
     this.data = {};
-    this.steps = {};
-    this.branchPath = {
-      currentStep: '',
-      previousSteps: []
-    };
     
     logVerbose('FormState cleared', { oldData });
   }
 
   /**
    * Clear specific fields (used when branching changes)
+   * @param fieldNames - Array of field names to clear
    */
   public clearFields(fieldNames: string[]): void {
     const clearedFields: Record<string, unknown> = {};
@@ -108,144 +89,15 @@ class FormStateManager {
   }
 
   /**
-   * Set step information
-   */
-  public setStepInfo(stepId: string, info: Partial<StepInfo>): void {
-    if (!this.steps[stepId]) {
-      this.steps[stepId] = {
-        visible: false,
-        visited: false
-      };
-    }
-
-    Object.assign(this.steps[stepId], info);
-    
-    logVerbose(`Step info updated: ${stepId}`, this.steps[stepId]);
-  }
-
-  /**
-   * Get step information
-   */
-  public getStepInfo(stepId: string): StepInfo | undefined {
-    return this.steps[stepId];
-  }
-
-  /**
-   * Get all step information
-   */
-  public getAllSteps(): Record<string, StepInfo> {
-    return { ...this.steps };
-  }
-
-  /**
-   * Set step visibility
-   */
-  public setStepVisibility(stepId: string, visible: boolean): void {
-    this.setStepInfo(stepId, { visible });
-    logVerbose(`Step visibility updated: ${stepId}`, { visible });
-  }
-
-  /**
-   * Set current step in branch path
-   */
-  public setCurrentStep(stepId: string): void {
-    if (this.branchPath.currentStep && this.branchPath.currentStep !== stepId) {
-      this.branchPath.previousSteps.push(this.branchPath.currentStep);
-    }
-    
-    this.branchPath.currentStep = stepId;
-    
-    // Mark step as visited
-    this.setStepInfo(stepId, { visited: true });
-    
-    logVerbose(`Current step changed to: ${stepId}`, this.branchPath);
-  }
-
-  /**
-   * Get current step
-   */
-  public getCurrentStep(): string {
-    return this.branchPath.currentStep;
-  }
-
-  /**
-   * Get branch path
-   */
-  public getBranchPath(): BranchPath {
-    return { ...this.branchPath };
-  }
-
-
-  /**
-   * Get fields by step type/subtype/number
-   */
-  public getFieldsByStep(): FormStateData {
-    const result: FormStateData = {};
-    
-    // For now, return all fields that match the criteria
-    // This can be enhanced with more sophisticated filtering
-    Object.entries(this.data).forEach(([key, value]) => {
-      // Simple implementation - can be enhanced with metadata tracking
-      result[key] = value;
-    });
-
-    return result;
-  }
-
-  /**
-   * Handle field change events
-   */
-  private onFieldChange(name: string, newValue: unknown, oldValue: unknown): void {
-    // This can be used to trigger dependent field updates, validation, etc.
-    // For now, just log the change
-    if (newValue !== oldValue) {
-      logVerbose(`Field change detected: ${name}`, {
-        from: oldValue,
-        to: newValue
-      });
-    }
-  }
-
-  /**
-   * Reset to previous step (for back navigation)
-   */
-  public goToPreviousStep(): string | null {
-    const previousStep = this.branchPath.previousSteps.pop();
-    if (previousStep) {
-      this.branchPath.currentStep = previousStep;
-      logVerbose(`Went back to previous step: ${previousStep}`, this.branchPath);
-      return previousStep;
-    }
-    return null;
-  }
-
-  /**
-   * Check if step was visited
-   */
-  public wasStepVisited(stepId: string): boolean {
-    return this.steps[stepId]?.visited || false;
-  }
-
-  /**
-   * Check if step is visible
-   */
-  public isStepVisible(stepId: string): boolean {
-    return this.steps[stepId]?.visible || false;
-  }
-
-  /**
    * Get debug information
    */
   public getDebugInfo(): Record<string, unknown> {
     return {
       data: this.data,
-      steps: this.steps,
-      branchPath: this.branchPath,
-      fieldCount: Object.keys(this.data).length,
-      stepCount: Object.keys(this.steps).length
+      fieldCount: Object.keys(this.data).length
     };
   }
 }
 
 // Export singleton instance
-export const FormState = FormStateManager.getInstance(); 
+export const FormState = FormStateManager.getInstance();

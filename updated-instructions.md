@@ -21,6 +21,7 @@ All modules must be clean, well-typed TypeScript, with verbose `console.log` out
 │   ├── branching.ts
 │   ├── multiStep.ts
 │   ├── validation.ts
+│   ├── events.ts
 │   ├── errors.ts
 │   ├── summary.ts
 │   └── utils.ts
@@ -30,7 +31,7 @@ All modules must be clean, well-typed TypeScript, with verbose `console.log` out
 ├── console-logs.txt
 ├── index.html (provided by user)
 ├── README.md
-└── instructions.md
+└── updated-instructions.md
 ```
 
 ---

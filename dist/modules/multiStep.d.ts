@@ -14,6 +14,10 @@ export declare function showStepItem(stepItemId: string): void;
  */
 export declare function hideStepItem(stepItemId: string): void;
 /**
+ * Skip a specific step (basic functionality)
+ */
+export declare function skipStep(stepId: string): boolean;
+/**
  * Go to a step by ID (handles both regular steps and branching step_items)
  */
 export declare function goToStepById(stepId: string): void;

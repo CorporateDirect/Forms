@@ -1,25 +1,13 @@
 /**
- * Singleton FormState class for managing form data in memory
+ * Simple FormState singleton for managing form data in memory
+ * Per instructions: Only handles form data with 4 required methods
  */
 export interface FormStateData {
     [key: string]: unknown;
 }
-export interface StepInfo {
-    type?: string;
-    subtype?: string;
-    number?: string;
-    visible: boolean;
-    visited: boolean;
-}
-export interface BranchPath {
-    currentStep: string;
-    previousSteps: string[];
-}
 declare class FormStateManager {
     private static instance;
     private data;
-    private steps;
-    private branchPath;
     private constructor();
     /**
      * Get singleton instance
@@ -27,14 +15,19 @@ declare class FormStateManager {
     static getInstance(): FormStateManager;
     /**
      * Set field value
+     * @param name - Field name
+     * @param value - Field value
      */
     setField(name: string, value: unknown): void;
     /**
      * Get field value
+     * @param name - Field name
+     * @returns Field value or undefined
      */
     getField(name: string): unknown;
     /**
      * Get all field data
+     * @returns Copy of all form data
      */
     getAll(): FormStateData;
     /**
@@ -43,56 +36,9 @@ declare class FormStateManager {
     clear(): void;
     /**
      * Clear specific fields (used when branching changes)
+     * @param fieldNames - Array of field names to clear
      */
     clearFields(fieldNames: string[]): void;
-    /**
-     * Set step information
-     */
-    setStepInfo(stepId: string, info: Partial<StepInfo>): void;
-    /**
-     * Get step information
-     */
-    getStepInfo(stepId: string): StepInfo | undefined;
-    /**
-     * Get all step information
-     */
-    getAllSteps(): Record<string, StepInfo>;
-    /**
-     * Set step visibility
-     */
-    setStepVisibility(stepId: string, visible: boolean): void;
-    /**
-     * Set current step in branch path
-     */
-    setCurrentStep(stepId: string): void;
-    /**
-     * Get current step
-     */
-    getCurrentStep(): string;
-    /**
-     * Get branch path
-     */
-    getBranchPath(): BranchPath;
-    /**
-     * Get fields by step type/subtype/number
-     */
-    getFieldsByStep(): FormStateData;
-    /**
-     * Handle field change events
-     */
-    private onFieldChange;
-    /**
-     * Reset to previous step (for back navigation)
-     */
-    goToPreviousStep(): string | null;
-    /**
-     * Check if step was visited
-     */
-    wasStepVisited(stepId: string): boolean;
-    /**
-     * Check if step is visible
-     */
-    isStepVisible(stepId: string): boolean;
     /**
      * Get debug information
      */

@@ -2,7 +2,7 @@
  * Branching logic module for handling conditional form navigation
  */
 import { SELECTORS } from '../config.js';
-import { logVerbose, queryAllByAttr, queryByAttr, getAttrValue, delegateEvent, getInputValue, isFormInput, showElement, hideElement } from './utils.js';
+import { logVerbose, queryAllByAttr, queryByAttr, getAttrValue, delegateEvent, getInputValue, isFormInput } from './utils.js';
 import { FormState } from './formState.js';
 import { formEvents } from './events.js';
 let initialized = false;
@@ -227,22 +227,12 @@ function handleBranchTrigger(event, target) {
         hasGoTo: !!goToValue,
         hasValue: !!inputValue
     });
-    // Store the field value in state
-    if (fieldName) {
-        FormState.setField(fieldName, inputValue);
-        console.log('💾 [Branch] Field value stored in FormState:', {
-            fieldName,
-            value: inputValue,
-            previousValue: FormState.getField(fieldName)
-        });
-    }
-    else {
-        console.warn('⚠️ [Branch] No field name found, cannot store value in FormState', {
-            element: target,
-            name: target.name,
-            dataStepFieldName: getAttrValue(target, 'data-step-field-name')
-        });
-    }
+    // Note: Field value now stored centrally by field coordinator
+    console.log('💾 [Branch] Field change detected for branching logic:', {
+        fieldName,
+        value: inputValue,
+        goToValue
+    });
     // Handle different input types with detailed logging
     try {
         if (target instanceof HTMLInputElement) {
@@ -438,42 +428,19 @@ function updateStepVisibility() {
         const stepId = getAttrValue(step, 'data-answer');
         if (condition && stepId) {
             if (evaluateCondition(condition, activeConditions)) {
-                showElement(step);
-                FormState.setStepVisibility(stepId, true);
-                enableRequiredFields(step);
+                // Emit event for step to be shown - let multiStep handle visibility
+                logVerbose('Branching logic determines step should be visible', { stepId });
+                formEvents.emit('branch:show', { stepId });
             }
             else {
-                hideElement(step);
-                FormState.setStepVisibility(stepId, false);
-                disableRequiredFields(step);
+                // Emit event for step to be hidden - let multiStep handle visibility
+                logVerbose('Branching logic determines step should be hidden', { stepId });
+                formEvents.emit('branch:hide', { stepId });
             }
         }
     });
 }
-/**
- * Enable required fields that were originally required
- */
-function enableRequiredFields(stepElement) {
-    const fields = stepElement.querySelectorAll('input, select, textarea');
-    fields.forEach(field => {
-        const input = field;
-        const originalRequired = input.getAttribute('data-original-required');
-        if (originalRequired === 'true') {
-            input.required = true;
-        }
-    });
-}
-/**
- * Disable required fields when step is hidden
- */
-function disableRequiredFields(stepElement) {
-    const fields = stepElement.querySelectorAll('input[required], select[required], textarea[required]');
-    fields.forEach(field => {
-        const input = field;
-        input.setAttribute('data-original-required', 'true');
-        input.required = false;
-    });
-}
+// Note: Field required state management now handled by multiStep.ts to avoid conflicts
 /**
  * Clear fields within a deactivated branch
  */
@@ -492,6 +459,58 @@ function clearBranchFields(branchTarget) {
     if (fieldsToClear.length > 0) {
         FormState.clearFields(fieldsToClear);
     }
+}
+/**
+ * Get next step based on current form state and branching logic
+ * @param currentStepId - Current step ID
+ * @returns Next step ID or null if no branching applies
+ */
+export function getNextStep(currentStepId) {
+    if (!initialized) {
+        logVerbose('Branching module not initialized, cannot determine next step');
+        return null;
+    }
+    logVerbose('Evaluating next step for branching logic', { currentStepId });
+    // Find all data-go-to elements in current step that are active/selected
+    const currentStepElement = document.querySelector(`[data-answer="${currentStepId}"]`);
+    if (!currentStepElement) {
+        logVerbose('Current step element not found', { currentStepId });
+        return null;
+    }
+    const goToElements = currentStepElement.querySelectorAll(SELECTORS.GO_TO);
+    for (const element of goToElements) {
+        const input = element;
+        const goToValue = getAttrValue(input, 'data-go-to');
+        if (!goToValue)
+            continue;
+        // Check if this element determines the next step
+        if (input.type === 'radio' && input.checked) {
+            logVerbose('Found active radio determining next step', {
+                goToValue,
+                inputName: input.name,
+                inputValue: input.value
+            });
+            return goToValue;
+        }
+        else if (input.type === 'checkbox' && input.checked) {
+            logVerbose('Found active checkbox determining next step', {
+                goToValue,
+                inputName: input.name,
+                inputValue: input.value
+            });
+            return goToValue;
+        }
+        else if (input.type !== 'radio' && input.type !== 'checkbox' && input.value.trim()) {
+            logVerbose('Found input with value determining next step', {
+                goToValue,
+                inputType: input.type,
+                inputValue: input.value
+            });
+            return goToValue;
+        }
+    }
+    logVerbose('No branching logic applies, returning null for sequential navigation');
+    return null;
 }
 /**
  * Reset branching module state

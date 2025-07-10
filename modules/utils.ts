@@ -316,4 +316,148 @@ export function delegateEvent<T extends Event>(
   return () => {
     root.removeEventListener(eventType, delegatedHandler);
   };
+}
+
+/**
+ * Centralized Field Coordinator
+ * Handles all field input events and notifies interested modules via events
+ */
+
+import { FormState } from './formState.js';
+import { formEvents } from './events.js';
+
+let fieldCoordinatorInitialized = false;
+let fieldCoordinatorCleanup: (() => void)[] = [];
+
+/**
+ * Initialize centralized field coordinator
+ * This replaces individual field listeners in branching, validation, and summary modules
+ */
+export function initFieldCoordinator(root: Document | Element = document): void {
+  if (fieldCoordinatorInitialized) {
+    logVerbose('Field coordinator already initialized, cleaning up first');
+    resetFieldCoordinator();
+  }
+
+  logVerbose('Initializing centralized field coordinator');
+
+  // Single event listener for all form field changes
+  const cleanup1 = delegateEvent(root, 'input', 'input, select, textarea', handleFieldInput);
+  const cleanup2 = delegateEvent(root, 'change', 'input, select, textarea', handleFieldChange);
+  const cleanup3 = delegateEvent(root, 'blur', 'input, select, textarea', handleFieldBlur);
+
+  fieldCoordinatorCleanup.push(cleanup1, cleanup2, cleanup3);
+  fieldCoordinatorInitialized = true;
+  
+  logVerbose('Field coordinator initialization complete');
+}
+
+/**
+ * Handle field input events (real-time)
+ */
+function handleFieldInput(event: Event, target: Element): void {
+  if (!isFormInput(target)) return;
+  
+  const fieldName = getFieldName(target);
+  const fieldValue = getInputValue(target);
+  
+  if (fieldName) {
+    // Store in FormState (single source of truth)
+    FormState.setField(fieldName, fieldValue);
+    
+    logVerbose('Field input detected', {
+      fieldName,
+      value: fieldValue,
+      eventType: 'input'
+    });
+    
+    // Notify interested modules via events
+    formEvents.emit('field:input', {
+      fieldName,
+      value: fieldValue,
+      element: target as HTMLElement,
+      eventType: 'input'
+    });
+  }
+}
+
+/**
+ * Handle field change events (when value finalizes)
+ */
+function handleFieldChange(event: Event, target: Element): void {
+  if (!isFormInput(target)) return;
+  
+  const fieldName = getFieldName(target);
+  const fieldValue = getInputValue(target);
+  
+  if (fieldName) {
+    // Store in FormState (single source of truth)
+    FormState.setField(fieldName, fieldValue);
+    
+    logVerbose('Field change detected', {
+      fieldName,
+      value: fieldValue,
+      eventType: 'change'
+    });
+    
+    // Notify interested modules via events
+    formEvents.emit('field:change', {
+      fieldName,
+      value: fieldValue,
+      element: target as HTMLElement,
+      eventType: 'change'
+    });
+  }
+}
+
+/**
+ * Handle field blur events (for validation)
+ */
+function handleFieldBlur(event: Event, target: Element): void {
+  if (!isFormInput(target)) return;
+  
+  const fieldName = getFieldName(target);
+  const fieldValue = getInputValue(target);
+  
+  if (fieldName) {
+    logVerbose('Field blur detected', {
+      fieldName,
+      value: fieldValue,
+      eventType: 'blur'
+    });
+    
+    // Notify interested modules via events
+    formEvents.emit('field:blur', {
+      fieldName,
+      value: fieldValue,
+      element: target as HTMLElement,
+      eventType: 'blur'
+    });
+  }
+}
+
+/**
+ * Get field name from element
+ */
+function getFieldName(element: Element): string | null {
+  const htmlElement = element as HTMLInputElement;
+  return htmlElement.name || getAttrValue(element, 'data-step-field-name') || null;
+}
+
+/**
+ * Reset field coordinator
+ */
+export function resetFieldCoordinator(): void {
+  if (!fieldCoordinatorInitialized) {
+    logVerbose('Field coordinator not initialized, nothing to reset');
+    return;
+  }
+
+  logVerbose('Resetting field coordinator');
+  
+  fieldCoordinatorCleanup.forEach(cleanup => cleanup());
+  fieldCoordinatorCleanup = [];
+  fieldCoordinatorInitialized = false;
+  
+  logVerbose('Field coordinator reset complete');
 } 

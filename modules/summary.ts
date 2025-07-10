@@ -6,12 +6,10 @@ import { SELECTORS, DEFAULTS, JoinType } from '../config.js';
 import { 
   logVerbose, 
   queryAllByAttr, 
-  getAttrValue, 
-  delegateEvent,
-  getInputValue,
-  isFormInput
+  getAttrValue
 } from './utils.js';
 import { FormState } from './formState.js';
+import { formEvents } from './events.js';
 
 interface SummaryField {
   element: HTMLElement;
@@ -23,7 +21,7 @@ interface SummaryField {
 }
 
 let initialized = false;
-let cleanupFunctions: (() => void)[] = [];
+let eventCleanupFunctions: (() => void)[] = [];
 let summaryFields: SummaryField[] = [];
 
 /**
@@ -44,8 +42,8 @@ export function initSummary(root: Document | Element = document): void {
   // Set up summary field configurations
   setupSummaryFields(summaryElements);
 
-  // Set up event listeners for field changes
-  setupSummaryListeners(root);
+  // Set up event listeners for field changes via centralized coordinator
+  setupSummaryEventListeners();
 
   // Initial summary update
   updateAllSummaries();
@@ -96,52 +94,28 @@ function setupSummaryFields(summaryElements: NodeListOf<Element>): void {
 }
 
 /**
- * Set up event listeners for field changes
+ * Set up event listeners for field changes via centralized coordinator
  */
-function setupSummaryListeners(root: Document | Element): void {
-  // Listen for input changes on fields with data-step-field-name
-  const cleanup1 = delegateEvent(
-    root,
-    'input',
-    SELECTORS.STEP_FIELD_NAME,
-    handleFieldChange
-  );
+function setupSummaryEventListeners(): void {
+  // Listen to centralized field events instead of direct DOM events
+  const cleanup1 = formEvents.on('field:change', handleFieldChangeEvent);
+  const cleanup2 = formEvents.on('field:input', handleFieldChangeEvent);
 
-  // Listen for change events
-  const cleanup2 = delegateEvent(
-    root,
-    'change',
-    SELECTORS.STEP_FIELD_NAME,
-    handleFieldChange
-  );
-
-  // Listen for blur events
-  const cleanup3 = delegateEvent(
-    root,
-    'blur',
-    SELECTORS.STEP_FIELD_NAME,
-    handleFieldChange
-  );
-
-  cleanupFunctions.push(cleanup1, cleanup2, cleanup3);
+  eventCleanupFunctions.push(cleanup1, cleanup2);
+  
+  logVerbose('Summary module subscribed to centralized field events');
 }
 
 /**
- * Handle field change events
+ * Handle field change events from centralized coordinator
  */
-function handleFieldChange(event: Event, target: Element): void {
-  if (!isFormInput(target)) return;
-
-  const fieldName = getAttrValue(target, 'data-step-field-name');
-  if (!fieldName) return;
-
-  const value = getInputValue(target as HTMLInputElement);
+function handleFieldChangeEvent(data: { fieldName: string; value: string | string[]; element: HTMLElement; eventType: string }): void {
+  const { fieldName, value, eventType } = data;
   
-  logVerbose(`Summary field changed: ${fieldName}`, { value });
+  logVerbose(`Summary received field ${eventType}: ${fieldName}`, { value });
 
-  // Update FormState
-  FormState.setField(fieldName, value);
-
+  // Note: FormState already updated by centralized coordinator
+  
   // Update summaries that include this field
   updateSummariesForField(fieldName);
 }
@@ -378,8 +352,8 @@ function resetSummary(): void {
   logVerbose('Resetting summary functionality');
 
   // Clean up event listeners
-  cleanupFunctions.forEach(cleanup => cleanup());
-  cleanupFunctions = [];
+  eventCleanupFunctions.forEach(cleanup => cleanup());
+  eventCleanupFunctions = [];
 
   // Clear all summary fields
   summaryFields.forEach(summaryField => {

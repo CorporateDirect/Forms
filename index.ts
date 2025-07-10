@@ -8,7 +8,7 @@
  */
 
 import { SELECTORS } from './config.js';
-import { logVerbose } from './modules/utils.js';
+import { logVerbose, initFieldCoordinator, resetFieldCoordinator } from './modules/utils.js';
 import { clearQueryCache } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
 
@@ -24,7 +24,7 @@ import { initMultiStep, goToStep, showStep, getCurrentStepInfo, getMultiStepStat
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, getErrorState } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
-import { resetSkip, getSkipState } from './modules/skip.js';
+// Skip functionality now integrated into multiStep.js
 
 /**
  * Main FormLib class - singleton instance
@@ -58,7 +58,7 @@ class FormLibrary {
     }
 
     this.rootElement = root;
-    logVerbose('Initializing FormLibrary with enhanced skip functionality', { 
+    logVerbose('Initializing FormLibrary', { 
       root: root === document ? 'document' : 'custom element' 
     });
 
@@ -80,27 +80,30 @@ class FormLibrary {
 
     // Initialize modules in dependency order
     try {
-      // 1. Initialize error handling first (used by validation)
+      // 1. Initialize centralized field coordinator (used by all modules)
+      initFieldCoordinator(root);
+      
+      // 2. Initialize error handling (used by validation)
       initErrors(root);
 
-      // 2. Initialize validation (used by multi-step navigation)
+      // 3. Initialize validation (used by multi-step navigation)
       initValidation(root);
 
-      // 3. Initialize branching logic (used by multi-step navigation)
+      // 4. Initialize branching logic (used by multi-step navigation)
       if (logicForms.length > 0) {
         initBranching(root);
       }
 
-      // 4. Initialize multi-step navigation (coordinates with branching and includes skip)
+      // 5. Initialize multi-step navigation (coordinates with branching, includes skip)
       if (multistepForms.length > 0 || stepElements.length > 0) {
-        initMultiStep(root); // This now includes skip initialization
+        initMultiStep(root); // Includes integrated skip functionality
       }
 
-      // 5. Initialize summary functionality (listens to field changes)
+      // 6. Initialize summary functionality (listens to field changes)
       initSummary(root);
 
       this.initialized = true;
-      logVerbose('FormLibrary initialization complete with enhanced skip functionality');
+      logVerbose('FormLibrary initialization complete');
 
       // Log initial state
       this.logCurrentState();
@@ -125,7 +128,9 @@ class FormLibrary {
     // Reset all modules (they handle their own cleanup)
     try {
       resetBranching();
-      resetSkip();
+      // Reset centralized field coordinator
+      resetFieldCoordinator();
+      // Skip functionality integrated into multiStep
       // Note: Other modules will be reset when re-initialized
     } catch (error) {
       logVerbose('Error during FormLibrary destruction', error);
@@ -160,7 +165,7 @@ class FormLibrary {
       validation: getValidationState(),
       errors: getErrorState(),
       summary: getSummaryState(),
-      skip: getSkipState()
+      // skip functionality integrated into multiStep
     };
   }
 

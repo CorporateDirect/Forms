@@ -2,11 +2,11 @@
  * Form validation module with branch awareness
  */
 import { SELECTORS, DEFAULTS } from '../config.js';
-import { logVerbose, queryAllByAttr, queryByAttr, getAttrValue, delegateEvent, debounce, getInputValue, isFormInput } from './utils.js';
-import { FormState } from './formState.js';
+import { logVerbose, queryAllByAttr, queryByAttr, getAttrValue, debounce, getInputValue, isFormInput, isVisible } from './utils.js';
 import { showError, clearError } from './errors.js';
+import { formEvents } from './events.js';
 let initialized = false;
-let cleanupFunctions = [];
+let eventCleanupFunctions = [];
 let fieldValidations = new Map();
 /**
  * Initialize validation functionality
@@ -23,7 +23,7 @@ export function initValidation(root = document) {
     // Set up validation rules for each input
     setupFieldValidations(formInputs);
     // Set up event listeners
-    setupValidationListeners(root);
+    setupValidationEventListeners();
     initialized = true;
     logVerbose('Validation initialization complete');
 }
@@ -120,39 +120,34 @@ function extractValidationRules(input) {
 /**
  * Set up validation event listeners
  */
-function setupValidationListeners(root) {
-    // Real-time validation on input (debounced)
-    const debouncedValidation = debounce((...args) => {
-        handleFieldValidation(args[0], args[1]);
-    }, DEFAULTS.VALIDATION_DELAY);
-    const cleanup1 = delegateEvent(root, 'input', 'input, select, textarea', debouncedValidation);
-    // Validation on blur
-    const cleanup2 = delegateEvent(root, 'blur', 'input, select, textarea', handleFieldValidation);
-    // Validation on change
-    const cleanup3 = delegateEvent(root, 'change', 'input, select, textarea', handleFieldValidation);
-    cleanupFunctions.push(cleanup1, cleanup2, cleanup3);
+function setupValidationEventListeners() {
+    // Listen to centralized field events instead of direct DOM events
+    const cleanup1 = formEvents.on('field:input', (data) => {
+        // Apply debouncing to input events
+        debounce(() => handleFieldValidationEvent(data), DEFAULTS.VALIDATION_DELAY)();
+    });
+    const cleanup2 = formEvents.on('field:blur', handleFieldValidationEvent);
+    const cleanup3 = formEvents.on('field:change', handleFieldValidationEvent);
+    eventCleanupFunctions.push(cleanup1, cleanup2, cleanup3);
+    logVerbose('Validation module subscribed to centralized field events');
 }
 /**
  * Handle field validation events
  */
-function handleFieldValidation(event, target) {
-    if (!isFormInput(target))
-        return;
-    const htmlTarget = target;
-    const fieldName = htmlTarget.name || getAttrValue(target, 'data-step-field-name');
+function handleFieldValidationEvent(data) {
+    const { fieldName, element } = data;
     if (!fieldName) {
         logVerbose('Skipping validation - no field name found', {
-            element: target,
-            name: htmlTarget.name,
-            dataStepFieldName: getAttrValue(target, 'data-step-field-name')
+            element,
+            eventType: data.eventType
         });
         return;
     }
     // Check if field is in visible step
-    const stepElement = target.closest(SELECTORS.STEP);
+    const stepElement = element.closest(SELECTORS.STEP);
     if (stepElement) {
         const stepId = getAttrValue(stepElement, 'data-answer');
-        if (stepId && !FormState.isStepVisible(stepId)) {
+        if (stepId && !isVisible(stepElement)) {
             logVerbose(`Skipping validation for field in hidden step: ${fieldName}`);
             return;
         }
@@ -291,7 +286,7 @@ export function validateStep(stepId) {
         return true;
     }
     // Check if step is visible
-    if (!FormState.isStepVisible(stepId)) {
+    if (!isVisible(stepElement)) {
         logVerbose(`Skipping validation for hidden step: ${stepId}`);
         return true;
     }
@@ -325,7 +320,7 @@ export function validateAllVisibleFields() {
         let shouldValidate = true;
         if (stepElement) {
             const stepId = getAttrValue(stepElement, 'data-answer');
-            if (stepId && !FormState.isStepVisible(stepId)) {
+            if (stepId && !isVisible(stepElement)) {
                 shouldValidate = false;
             }
         }
@@ -402,8 +397,8 @@ export function getValidationState() {
 function resetValidation() {
     logVerbose('Resetting validation');
     // Clean up event listeners
-    cleanupFunctions.forEach(cleanup => cleanup());
-    cleanupFunctions = [];
+    eventCleanupFunctions.forEach(cleanup => cleanup());
+    eventCleanupFunctions = [];
     // Clear all validation states
     clearAllValidation();
     // Reset field validations

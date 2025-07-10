@@ -89,4 +89,13 @@ export declare function setInputValue(input: HTMLInputElement | HTMLSelectElemen
  * Create delegated event listener
  */
 export declare function delegateEvent<T extends Event>(root: Element | Document, eventType: string, selector: string, handler: (event: T, target: Element) => void): () => void;
+/**
+ * Initialize centralized field coordinator
+ * This replaces individual field listeners in branching, validation, and summary modules
+ */
+export declare function initFieldCoordinator(root?: Document | Element): void;
+/**
+ * Reset field coordinator
+ */
+export declare function resetFieldCoordinator(): void;
 //# sourceMappingURL=utils.d.ts.map

@@ -37,6 +37,12 @@ interface FormEvents extends Record<string, unknown> {
     'branch:change': {
         targetStepId: string;
     };
+    'branch:show': {
+        stepId: string;
+    };
+    'branch:hide': {
+        stepId: string;
+    };
     'skip:request': {
         targetStepId: string | null;
     };
@@ -45,6 +51,24 @@ interface FormEvents extends Record<string, unknown> {
         currentStepId: string;
     };
     'form:submit': Record<string, never>;
+    'field:input': {
+        fieldName: string;
+        value: string | string[];
+        element: HTMLElement;
+        eventType: string;
+    };
+    'field:change': {
+        fieldName: string;
+        value: string | string[];
+        element: HTMLElement;
+        eventType: string;
+    };
+    'field:blur': {
+        fieldName: string;
+        value: string | string[];
+        element: HTMLElement;
+        eventType: string;
+    };
 }
 export declare const formEvents: EventEmitter<FormEvents>;
 export {};
