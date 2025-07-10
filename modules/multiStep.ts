@@ -384,6 +384,22 @@ export function initMultiStep(root: Document | Element = document): void {
   
   // Register this module as initialized
   formEvents.registerModule('multiStep');
+
+  // Initialize and go to the first step
+  if (steps.length > 0) {
+    console.log('✅ [MultiStep] Initialization complete. Going to first step.');
+    goToStep(0); // Go to the first step to start the form
+  } else {
+    console.warn('⚠️ [MultiStep] Initialization complete, but no steps found to display.');
+  }
+
+  console.log('📊 [MultiStep] === INITIALIZATION COMPLETE ===', {
+    totalSteps: steps.length,
+    totalStepItems: stepItems.length,
+    initialStepIndex: currentStepIndex,
+    initialStepId: currentStepId,
+    initialStepItemId: currentStepItemId
+  });
 }
 
 /**
