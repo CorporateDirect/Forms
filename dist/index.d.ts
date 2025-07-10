@@ -3,6 +3,8 @@
  *
  * A modular, flexible form functionality library for Webflow forms
  * supporting single-step, multi-step, and branching forms.
+ *
+ * Cache-busted version: 2025-01-10-14:40
  */
 import { FormState } from './modules/formState.js';
 import { initBranching, resetBranching } from './modules/branching.js';
