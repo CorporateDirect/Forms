@@ -11,7 +11,7 @@ import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
 import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/multiStep-clean.js';
 import { initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState } from './modules/multiStep-diagnostic.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields } from './modules/validation.js';
-import { initErrors, showError, clearError, clearAllErrors } from './modules/errors.js';
+import { initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary } from './modules/summary.js';
 /**
  * Main FormLib class - singleton instance
@@ -61,8 +61,10 @@ declare class FormLibrary {
      * Set form data
      */
     setFormData(data: Record<string, unknown>): void;
+    debugStepSystem(): void;
+    getNavigatedSteps(): string[];
 }
 declare const FormLib: FormLibrary;
 export default FormLib;
-export { FormState, initMultiStep, goToStep, goToStepById, initMultiStepClean, goToStepByIdClean, getCleanState, initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, initSummary, updateSummary, clearSummary };
+export { FormState, initMultiStep, goToStep, goToStepById, initMultiStepClean, goToStepByIdClean, getCleanState, initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, initSummary, updateSummary, clearSummary };
 //# sourceMappingURL=index.d.ts.map

@@ -3,6 +3,7 @@
  */
 import { CSS_CLASSES, SELECTORS } from '../config.js';
 import { logVerbose, getAttrValue, addClass, removeClass } from './utils.js';
+import { formEvents } from './events.js';
 let errorConfigs = new Map();
 let errorStates = new Map();
 /**
@@ -23,6 +24,7 @@ export function initErrors(root = document) {
             });
         }
     });
+    formEvents.registerModule('errors');
     logVerbose(`Error handling initialized for ${errorConfigs.size} fields`);
 }
 /**

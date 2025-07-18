@@ -27,6 +27,7 @@ export function initSummary(root = document) {
     // Initial summary update
     updateAllSummaries();
     initialized = true;
+    formEvents.registerModule('summary');
     logVerbose('Summary initialization complete');
 }
 /**

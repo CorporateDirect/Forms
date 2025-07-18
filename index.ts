@@ -19,11 +19,11 @@ console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
 console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 
 // Import all modules  
-import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
+import { initMultiStep, goToStep, goToStepById, debugStepSystem, getNavigatedSteps } from './modules/multiStep.js';
 import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/multiStep-clean.js';
 import { initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState } from './modules/multiStep-diagnostic.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
-import { initErrors, showError, clearError, clearAllErrors, getErrorState } from './modules/errors.js';
+import { initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, getErrorState } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
 // Skip functionality now integrated into multiStep.js
 
@@ -237,6 +237,15 @@ class FormLibrary {
     
     logVerbose('Form data set', data);
   }
+
+  // ADDED: Debug and utility functions for troubleshooting
+  public debugStepSystem(): void {
+    debugStepSystem();
+  }
+
+  public getNavigatedSteps(): string[] {
+    return getNavigatedSteps();
+  }
 }
 
 // Create and export singleton instance
@@ -276,6 +285,9 @@ export {
   showError,
   clearError,
   clearAllErrors,
+  showErrors,
+  hasError,
+  getFieldsWithErrors,
   
   // Summary
   initSummary,

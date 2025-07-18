@@ -49,6 +49,12 @@ interface FormEvents extends Record<string, unknown> {
     'step:change': {
         currentStepIndex: number;
         currentStepId: string;
+        navigatedSteps?: string[];
+        isBranchStep?: boolean;
+    };
+    'step:navigate': {
+        targetStepId?: string;
+        reason?: string;
     };
     'form:submit': Record<string, never>;
     'field:input': {

@@ -8,6 +8,7 @@ import { formEvents } from './events.js';
 let initialized = false;
 let eventCleanupFunctions = [];
 let fieldValidations = new Map();
+let navigatedSteps = new Set(); // Track navigated steps locally
 /**
  * Initialize validation functionality
  */
@@ -25,6 +26,7 @@ export function initValidation(root = document) {
     // Set up event listeners
     setupValidationEventListeners();
     initialized = true;
+    formEvents.registerModule('validation');
     logVerbose('Validation initialization complete');
 }
 /**
@@ -118,7 +120,7 @@ function extractValidationRules(input) {
     return rules;
 }
 /**
- * Set up validation event listeners
+ * Set up validation event listeners - UPDATED to track navigation
  */
 function setupValidationEventListeners() {
     // Listen to centralized field events instead of direct DOM events
@@ -128,11 +130,21 @@ function setupValidationEventListeners() {
     });
     const cleanup2 = formEvents.on('field:blur', handleFieldValidationEvent);
     const cleanup3 = formEvents.on('field:change', handleFieldValidationEvent);
-    eventCleanupFunctions.push(cleanup1, cleanup2, cleanup3);
-    logVerbose('Validation module subscribed to centralized field events');
+    // NEW: Listen to step changes to track navigated steps
+    const cleanup4 = formEvents.on('step:change', (data) => {
+        if (data.currentStepId) {
+            navigatedSteps.add(data.currentStepId);
+            logVerbose(`Validation: Step ${data.currentStepId} marked as navigated`, {
+                totalNavigatedSteps: navigatedSteps.size,
+                navigatedStepsList: Array.from(navigatedSteps)
+            });
+        }
+    });
+    eventCleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4);
+    logVerbose('Validation module subscribed to centralized field and step events');
 }
 /**
- * Handle field validation events
+ * Handle field validation events - UPDATED to only validate navigated steps
  */
 function handleFieldValidationEvent(data) {
     const { fieldName, element } = data;
@@ -143,14 +155,23 @@ function handleFieldValidationEvent(data) {
         });
         return;
     }
-    // Check if field is in visible step
-    const stepElement = element.closest(SELECTORS.STEP);
-    if (stepElement) {
-        const stepId = getAttrValue(stepElement, 'data-answer');
-        if (stepId && !isVisible(stepElement)) {
-            logVerbose(`Skipping validation for field in hidden step: ${fieldName}`);
+    // NEW: Check if field is in a step that has been navigated to
+    const stepWrapper = element.closest('.step_wrapper[data-answer]');
+    if (stepWrapper) {
+        const stepId = getAttrValue(stepWrapper, 'data-answer');
+        if (stepId && !navigatedSteps.has(stepId)) {
+            logVerbose(`Skipping validation for field in non-navigated step: ${fieldName}`, {
+                stepId,
+                navigatedSteps: Array.from(navigatedSteps),
+                fieldInNavigatedStep: false
+            });
             return;
         }
+        logVerbose(`Validating field in navigated step: ${fieldName}`, {
+            stepId,
+            navigatedSteps: Array.from(navigatedSteps),
+            fieldInNavigatedStep: true
+        });
     }
     validateField(fieldName);
 }
@@ -392,7 +413,7 @@ export function getValidationState() {
     };
 }
 /**
- * Reset validation state and cleanup
+ * Reset validation state and cleanup - UPDATED to clear navigated steps
  */
 function resetValidation() {
     logVerbose('Resetting validation');
@@ -403,6 +424,8 @@ function resetValidation() {
     clearAllValidation();
     // Reset field validations
     fieldValidations.clear();
+    // Clear navigated steps tracking
+    navigatedSteps.clear();
     initialized = false;
     logVerbose('Validation reset complete');
 }

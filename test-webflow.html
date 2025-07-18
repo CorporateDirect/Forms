@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webflow Structure Test</title>
+    <style>
+        .step_wrapper {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+        .step_wrapper.active-step {
+            display: block !important;
+        }
+        .hidden-step {
+            display: none !important;
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #007cba;
+            color: white;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background: #005a87;
+        }
+        .is-active-inputactive {
+            border: 2px solid #007cba !important;
+            background-color: #e3f2fd;
+        }
+        /* Webflow-style radio buttons */
+        .radio_field {
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            cursor: pointer;
+            position: relative;
+        }
+        .radio_field.is-active-inputactive {
+            border-color: #007cba;
+            background-color: #e3f2fd;
+        }
+        .w-form-formradioinput {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ddd;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .radio_field.is-active-inputactive .w-form-formradioinput {
+            background-color: #007cba;
+            border-color: #007cba;
+        }
+        .multi-form_step {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webflow Structure Test</h1>
+    
+    <form data-form="multistep" data-logic="true" method="get" class="multi-form_form">
+        
+        <!-- Step 0: Welcome -->
+        <div data-form="step" class="multi-form_step">
+            <div data-answer="step-0" data-go-to="step-1" class="step_wrapper">
+                <h2>Welcome to RealShield Onboarding</h2>
+                <p>This tests the exact Webflow structure from your test.html file.</p>
+                <a data-form="next-btn" href="#" class="button">Start</a>
+            </div>
+        </div>
+
+        <!-- Step 1: Contact Info -->
+        <div data-form="step" class="multi-form_step">
+            <div data-answer="step-1" data-go-to="step-2" class="step_wrapper">
+                <h2>Main Authorized Contact</h2>
+                <div>
+                    <label>First Name*</label>
+                    <input type="text" name="First-Name" data-step-field-name="firstName" required>
+                </div>
+                <div>
+                    <label>Email*</label>
+                    <input type="email" name="email-address" data-step-field-name="email" required>
+                </div>
+                <a data-form="back-btn" href="#" class="button">Back</a>
+                <a data-form="next-btn" href="#" class="button">Next Step</a>
+            </div>
+        </div>
+
+        <!-- Step 2: Company Name -->
+        <div data-form="step" class="multi-form_step">
+            <div data-answer="step-2" data-go-to="step-3" class="step_wrapper">
+                <h2>Choose Your Holding Company Name</h2>
+                <div>
+                    <label>1st Name Choice*</label>
+                    <input type="text" name="Name-Choice-1" data-step-field-name="companyName1" required>
+                </div>
+                <a data-form="back-btn" href="#" class="button">Back</a>
+                <a data-form="next-btn" href="#" class="button">Next Step</a>
+            </div>
+        </div>
+
+        <!-- Step 3: Company Info -->
+        <div data-form="step" class="multi-form_step">
+            <div data-answer="step-3" data-go-to="step-4" class="step_wrapper">
+                <h2>Tell Us About Your Holding Company</h2>
+                <div>
+                    <label>In which state will we be forming your holding company?*</label>
+                    <select name="Holding-Company-State" data-step-field="state" required>
+                        <option value="">Select State...</option>
+                        <option value="NV">Nevada</option>
+                        <option value="WY">Wyoming</option>
+                    </select>
+                </div>
+                <a data-form="back-btn" href="#" class="button">Back</a>
+                <a data-form="next-btn" href="#" class="button">Next Step</a>
+            </div>
+        </div>
+
+        <!-- Step 4: Branch Selection (Exact Webflow Structure) -->
+        <div data-form="step" class="multi-form_step">
+            <div data-branch="true" data-answer="step-4" data-go-to="step-5" class="step_wrapper full-height">
+                <a data-form="back-btn" href="#" class="button">Back</a>
+                <h2>Define Your Holding Company's Membership</h2>
+                <p>Choose the type of member—Individual, Entity, or Trust—and provide additional details based on that selection.</p>
+                
+                <div class="multi-form_form-content full-width">
+                    <div class="multi-form_option-container">
+                        <div class="multi-form_option-wrap">
+                            <div class="multi-form_field-wrapper">
+                                <label for="member-type" class="form_field-label">Member type</label>
+                            </div>
+                            <div class="radio_component _3-column">
+                                <label class="radio_field radio-type is-active-inputactive w-radio">
+                                    <div class="w-form-formradioinput w-form-formradioinput--inputType-custom radio_button-step w-radio-input"></div>
+                                    <input name="Member-Type-1" 
+                                           data-name="Member Type 1" 
+                                           type="radio" 
+                                           id="member-type-holding-individual" 
+                                           fs-inputactive-class="is-active-inputactive" 
+                                           data-go-to="step-4a" 
+                                           required="" 
+                                           style="opacity:0;position:absolute;z-index:-1" 
+                                           value="An Individual">
+                                    <span class="radio_label w-form-label">An Individual</span>
+                                </label>
+                                
+                                <label class="radio_field radio-type is-active-inputactive w-radio">
+                                    <div class="w-form-formradioinput w-form-formradioinput--inputType-custom radio_button-step w-radio-input"></div>
+                                    <input name="Member-Type-1" 
+                                           data-name="Member Type 1" 
+                                           type="radio" 
+                                           id="member-type-holding-entity" 
+                                           fs-inputactive-class="is-active-inputactive" 
+                                           data-go-to="step-4b" 
+                                           required="" 
+                                           style="opacity:0;position:absolute;z-index:-1" 
+                                           value="An Entity">
+                                    <span class="radio_label w-form-label">An Entity</span>
+                                </label>
+                                
+                                <label class="radio_field radio-type is-active-inputactive w-radio">
+                                    <div class="w-form-formradioinput w-form-formradioinput--inputType-custom radio_button-step w-radio-input"></div>
+                                    <input name="Member-Type-1" 
+                                           data-name="Member Type 1" 
+                                           type="radio" 
+                                           id="member-type-holding-trust" 
+                                           fs-inputactive-class="is-active-inputactive" 
+                                           data-go-to="step-4c" 
+                                           required="" 
+                                           style="opacity:0;position:absolute;z-index:-1" 
+                                           value="A Trust">
+                                    <span class="radio_label w-form-label">A Trust</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-size-tiny error-state"><em>Please select whether the member is an individual, an entity, or a trust.</em></div>
+                </div>
+                
+                <a data-form="next-btn" href="#" class="button">Add Member</a>
+            </div>
+        </div>
+
+        <!-- Step 4a: Individual Details -->
+        <div data-form="step" class="multi-form_step">
+            <div data-answer="step-4a" data-go-to="step-5" class="step_wrapper">
+                <a data-form="back-btn" href="#" class="button">Back</a>
+                <h2>Add Members 1 - Individual</h2>
+                <div>
+                    <label>First Name*</label>
+                    <input type="text" name="member-1-individual-first-name" data-step-field-name="firstName" required>
+                </div>
+                <div>
+                    <label>Email*</label>
+                    <input type="email" name="member-1-individual-email-address" data-step-field-name="email" required>
+                </div>
+                <a data-skip="step-9" href="#" class="button">Skip Step</a>
+                <a data-form="next-btn" href="#" class="button">Add Member</a>
+            </div>
+        </div>
+
+        <!-- Step 4b: Entity Details -->
+        <div data-form="step" class="multi-form_step">
+            <div data-answer="step-4b" data-go-to="step-5" class="step_wrapper">
+                <a data-form="back-btn" href="#" class="button">Back</a>
+                <h2>Add Members 1 - Entity</h2>
+                <div>
+                    <label>Member Entity Name*</label>
+                    <input type="text" name="member-1-entity-name" data-step-field-name="entityName" required>
+                </div>
+                <div>
+                    <label>Entity Member Manager's Full Name*</label>
+                    <input type="text" name="member-1-member-manager-name" data-step-field-name="managerName" required>
+                </div>
+                <a data-skip="step-9" href="#" class="button">Skip Step</a>
+                <a data-form="next-btn" href="#" class="button">Add Member</a>
+            </div>
+        </div>
+
+        <!-- Step 4c: Trust Details -->
+        <div data-form="step" class="multi-form_step">
+            <div data-answer="step-4c" data-go-to="step-5" class="step_wrapper">
+                <a data-form="back-btn" href="#" class="button">Back</a>
+                <h2>Add Members 1 - Trust</h2>
+                <div>
+                    <label>Trust Name*</label>
+                    <input type="text" name="member-1-trust-name" data-step-field-name="trustName" required>
+                </div>
+                <div>
+                    <label>Trustee 1 Name*</label>
+                    <input type="text" name="member-1-trustee-1-name" data-step-field-name="trusteeName1" required>
+                </div>
+                <a data-skip="step-9" href="#" class="button">Skip Step</a>
+                <a data-form="next-btn" href="#" class="button">Add Member</a>
+            </div>
+        </div>
+
+        <!-- Step 5: Final -->
+        <div data-form="step" class="multi-form_step">
+            <div data-answer="step-5" class="step_wrapper">
+                <h2>Review & Submit</h2>
+                <p>Please review your information and submit.</p>
+                <a data-form="back-btn" href="#" class="button">Back</a>
+                <button type="submit" data-form="submit" class="button">Submit</button>
+            </div>
+        </div>
+
+        <!-- Step 9: Skip target -->
+        <div data-form="step" class="multi-form_step">
+            <div data-answer="step-9" class="step_wrapper">
+                <h2>Skipped to Final Review</h2>
+                <p>You skipped some steps. Please review and submit.</p>
+                <a data-form="back-btn" href="#" class="button">Back</a>
+                <button type="submit" data-form="submit" class="button">Submit</button>
+            </div>
+        </div>
+
+    </form>
+
+    <div style="margin-top: 20px;">
+        <button onclick="window.FormLib.debugStepSystem()" class="button">Debug Steps</button>
+        <button onclick="console.log('Navigated Steps:', window.FormLib.getNavigatedSteps())" class="button">Show Navigated Steps</button>
+        <button onclick="testRadioNavigation()" class="button">Test Radio Detection</button>
+    </div>
+
+    <!-- Load the library -->
+    <script type="module">
+        import FormLib from './dist/index.browser.js';
+        
+        // Make it globally available for debugging
+        window.FormLib = FormLib;
+        
+        // Initialize the library
+        FormLib.init();
+        
+        console.log('🚀 Webflow structure test initialized');
+        
+        // Test function for radio detection
+        window.testRadioNavigation = function() {
+            const radioButtons = document.querySelectorAll('input[type="radio"][data-go-to]');
+            console.log('📻 Found radio buttons with data-go-to:', radioButtons.length);
+            
+            radioButtons.forEach((radio, index) => {
+                console.log(`Radio ${index + 1}:`, {
+                    id: radio.id,
+                    dataGoTo: radio.getAttribute('data-go-to'),
+                    isVisible: radio.offsetHeight > 0,
+                    style: radio.getAttribute('style'),
+                    parentLabel: radio.closest('label')?.className
+                });
+            });
+        };
+    </script>
+
+</body>
+</html> 

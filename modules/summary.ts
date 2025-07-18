@@ -49,6 +49,7 @@ export function initSummary(root: Document | Element = document): void {
   updateAllSummaries();
 
   initialized = true;
+  formEvents.registerModule('summary');
   logVerbose('Summary initialization complete');
 }
 

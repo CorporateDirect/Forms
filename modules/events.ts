@@ -135,7 +135,13 @@ interface FormEvents extends Record<string, unknown> {
   'branch:show': { stepId: string };
   'branch:hide': { stepId: string };
   'skip:request': { targetStepId: string | null };
-  'step:change': { currentStepIndex: number; currentStepId: string; };
+  'step:change': { 
+    currentStepIndex: number; 
+    currentStepId: string; 
+    navigatedSteps?: string[];
+    isBranchStep?: boolean;
+  };
+  'step:navigate': { targetStepId?: string; reason?: string };
   'form:submit': Record<string, never>;
   'field:input': { fieldName: string; value: string | string[]; element: HTMLElement; eventType: string; };
   'field:change': { fieldName: string; value: string | string[]; element: HTMLElement; eventType: string; };

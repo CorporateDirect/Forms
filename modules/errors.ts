@@ -9,6 +9,7 @@ import {
   addClass,
   removeClass
 } from './utils.js';
+import { formEvents } from './events.js';
 
 interface ErrorConfig {
   fieldName: string;
@@ -49,6 +50,7 @@ export function initErrors(root: Document | Element = document): void {
     }
   });
 
+  formEvents.registerModule('errors');
   logVerbose(`Error handling initialized for ${errorConfigs.size} fields`);
 }
 

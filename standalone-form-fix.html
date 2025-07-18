@@ -1,0 +1,180 @@
+<script>
+console.log('🚀 STANDALONE FORM SCRIPT STARTING...');
+
+// Wait for DOM to be ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initStandaloneForm);
+} else {
+    initStandaloneForm();
+}
+
+function initStandaloneForm() {
+    console.log('🔍 STANDALONE FORM INITIALIZATION');
+    
+    // Find all possible step elements
+    const stepSelectors = [
+        '[data-form="step"]',
+        '[data-answer]',
+        '.step_wrapper[data-answer]',
+        '.multi-form_step',
+        '.step'
+    ];
+    
+    let steps = [];
+    let currentStepIndex = 0;
+    
+    // Try each selector to find steps
+    for (const selector of stepSelectors) {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+            console.log(`✅ Found ${elements.length} steps with selector: ${selector}`);
+            
+            steps = Array.from(elements).map((el, index) => {
+                const stepWrapper = el.querySelector('.step_wrapper[data-answer]');
+                const dataAnswer = stepWrapper ? 
+                    stepWrapper.getAttribute('data-answer') : 
+                    el.getAttribute('data-answer');
+                    
+                return {
+                    element: el,
+                    id: dataAnswer || `step-${index}`,
+                    index: index
+                };
+            });
+            break;
+        }
+    }
+    
+    if (steps.length === 0) {
+        console.error('❌ NO STEPS FOUND with any selector');
+        console.log('📋 Available elements on page:', {
+            allDataForm: document.querySelectorAll('[data-form]').length,
+            allDataAnswer: document.querySelectorAll('[data-answer]').length,
+            allStepWrappers: document.querySelectorAll('.step_wrapper').length,
+            allDivsWithStep: document.querySelectorAll('div[class*="step"]').length
+        });
+        return;
+    }
+    
+    console.log('📊 STEPS FOUND:', {
+        total: steps.length,
+        ids: steps.map(s => s.id)
+    });
+    
+    // Show/Hide functions
+    function hideAllSteps() {
+        steps.forEach((step, index) => {
+            step.element.style.display = 'none';
+            step.element.style.visibility = 'hidden';
+            console.log(`🙈 HID step ${index}: ${step.id}`);
+        });
+    }
+    
+    function showStep(index) {
+        if (index < 0 || index >= steps.length) {
+            console.error('❌ Invalid step index:', index);
+            return;
+        }
+        
+        hideAllSteps();
+        
+        const step = steps[index];
+        step.element.style.display = 'block';
+        step.element.style.visibility = 'visible';
+        step.element.style.opacity = '1';
+        
+        currentStepIndex = index;
+        console.log(`👁️ SHOWED step ${index}: ${step.id}`);
+        
+        // Force a layout recalculation
+        step.element.offsetHeight;
+        
+        // Check if it's actually visible
+        const isVisible = step.element.offsetHeight > 0;
+        console.log(`✓ Step visibility check: ${isVisible ? 'VISIBLE' : 'NOT VISIBLE'}`);
+        
+        if (!isVisible) {
+            console.warn('⚠️ Step not visible after show - forcing display');
+            step.element.style.setProperty('display', 'block', 'important');
+            step.element.style.setProperty('visibility', 'visible', 'important');
+            step.element.style.setProperty('opacity', '1', 'important');
+        }
+    }
+    
+    function goToStepById(stepId) {
+        console.log(`🎯 NAVIGATING TO: ${stepId}`);
+        const stepIndex = steps.findIndex(s => s.id === stepId);
+        
+        if (stepIndex === -1) {
+            console.error('❌ STEP NOT FOUND:', {
+                searchFor: stepId,
+                available: steps.map(s => s.id)
+            });
+            return;
+        }
+        
+        showStep(stepIndex);
+    }
+    
+    // Initial setup - show first step
+    console.log('🎬 SHOWING INITIAL STEP');
+    showStep(0);
+    
+    // Setup radio button listeners
+    const radioButtons = document.querySelectorAll('input[type="radio"][data-go-to]');
+    console.log(`🎯 FOUND ${radioButtons.length} RADIO BUTTONS`);
+    
+    radioButtons.forEach((radio, index) => {
+        console.log(`📻 Radio ${index}: ${radio.name} -> ${radio.getAttribute('data-go-to')}`);
+        
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                const goTo = this.getAttribute('data-go-to');
+                console.log(`🔥 RADIO CLICKED: ${this.name} = ${this.value} -> ${goTo}`);
+                
+                // Style the radio button
+                const activeClass = 'is-active-inputactive';
+                if (this.name) {
+                    document.querySelectorAll(`input[name="${this.name}"]`).forEach(r => {
+                        r.classList.remove(activeClass);
+                        const label = r.closest('label');
+                        if (label) label.classList.remove(activeClass);
+                    });
+                }
+                
+                this.classList.add(activeClass);
+                const label = this.closest('label');
+                if (label) label.classList.add(activeClass);
+                
+                // Navigate to target step
+                if (goTo) {
+                    goToStepById(goTo);
+                }
+            }
+        });
+    });
+    
+    // Expose debug functions to window for testing
+    window.StandaloneForm = {
+        showStep: showStep,
+        goToStepById: goToStepById,
+        hideAllSteps: hideAllSteps,
+        getSteps: () => steps,
+        getCurrentStep: () => steps[currentStepIndex],
+        debug: () => {
+            console.log('📊 CURRENT STATE:', {
+                currentStepIndex,
+                currentStepId: steps[currentStepIndex]?.id,
+                totalSteps: steps.length,
+                allStepsVisible: steps.map(s => ({
+                    id: s.id,
+                    visible: s.element.offsetHeight > 0
+                }))
+            });
+        }
+    };
+    
+    console.log('✅ STANDALONE FORM SCRIPT COMPLETE');
+    console.log('🔧 Debug functions available: window.StandaloneForm.debug()');
+}
+</script> 
