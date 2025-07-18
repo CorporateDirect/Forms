@@ -34,7 +34,7 @@ All modules must be clean, well-typed TypeScript, with verbose `console.log` out
 └── updated-instructions.md
 ```
 
----
+---1
 
 ## Acceptance Criteria (Modules)
 

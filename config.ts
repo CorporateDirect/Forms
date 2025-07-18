@@ -37,7 +37,6 @@ export const DATA_ATTRS = {
   NEXT_BTN: 'data-form="next-btn"',
   BACK_BTN: 'data-form="back-btn"',
   SUBMIT: 'data-form="submit"',
-  SUBMIT_BTN: 'data-form="submit-btn"',
   ERROR_DISPLAY: 'data-form="error"',
   
   
@@ -69,7 +68,7 @@ export const SELECTORS = {
   ANSWER: '[data-answer]', // Target identifier for steps (destination)
   
   // Navigation sources (these reference ANSWER values)
-  GO_TO: '[data-go-to]',   // Points to data-answer value
+  GO_TO: '[data-go-to]',   // Points to data-an1swer value
   SKIP: '[data-skip]',     // Points to data-answer value
   
   // Standard navigation buttons

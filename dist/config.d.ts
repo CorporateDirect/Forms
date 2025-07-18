@@ -29,7 +29,6 @@ export declare const DATA_ATTRS: {
     readonly NEXT_BTN: "data-form=\"next-btn\"";
     readonly BACK_BTN: "data-form=\"back-btn\"";
     readonly SUBMIT: "data-form=\"submit\"";
-    readonly SUBMIT_BTN: "data-form=\"submit-btn\"";
     readonly ERROR_DISPLAY: "data-form=\"error\"";
     readonly STEP_TYPE: "data-step-type";
     readonly STEP_SUBTYPE: "data-step-subtype";
