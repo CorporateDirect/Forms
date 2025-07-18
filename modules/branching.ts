@@ -420,18 +420,11 @@ function handleBranchTrigger(event: Event, target: Element): void {
     });
   }
 
-  // Update step visibility if we have active conditions
-  // Active conditions removed (was part of advanced skip logic)
-  const activeConditions = {};
-  if (Object.keys(activeConditions).length > 0) {
-    console.log('🔄 [Branch] Updating step visibility based on active conditions:', {
-      activeConditions,
-      conditionCount: Object.keys(activeConditions).length
-    });
-    updateStepVisibility();
-  } else {
-    console.log('ℹ️ [Branch] No active conditions, skipping step visibility update');
-  }
+  // DISABLED: Step visibility update for step_item branching
+  // This was causing all main steps to be hidden when step_items branch
+  // Step_item branching should only affect step_items within the current step,
+  // not the main form steps themselves
+  console.log('ℹ️ [Branch] Step visibility update disabled for step_item branching');
 }
 
 /**

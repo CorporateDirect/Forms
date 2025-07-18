@@ -11,6 +11,12 @@ This must be reusable across multiple projects. The system is driven exclusively
 
 All modules must be clean, well-typed TypeScript, with verbose `console.log` output for testing, and state managed **in memory** for speed and simplicity.
 
+## Deployment
+
+- When prompted, please commit, and push changes to Github. 
+- Once commit has occured, please generrate a JSDelivr URL with the current commit hash. For example https://cdn.jsdelivr.net/gh/CorporateDirect/Form@[Commit Hash]/dist/
+- ALWAYS use index.browser.min.js as the entry to the app to comply with CORS.
+
 ---
 
 ## Project Structure
