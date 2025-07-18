@@ -39,10 +39,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/form-functionality-library.git"
+    "url": "https://github.com/CorporateDirect/Forms.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/form-functionality-library/issues"
+    "url": "https://github.com/CorporateDirect/Forms/issues"
   },
-  "homepage": "https://github.com/your-username/form-functionality-library#readme"
+  "homepage": "https://github.com/CorporateDirect/Forms#readme"
 }
