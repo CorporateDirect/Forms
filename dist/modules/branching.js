@@ -344,8 +344,8 @@ function handleBranchTrigger(event, target) {
             fieldName
         });
     }
-    // Step_item branching: Only show/hide the specific step_item, not main steps
-    console.log('ℹ️ [Branch] Step_item branching complete, no main step visibility changes needed');
+    // Radio button branching: Navigate to target step using normal step navigation
+    console.log('ℹ️ [Branch] Radio button navigation complete - target step navigation triggered');
 }
 /**
  * Apply active class to radio button and remove from others in the same group
@@ -389,26 +389,25 @@ function handleRadioGroupSelection(selectedRadio) {
     });
 }
 /**
- * Activate a branch target
+ * Activate a branch target - navigate to target step
  */
 function activateBranch(target) {
     if (!target)
         return;
-    console.log('🌿 [Branch] Activating branch target:', { target });
-    // Emit event to show the target step_item
-    formEvents.emit('branch:show', { stepId: target });
+    console.log('🌿 [Branch] Navigating to branch target step:', { target });
+    // Emit navigation event to go to target step (not step_item)
+    formEvents.emit('step:navigate', { targetStepId: target, reason: 'radio_selection' });
 }
 /**
- * Deactivate a branch target
+ * Deactivate a branch target - clear fields only (no navigation needed for separate steps)
  */
 function deactivateBranch(target) {
     if (!target)
         return;
-    console.log('🍂 [Branch] Deactivating branch target:', { target });
+    console.log('🍂 [Branch] Deactivating branch target (clearing fields only):', { target });
     // Clear form data for this branch
     clearBranchFields(target);
-    // Emit event to hide the target step_item
-    formEvents.emit('branch:hide', { stepId: target });
+    // Note: No hide event needed since we're using separate steps now
 }
 /**
  * Update visibility of all conditional steps based on active branches

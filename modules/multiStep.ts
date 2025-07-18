@@ -423,6 +423,19 @@ function setupEventListeners(): void {
     }
   });
 
+  const stepNavigateCleanup = formEvents.on('step:navigate', (data: unknown) => {
+    const eventData = data as { targetStepId?: string; reason?: string };
+    logVerbose('Received step:navigate event', { targetStepId: eventData.targetStepId, reason: eventData.reason });
+    
+    // Navigate directly to target step (used for radio button navigation)
+    if (eventData.targetStepId) {
+      logVerbose('Navigating to target step via step:navigate:', { targetStepId: eventData.targetStepId, reason: eventData.reason });
+      goToStepById(eventData.targetStepId);
+    } else {
+      logVerbose('No target step provided in step:navigate event');
+    }
+  });
+
   // Listen for branching show/hide events
   const branchShowCleanup = formEvents.on('branch:show', ({ stepId }) => {
     logVerbose('Received branch:show event', { stepId });
@@ -464,7 +477,7 @@ function setupEventListeners(): void {
   });
 
   // Store cleanup functions for proper cleanup
-  eventCleanupFunctions.push(branchChangeCleanup, skipRequestCleanup, branchShowCleanup, branchHideCleanup);
+  eventCleanupFunctions.push(branchChangeCleanup, skipRequestCleanup, stepNavigateCleanup, branchShowCleanup, branchHideCleanup);
 }
 
 /**
