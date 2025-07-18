@@ -18,8 +18,7 @@ console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_10_14_45_FRESH');
 console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
 console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 
-// Import all modules
-import { initBranching, resetBranching, getBranchingState } from './modules/branching.js';
+// Import all modules  
 import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, getErrorState } from './modules/errors.js';
@@ -89,12 +88,7 @@ class FormLibrary {
       // 3. Initialize validation (used by multi-step navigation)
       initValidation(root);
 
-      // 4. Initialize branching logic (used by multi-step navigation)
-      if (logicForms.length > 0) {
-        initBranching(root);
-      }
-
-      // 5. Initialize multi-step navigation (coordinates with branching, includes skip)
+      // 4. Initialize multi-step navigation (linear navigation only)
       if (multistepForms.length > 0 || stepElements.length > 0) {
         initMultiStep(root); // Includes integrated skip functionality
       }
@@ -127,7 +121,6 @@ class FormLibrary {
 
     // Reset all modules (they handle their own cleanup)
     try {
-      resetBranching();
       // Reset centralized field coordinator
       resetFieldCoordinator();
       // Skip functionality integrated into multiStep
@@ -160,7 +153,6 @@ class FormLibrary {
     return {
       initialized: this.initialized,
       formState: FormState.getDebugInfo(),
-      branching: getBranchingState(),
       multiStep: { note: "Simplified linear navigation - debug info removed" },
       validation: getValidationState(),
       errors: getErrorState(),
@@ -255,10 +247,6 @@ export default FormLib;
 export {
   // Core
   FormState,
-  
-  // Branching
-  initBranching,
-  resetBranching,
   
   // Multi-step (simplified linear navigation)
   initMultiStep,

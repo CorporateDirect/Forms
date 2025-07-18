@@ -241,9 +241,71 @@ function setupNavigationListeners(root: Document | Element): void {
   const cleanup2 = delegateEvent(root, 'click', SELECTORS.BACK_BTN, handleBackClick);
   const cleanup3 = delegateEvent(root, 'click', SELECTORS.SUBMIT_BTN, handleSubmitClick);
 
-  cleanupFunctions.push(cleanup1, cleanup2, cleanup3);
+  // ADDED: Handle radio buttons with data-go-to attributes directly
+  const cleanup4 = delegateEvent(root, 'change', 'input[type="radio"][data-go-to]', handleRadioNavigation);
+  const cleanup5 = delegateEvent(root, 'click', 'input[type="radio"][data-go-to]', handleRadioNavigation);
+
+  cleanupFunctions.push(cleanup1, cleanup2, cleanup3, cleanup4, cleanup5);
   
   logVerbose('Navigation listeners setup complete');
+}
+
+/**
+ * ADDED: Handle radio button navigation directly (replaces branching module)
+ */
+function handleRadioNavigation(event: Event, target: Element): void {
+  const radio = target as HTMLInputElement;
+  
+  console.log('🎯 [MultiStep] Radio button navigation:', {
+    radioName: radio.name,
+    radioValue: radio.value,
+    isChecked: radio.checked,
+    dataGoTo: getAttrValue(radio, 'data-go-to')
+  });
+  
+  if (!radio.checked) {
+    return; // Only handle checked radio buttons
+  }
+  
+  const goToValue = getAttrValue(radio, 'data-go-to');
+  
+  if (!goToValue) {
+    console.warn('⚠️ [MultiStep] Radio button missing data-go-to attribute');
+    return;
+  }
+  
+  // Apply active styling to radio button
+  applyRadioActiveClass(radio);
+  
+  // Navigate directly to target step
+  console.log('🚀 [MultiStep] Navigating to step via radio button:', goToValue);
+  goToStepById(goToValue);
+}
+
+/**
+ * ADDED: Apply active class to radio button (moved from branching module)
+ */
+function applyRadioActiveClass(selectedRadio: HTMLInputElement): void {
+  const groupName = selectedRadio.name;
+  if (!groupName) return;
+
+  const activeClass = getAttrValue(selectedRadio, 'fs-inputactive-class') || 'is-active-inputactive';
+  
+  // Remove active class from other radio buttons in the same group
+  const radioGroup = document.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
+  radioGroup.forEach(radio => {
+    const htmlRadio = radio as HTMLInputElement;
+    const radioLabel = htmlRadio.closest('label');
+    if (htmlRadio !== selectedRadio) {
+      htmlRadio.classList.remove(activeClass);
+      radioLabel?.classList.remove(activeClass);
+    }
+  });
+  
+  // Add active class to the selected radio and its label
+  selectedRadio.classList.add(activeClass);
+  const parentLabel = selectedRadio.closest('label');
+  parentLabel?.classList.add(activeClass);
 }
 
 /**

@@ -7,7 +7,6 @@
  * Version: CACHE_BUST_2025_01_10_14_45_FRESH
  */
 import { FormState } from './modules/formState.js';
-import { initBranching, resetBranching } from './modules/branching.js';
 import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors } from './modules/errors.js';
@@ -63,5 +62,5 @@ declare class FormLibrary {
 }
 declare const FormLib: FormLibrary;
 export default FormLib;
-export { FormState, initBranching, resetBranching, initMultiStep, goToStep, goToStepById, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, initSummary, updateSummary, clearSummary };
+export { FormState, initMultiStep, goToStep, goToStepById, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, initSummary, updateSummary, clearSummary };
 //# sourceMappingURL=index.d.ts.map
