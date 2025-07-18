@@ -1,6 +1,6 @@
 {
   "name": "form-functionality-library",
-  "version": "1.1.0",
+  "version": "1.1.4",
   "description": "A modular, flexible form functionality library for Webflow forms supporting single-step, multi-step, and branching forms",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -23,7 +23,7 @@
     "validation",
     "typescript"
   ],
-  "author": "Form Functionality Library",
+  "author": "Chris Brummer",
   "license": "MIT",
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.36.0",

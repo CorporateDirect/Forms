@@ -218,6 +218,44 @@ function handleBranchTrigger(event, target) {
         });
         return;
     }
+    // Check if this is pointing to an actual step (not a step_item)
+    // If so, use direct step navigation instead of complex branching logic
+    const targetElement = document.querySelector(`[data-answer="${goToValue}"]`);
+    if (targetElement && targetElement.closest('[data-form="step"]')) {
+        console.log('ℹ️ [Branch] Target is a main step, using direct navigation instead of branching logic:', {
+            goToValue,
+            targetElement: targetElement.tagName,
+            isMainStep: true
+        });
+        // For radio buttons, handle selection and navigate directly
+        if (target instanceof HTMLInputElement && target.type === 'radio' && target.checked) {
+            // Apply active styling
+            applyRadioActiveClass(target);
+            // Navigate directly to target step
+            console.log('🎯 [Branch] Navigating directly to main step:', { goToValue });
+            formEvents.emit('step:navigate', { targetStepId: goToValue, reason: 'radio_selection_main_step' });
+        }
+        return;
+    }
+    // For the new linear structure with separate steps for each branch option,
+    // radio buttons should use normal step navigation instead of complex branching
+    if (target instanceof HTMLInputElement && target.type === 'radio') {
+        console.log('🔄 [Branch] Radio button detected - using simple step navigation instead of branching logic:', {
+            goToValue,
+            radioName: target.name,
+            radioValue: target.value,
+            isChecked: target.checked
+        });
+        if (target.checked && goToValue) {
+            // Apply radio button styling
+            applyRadioActiveClass(target);
+            // Use direct step navigation event
+            console.log('🎯 [Branch] Emitting step:navigate for radio button:', { targetStepId: goToValue });
+            formEvents.emit('step:navigate', { targetStepId: goToValue, reason: 'radio_button_selection' });
+        }
+        // Skip all the complex branching logic for radio buttons
+        return;
+    }
     console.log('🎯 [Branch] Processing branch trigger:', {
         element: target,
         goTo: goToValue,

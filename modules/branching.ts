@@ -286,7 +286,30 @@ function handleBranchTrigger(event: Event, target: Element): void {
     return;
   }
 
-  console.log('🎯 [Branch] Processing branch trigger:', {
+  // FOR NEW LINEAR STRUCTURE: All radio buttons use simple step navigation
+  if (target instanceof HTMLInputElement && target.type === 'radio') {
+    console.log('🔄 [Branch] Radio button detected - using SIMPLE STEP NAVIGATION ONLY:', {
+      goToValue,
+      radioName: target.name,
+      radioValue: target.value,
+      isChecked: target.checked
+    });
+    
+    if (target.checked && goToValue) {
+      // Apply radio button styling
+      applyRadioActiveClass(target);
+      
+      // Use ONLY direct step navigation - NO complex branching logic
+      console.log('🎯 [Branch] Emitting step:navigate for radio button (NO BRANCHING LOGIC):', { targetStepId: goToValue });
+      formEvents.emit('step:navigate', { targetStepId: goToValue, reason: 'radio_button_simple_navigation' });
+    }
+    
+    // COMPLETELY skip all complex branching logic for radio buttons
+    return;
+  }
+
+  // FOR OTHER INPUT TYPES: Also use simple navigation to avoid conflicts
+  console.log('🎯 [Branch] Non-radio input with data-go-to - using simple navigation:', {
     element: target,
     goTo: goToValue,
     value: inputValue,
@@ -296,132 +319,11 @@ function handleBranchTrigger(event: Event, target: Element): void {
     hasValue: !!inputValue
   });
 
-  // Note: Field value now stored centrally by field coordinator
-  console.log('💾 [Branch] Field change detected for branching logic:', {
-    fieldName,
-    value: inputValue,
-    goToValue
-  });
-
-  // Handle different input types with detailed logging
-  try {
-    if (target instanceof HTMLInputElement) {
-      if (target.type === 'radio' && target.checked) {
-        console.log('📻 [Branch] Processing radio button selection:', {
-          name: target.name,
-          value: target.value,
-          checked: target.checked,
-          goTo: goToValue
-        });
-        
-        if (!goToValue) {
-          console.warn('⚠️ [Branch] Radio button has no data-go-to attribute, skipping navigation', {
-            element: target,
-            name: target.name,
-            value: target.value
-          });
-          return;
-        }
-        
-        // Verify target step exists
-        const targetElement = document.querySelector(`[data-answer="${goToValue}"]`);
-        if (!targetElement) {
-          const allAnswerElements = document.querySelectorAll('[data-answer]');
-          const allAnswerValues = Array.from(allAnswerElements).map(el => getAttrValue(el, 'data-answer'));
-          
-          console.error('❌ [Branch] Target step not found in DOM!', {
-            searchedFor: goToValue,
-            availableSteps: allAnswerValues,
-            suggestion: `Check if element with data-answer="${goToValue}" exists`,
-            possibleMatches: allAnswerValues.filter(val => val && val.includes(goToValue))
-          });
-        }
-        
-        // Handle radio group selection
-        handleRadioGroupSelection(target);
-        
-        // Apply active class styling
-        applyRadioActiveClass(target);
-        
-        // Activate branch and emit event
-        activateBranch(goToValue);
-        
-        console.log('🚀 [Branch] Emitting branch:change event:', {
-          targetStepId: goToValue,
-          triggerValue: target.value,
-          triggerType: 'radio'
-        });
-        
-        formEvents.emit('branch:change', { targetStepId: goToValue });
-        
-      } else if (target.type === 'checkbox') {
-        console.log('☑️ [Branch] Processing checkbox:', {
-          name: target.name,
-          value: target.value,
-          checked: target.checked,
-          goTo: goToValue
-        });
-        
-        if (goToValue) {
-          if (target.checked) {
-            console.log('✅ [Branch] Checkbox checked, activating branch:', { goToValue });
-            activateBranch(goToValue);
-          } else {
-            console.log('❌ [Branch] Checkbox unchecked, deactivating branch:', { goToValue });
-            deactivateBranch(goToValue);
-          }
-        }
-      } else if (target.type !== 'radio' && target.type !== 'checkbox') {
-        console.log('📝 [Branch] Processing text input/other:', {
-          type: target.type,
-          name: target.name,
-          value: inputValue,
-          goTo: goToValue
-        });
-        
-        // Text inputs, selects, etc.
-        if (goToValue) {
-          if (inputValue) {
-            console.log('✅ [Branch] Input has value, activating branch:', { goToValue, inputValue });
-            activateBranch(goToValue);
-          } else {
-            console.log('❌ [Branch] Input is empty, deactivating branch:', { goToValue });
-            deactivateBranch(goToValue);
-          }
-        }
-      }
-    } else {
-      console.log('📋 [Branch] Processing select/textarea:', {
-        tagName: target.tagName,
-        value: inputValue,
-        goTo: goToValue
-      });
-      
-      // Select elements and textareas
-      if (goToValue) {
-        if (inputValue) {
-          console.log('✅ [Branch] Element has value, activating branch:', { goToValue, inputValue });
-          activateBranch(goToValue);
-        } else {
-          console.log('❌ [Branch] Element is empty, deactivating branch:', { goToValue });
-          deactivateBranch(goToValue);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('💥 [Branch] Error handling branch trigger:', {
-      error: error,
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-      element: target,
-      goToValue,
-      inputValue,
-      fieldName
-    });
+  // Handle other input types with simple navigation only
+  if (goToValue && inputValue) {
+    console.log('✅ [Branch] Input has value, navigating to target step:', { goToValue, inputValue });
+    formEvents.emit('step:navigate', { targetStepId: goToValue, reason: 'input_navigation' });
   }
-
-  // Radio button branching: Navigate to target step using normal step navigation
-  console.log('ℹ️ [Branch] Radio button navigation complete - target step navigation triggered');
 }
 
 /**
@@ -451,74 +353,51 @@ function applyRadioActiveClass(selectedRadio: HTMLInputElement): void {
 }
 
 /**
- * Handle radio group state for branching
+ * DEPRECATED: Complex branching functions below are disabled for new linear structure
+ * These functions caused all steps to be hidden when radio buttons were clicked
+ */
+
+/**
+ * Handle radio group state for branching - DISABLED
  */
 function handleRadioGroupSelection(selectedRadio: HTMLInputElement): void {
-  const groupName = selectedRadio.name;
-  if (!groupName) return;
-
-  const allRadiosInGroup = document.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
-  allRadiosInGroup.forEach(radio => {
-    const r = radio as HTMLInputElement;
-    if (r !== selectedRadio) {
-      const goToValue = getAttrValue(r, 'data-go-to');
-      if (goToValue) {
-        deactivateBranch(goToValue);
-      }
-    }
-  });
+  // DISABLED: This function was causing conflicts with simple step navigation
+  console.log('🚫 [Branch] handleRadioGroupSelection DISABLED for new linear structure');
 }
 
 /**
- * Activate a branch target - navigate to target step
+ * Activate a branch target - SIMPLIFIED to just emit navigation
  */
 function activateBranch(target: string | null): void {
   if (!target) return;
   
-  console.log('🌿 [Branch] Navigating to branch target step:', { target });
+  console.log('🌿 [Branch] activateBranch called but SIMPLIFIED for linear structure:', { target });
   
-  // Emit navigation event to go to target step (not step_item)
-  formEvents.emit('step:navigate', { targetStepId: target, reason: 'radio_selection' });
+  // SIMPLIFIED: Just emit navigation event, no complex visibility logic
+  formEvents.emit('step:navigate', { targetStepId: target, reason: 'simplified_branch_activation' });
 }
 
 /**
- * Deactivate a branch target - clear fields only (no navigation needed for separate steps)
+ * Deactivate a branch target - DISABLED
  */
 function deactivateBranch(target: string | null): void {
-  if (!target) return;
-  
-  console.log('🍂 [Branch] Deactivating branch target (clearing fields only):', { target });
-  
-  // Clear form data for this branch
-  clearBranchFields(target);
-  
-  // Note: No hide event needed since we're using separate steps now
+  // DISABLED: No deactivation needed for linear structure
+  console.log('🚫 [Branch] deactivateBranch DISABLED for new linear structure:', { target });
 }
 
 /**
- * Update visibility of all conditional steps based on active branches
+ * Update visibility of all conditional steps - COMPLETELY DISABLED
+ * This function was hiding all steps and causing the main issue
  */
 function updateStepVisibility(): void {
-  const allConditionalSteps = queryAllByAttr('[data-show-if]');
-  // Active conditions removed (was part of advanced skip logic)
-  const activeConditions = {};
-
-  allConditionalSteps.forEach(step => {
-    const condition = getAttrValue(step, 'data-show-if');
-    const stepId = getAttrValue(step, 'data-answer');
-    
-    if (condition && stepId) {
-      if (evaluateCondition(condition, activeConditions)) {
-        // Emit event for step to be shown - let multiStep handle visibility
-        logVerbose('Branching logic determines step should be visible', { stepId });
-        formEvents.emit('branch:show', { stepId });
-      } else {
-        // Emit event for step to be hidden - let multiStep handle visibility
-        logVerbose('Branching logic determines step should be hidden', { stepId });
-        formEvents.emit('branch:hide', { stepId });
-      }
-    }
-  });
+  console.log('🚫 [Branch] updateStepVisibility COMPLETELY DISABLED - was causing all steps to be hidden');
+  
+  // COMPLETELY DISABLED: This function was the root cause of all steps being hidden
+  // The new linear structure doesn't need complex conditional visibility logic
+  // Each step is a separate main step that uses normal step navigation
+  
+  // OLD CODE REMOVED - it was hiding all steps and only showing ones with active conditions
+  // which doesn't work with the new linear structure where each branch is a separate step
 }
 
 // Note: Field required state management now handled by multiStep.ts to avoid conflicts
