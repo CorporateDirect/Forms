@@ -426,21 +426,40 @@ function setupEventListeners(): void {
   // Listen for branching show/hide events
   const branchShowCleanup = formEvents.on('branch:show', ({ stepId }) => {
     logVerbose('Received branch:show event', { stepId });
-    const stepElement = document.querySelector(`[data-answer="${stepId}"]`) as HTMLElement;
-    if (stepElement) {
-      showElement(stepElement);
-      // Enable required fields in this step
-      updateRequiredFieldsInStep(stepElement, true);
+    
+    // Check if this is a step_item (not a main step)
+    const stepItem = stepItems.find(item => item.id === stepId);
+    if (stepItem) {
+      // This is a step_item - use step_item specific logic
+      logVerbose('Showing step_item via branch:show', { stepId });
+      showStepItem(stepId);
+    } else {
+      // This might be a main step - handle normally
+      const stepElement = document.querySelector(`[data-answer="${stepId}"]`) as HTMLElement;
+      if (stepElement) {
+        showElement(stepElement);
+        updateRequiredFieldsInStep(stepElement, true);
+      }
     }
   });
 
   const branchHideCleanup = formEvents.on('branch:hide', ({ stepId }) => {
     logVerbose('Received branch:hide event', { stepId });
-    const stepElement = document.querySelector(`[data-answer="${stepId}"]`) as HTMLElement;
-    if (stepElement) {
-      hideElement(stepElement);
-      // Disable required fields in this step
-      updateRequiredFieldsInStep(stepElement, false);
+    
+    // Check if this is a step_item (not a main step)
+    const stepItem = stepItems.find(item => item.id === stepId);
+    if (stepItem) {
+      // This is a step_item - hide it and disable required fields
+      logVerbose('Hiding step_item via branch:hide', { stepId });
+      hideElement(stepItem.element);
+      updateRequiredFieldsInStep(stepItem.element, false);
+    } else {
+      // This might be a main step - handle normally
+      const stepElement = document.querySelector(`[data-answer="${stepId}"]`) as HTMLElement;
+      if (stepElement) {
+        hideElement(stepElement);
+        updateRequiredFieldsInStep(stepElement, false);
+      }
     }
   });
 

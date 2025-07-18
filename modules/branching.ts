@@ -420,11 +420,8 @@ function handleBranchTrigger(event: Event, target: Element): void {
     });
   }
 
-  // DISABLED: Step visibility update for step_item branching
-  // This was causing all main steps to be hidden when step_items branch
-  // Step_item branching should only affect step_items within the current step,
-  // not the main form steps themselves
-  console.log('ℹ️ [Branch] Step visibility update disabled for step_item branching');
+  // Step_item branching: Only show/hide the specific step_item, not main steps
+  console.log('ℹ️ [Branch] Step_item branching complete, no main step visibility changes needed');
 }
 
 /**
@@ -477,7 +474,11 @@ function handleRadioGroupSelection(selectedRadio: HTMLInputElement): void {
  */
 function activateBranch(target: string | null): void {
   if (!target) return;
-  // Active condition tracking removed (was part of advanced skip logic)
+  
+  console.log('🌿 [Branch] Activating branch target:', { target });
+  
+  // Emit event to show the target step_item
+  formEvents.emit('branch:show', { stepId: target });
 }
 
 /**
@@ -485,8 +486,14 @@ function activateBranch(target: string | null): void {
  */
 function deactivateBranch(target: string | null): void {
   if (!target) return;
-  // Active condition tracking removed (was part of advanced skip logic)
+  
+  console.log('🍂 [Branch] Deactivating branch target:', { target });
+  
+  // Clear form data for this branch
   clearBranchFields(target);
+  
+  // Emit event to hide the target step_item
+  formEvents.emit('branch:hide', { stepId: target });
 }
 
 /**
