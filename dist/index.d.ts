@@ -8,7 +8,7 @@
  */
 import { FormState } from './modules/formState.js';
 import { initBranching, resetBranching } from './modules/branching.js';
-import { initMultiStep, goToStep, showStep, getCurrentStepInfo } from './modules/multiStep.js';
+import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary } from './modules/summary.js';
@@ -63,5 +63,5 @@ declare class FormLibrary {
 }
 declare const FormLib: FormLibrary;
 export default FormLib;
-export { FormState, initBranching, resetBranching, initMultiStep, goToStep, showStep, getCurrentStepInfo, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, initSummary, updateSummary, clearSummary };
+export { FormState, initBranching, resetBranching, initMultiStep, goToStep, goToStepById, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, initSummary, updateSummary, clearSummary };
 //# sourceMappingURL=index.d.ts.map

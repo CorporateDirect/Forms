@@ -20,7 +20,7 @@ console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 
 // Import all modules
 import { initBranching, resetBranching, getBranchingState } from './modules/branching.js';
-import { initMultiStep, goToStep, showStep, getCurrentStepInfo, getMultiStepState } from './modules/multiStep.js';
+import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, getErrorState } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
@@ -161,7 +161,7 @@ class FormLibrary {
       initialized: this.initialized,
       formState: FormState.getDebugInfo(),
       branching: getBranchingState(),
-      multiStep: getMultiStepState(),
+      multiStep: { note: "Simplified linear navigation - debug info removed" },
       validation: getValidationState(),
       errors: getErrorState(),
       summary: getSummaryState(),
@@ -260,11 +260,10 @@ export {
   initBranching,
   resetBranching,
   
-  // Multi-step
+  // Multi-step (simplified linear navigation)
   initMultiStep,
   goToStep,
-  showStep,
-  getCurrentStepInfo,
+  goToStepById,
   
   // Validation
   initValidation,
