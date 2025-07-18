@@ -18,6 +18,7 @@ console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 // Import all modules  
 import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
 import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/multiStep-clean.js';
+import { initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState } from './modules/multiStep-diagnostic.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, getErrorState } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
@@ -209,6 +210,8 @@ FormState,
 initMultiStep, goToStep, goToStepById, 
 // Ultra-minimal clean version (zero legacy code)
 initMultiStepClean, goToStepByIdClean, getCleanState, 
+// Ultra-verbose diagnostic version for debugging
+initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState, 
 // Validation
 initValidation, validateField, validateStep, validateAllVisibleFields, 
 // Errors
