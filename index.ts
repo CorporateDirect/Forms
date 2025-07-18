@@ -20,6 +20,7 @@ console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 
 // Import all modules  
 import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
+import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/multiStep-clean.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, getErrorState } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
@@ -252,6 +253,11 @@ export {
   initMultiStep,
   goToStep,
   goToStepById,
+  
+  // Ultra-minimal clean version (zero legacy code)
+  initMultiStepClean,
+  goToStepByIdClean,
+  getCleanState,
   
   // Validation
   initValidation,
