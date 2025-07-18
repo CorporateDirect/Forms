@@ -8,13 +8,11 @@ import {
   queryAllByAttr, 
   queryByAttr, 
   getAttrValue, 
-  delegateEvent,
   debounce,
   getInputValue,
   isFormInput,
   isVisible
 } from './utils.js';
-import { FormState } from './formState.js';
 import { showError, clearError } from './errors.js';
 import { formEvents } from './events.js';
 

@@ -232,8 +232,9 @@ if (typeof window !== 'undefined') {
         }
     };
     // Use Webflow.push for proper Webflow integration timing
-    if (typeof window.Webflow !== 'undefined' && window.Webflow.push) {
-        window.Webflow.push(autoInit);
+    const webflowWindow = window;
+    if (webflowWindow.Webflow?.push) {
+        webflowWindow.Webflow.push(autoInit);
     }
     else {
         // Fallback to DOM ready if Webflow is not available
