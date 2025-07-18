@@ -221,22 +221,29 @@ initValidation, validateField, validateStep, validateAllVisibleFields,
 initErrors, showError, clearError, clearAllErrors, 
 // Summary
 initSummary, updateSummary, clearSummary };
-// Auto-initialize on DOM ready if forms are detected
+// Auto-initialize using Webflow's push system for proper timing
 if (typeof window !== 'undefined') {
     const autoInit = () => {
         const multistepForms = document.querySelectorAll(SELECTORS.MULTISTEP);
         const stepElements = document.querySelectorAll(SELECTORS.STEP);
         if (multistepForms.length > 0 || stepElements.length > 0) {
-            logVerbose('Auto-initializing FormLibrary on DOM ready');
+            logVerbose('Auto-initializing FormLibrary via Webflow.push');
             FormLib.init();
         }
     };
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', autoInit);
+    // Use Webflow.push for proper Webflow integration timing
+    if (typeof window.Webflow !== 'undefined' && window.Webflow.push) {
+        window.Webflow.push(autoInit);
     }
     else {
-        // DOM is already ready
-        autoInit();
+        // Fallback to DOM ready if Webflow is not available
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', autoInit);
+        }
+        else {
+            // DOM is already ready
+            autoInit();
+        }
     }
 }
 // Make FormLib available globally for testing
