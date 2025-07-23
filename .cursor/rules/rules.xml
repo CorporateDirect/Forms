@@ -1,0 +1,711 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectConfig>
+
+  <!-- Project Metadata -->
+  <project>
+    <name>Form Functionality Library</name>
+    <description>A scalable, testable, and modular form library that integrates into Webflow's native form builder.</description>
+    <version>1.0.0</version>
+    <maintainer>
+      <name>Chris Brummer</name>
+      <email>cbrummer@corporatedirect.com</email>
+    </maintainer>
+    <created>2025-07-21</created>
+    <lastUpdated>2025-07-21</lastUpdated>
+  </project>
+
+  <!-- Version Control Configuration -->
+  <versionControl>
+    <system>git</system>
+    <repositoryUrl>https://github.com/CorporateDirect/Forms</repositoryUrl>
+    <branch>main</branch>
+    <commitPolicy>conventional-commits</commitPolicy>
+    <taggingStrategy>semantic-versioning</taggingStrategy>
+  </versionControl>
+
+  <!-- Environments -->
+  <environments>
+    <environment name="development">
+      <debug>true</debug>
+      <optimize>false</optimize>
+      <logging>verbose</logging>
+    </environment>
+    <environment name="production">
+      <debug>false</debug>
+      <optimize>true</optimize>
+      <logging>error-only</logging>
+    </environment>
+    <environment name="test">
+      <debug>true</debug>
+      <optimize>false</optimize>
+      <logging>test-logs</logging>
+    </environment>
+  </environments>
+
+  <!-- Build Settings -->
+<build>
+    <tool>webpack</tool>
+    <outputDir>dist/</outputDir>
+    <entryPoint>src/index.js</entryPoint>
+    <target>web</target>
+    <minify>true</minify>
+    <sourceMaps>true</sourceMaps>
+    <package>
+      <registry>https://registry.npmjs.org/</registry>
+      <packageName>corp_direct/form-functionality-library</packageName>
+      <deploy>true</deploy>
+    </package>
+  </build>
+
+  <!-- Module Structure -->
+  <modules>
+    <module name="Events" path="src/modules/events.ts" />
+    <module name="MultiStep" path="src/modules/multiStep.ts" />
+    <module name="Errors" path="src/modules/errors.ts" />
+    <module name="formState" path="src/modules/formState.ts" />
+    <module name="Summary" path="src/modules/summary.ts" />
+    <module name="Utilities" path="src/modules/util.ts" />
+    <module name="Validation" path="src/modules/validation.ts" />
+
+  </modules>
+
+
+
+
+  <!-- CI/CD Configuration -->
+  <ciCd>
+    <platform>GitHub Actions</platform>
+    <workflowFile>.github/workflows/ci.yml</workflowFile>
+    <autoDeploy>true</autoDeploy>
+    <environments>
+      <deployTo>staging</deployTo>
+      <deployTo>production</deployTo>
+    </environments>
+  </ciCd>
+
+  <!-- Dependencies -->
+  <dependencies>
+    <dependency name="express" version="^4.18.2" scope="runtime" />
+    <dependency name="jest" version="^29.0.0" scope="dev" />
+    <dependency name="eslint" version="^8.0.0" scope="dev" />
+  </dependencies>
+
+  <instructions>
+  <usage>
+   This project builds a functionality library for Webflow forms. It is designed to be used in conjunction with the Webflow form builder, and must be modular, lightweight and easy to implement in Webflow. Elements and funcitonality are bound via data-attributes.
+  </usage>
+
+  <notes>
+        <note>
+        This library is designed to be used in conjunction with the Webflow form builder. It is not designed to be used as a standalone form library. It leverages data-attributes to bind elements and functionality and must be modular, lightweight and easily integratable into any webflow form that uses a multi-step or single step form.
+        </note>
+
+        <note>
+        The form wrapper must have a data-form attribute that is set to "multistep" or "single-step". Multi-step forms will utilize the multi-step module, and summary modules. Single-step forms will still need access to validation, form-field formatting.
+        </note>
+
+        <note>
+        The form wrapper must have a data-form="multistep" attribute and a data-logic="true" attribute.
+        </note>
+        <note>
+        1. multi-step navigation uses data-go-to and data-answer attributes.to navigate to a step, set data-go-to to the step id. To answer a step, set data-answer to the step id.
+        </note>
+        <note>
+        2. Multi-step navigation is executed when a user uses either data-form="next-btn" or data-form="prev-btn", or data-form="skip-btn".
+        </note>
+        <note>
+        3. All inputs are saved into the browser's local storage until form has successfullly been submitted.
+        </note>
+        <note>
+        4. Each form field has a "data-form-field" attribute that is used to identify the field. This is used to save the field's value to local storage and is bound to "data-summary-field" which is used to display the field's value in the summary.
+        </note>
+        <note>
+        5. Branching logic, when one option is selected, the form will navitate to that next step, and disable other branch option field validation.  
+        </note>
+                          <note>
+          6. Form field formatting must be handled by a form-field module that provides uniform structure across all form types (single-step, multi-step, etc.). All form fields follow this standardized base structure:
+          
+          Base HTML Structure:
+          &lt;div class="form-field_wrapper"&gt;
+            &lt;label class="form_field-label"&gt;Label Text&lt;/label&gt;
+            &lt;[input-element] class="form_input w-input" data-step-field-name="fieldName"&gt;
+            &lt;div data-form="error" class="form_error-message"&gt;Error text&lt;/div&gt;
+          &lt;/div&gt;
+          
+          Where [input-element] can be:
+          - &lt;input type="text|email|tel|password|etc."&gt; for text inputs
+          - &lt;select&gt;&lt;option&gt;...&lt;/option&gt;&lt;/select&gt; for dropdowns
+          - &lt;textarea&gt;&lt;/textarea&gt; for text areas
+          - &lt;input type="radio|checkbox"&gt; for selection inputs
+          
+          This base structure remains consistent regardless of input complexity. Child elements within the wrapper can have additional classes, IDs, nested structures (icons, validation hints, etc.) for unique modifications, but the core wrapper → label → input → error pattern is uniform across all implementations.
+         </note>
+        
+  </notes>
+
+  <examples>
+
+
+
+  <setup>
+    <step>Environment Detection & Compatibility Check</step>
+    <step>Form Discovery & Element Validation</step>
+    <step>Library Core Initialization</step>
+    <step>Module Dependency Resolution</step>
+    <step>Field Coordinator & Event System Setup</step>
+    <step>Error Handling System Initialization</step>
+    <step>Validation Rules Configuration</step>
+    <step>Multi-Step Navigation Setup</step>
+    <step>Data Attribute Binding & Indexing</step>
+    <step>Summary & Display Functionality</step>
+    <step>Event Listener Registration</step>
+    <step>Initial State Establishment</step>
+    <step>Webflow Integration Verification</step>
+    <step>Error Monitoring & Recovery Setup</step>
+    <step>Performance Optimization & Cleanup</step>
+  </setup>
+
+  <!-- Quality Assurance & Robustness -->
+  <robustness>
+    <errorHandling>
+      <principle>Graceful degradation when elements are missing</principle>
+      <principle>Comprehensive logging for debugging</principle>
+      <principle>Fallback behaviors for failed operations</principle>
+      <principle>Memory leak prevention with cleanup functions</principle>
+    </errorHandling>
+    
+    <validation>
+      <requirement>Validate DOM elements exist before operations</requirement>
+      <requirement>Check data attributes are properly formatted</requirement>
+      <requirement>Verify step navigation targets exist</requirement>
+      <requirement>Ensure field names are unique and properly bound</requirement>
+    </validation>
+    
+    <performance>
+      <optimization>Cache DOM queries to prevent redundant searches</optimization>
+      <optimization>Use event delegation for dynamic content</optimization>
+      <optimization>Debounce validation events to reduce overhead</optimization>
+      <optimization>Clean up event listeners on module reset</optimization>
+    </performance>
+    
+    <compatibility>
+      <webflow>Support for Webflow's hidden radio button patterns</webflow>
+      <webflow>Handle Webflow's dynamic class system</webflow>
+      <webflow>Integrate with Webflow.push() timing</webflow>
+      <webflow>Respect Webflow's form submission flow</webflow>
+    </compatibility>
+  </robustness>
+
+  <!-- Initialization Patterns -->
+  <initializationPatterns>
+    <pattern name="singleton">Use singleton pattern for FormLibrary main class</pattern>
+    <pattern name="moduleRegistration">Register modules with central event system</pattern>
+    <pattern name="dependencyOrder">Initialize modules in dependency order: events → errors → validation → navigation</pattern>
+    <pattern name="cleanup">Provide cleanup/reset functions for all modules</pattern>
+    <pattern name="stateTracking">Track navigation history and visited steps</pattern>
+  </initializationPatterns>
+
+  <!-- Error Recovery Strategies -->
+  <errorRecovery>
+    <scenario type="missingStep">Log warning and skip to next available step</scenario>
+    <scenario type="invalidDataAttribute">Use fallback values and continue execution</scenario>
+    <scenario type="moduleInitFailure">Isolate failure and continue with other modules</scenario>
+    <scenario type="eventListenerError">Log error but maintain other functionality</scenario>
+    <scenario type="validationFailure">Show user-friendly error message and prevent navigation</scenario>
+  </errorRecovery>
+
+  <!-- Testing Strategies -->
+  <testing>
+    <unit>Test individual module functions in isolation</unit>
+    <integration>Test module communication through event system</integration>
+    <webflow>Test with Webflow's actual DOM structure and timing</webflow>
+    <edge>Test with missing elements, malformed data, and error conditions</edge>
+    <performance>Monitor memory usage and event listener cleanup</performance>
+  </testing>
+
+  <!-- Implementation Guidelines -->
+  <implementationGuidelines>
+    <dataFlow>
+      <step>User interaction triggers DOM event</step>
+      <step>Event delegation captures event at document level</step>
+      <step>Module processes event and updates internal state</step>
+      <step>Module emits standardized event via formEvents system</step>
+      <step>Other modules react to event and update accordingly</step>
+      <step>UI reflects state changes with visual feedback</step>
+    </dataFlow>
+    
+    <stateManagement>
+      <principle>Single source of truth for form data (FormState)</principle>
+      <principle>Module-specific state kept in module scope</principle>
+      <principle>Navigation history tracked for branch-aware back buttons</principle>
+      <principle>Validation state cached to prevent redundant checks</principle>
+    </stateManagement>
+    
+    <eventArchitecture>
+      <rule>Use formEvents for inter-module communication</rule>
+      <rule>Avoid direct module dependencies</rule>
+      <rule>Emit events for state changes that other modules need</rule>
+      <rule>Provide cleanup functions that remove event listeners</rule>
+    </eventArchitecture>
+  </implementationGuidelines>
+
+  <!-- Monitoring & Diagnostics -->
+  <monitoring>
+    <healthChecks>
+      <check>Verify all expected data attributes are present</check>
+      <check>Validate step navigation targets exist</check>
+      <check>Confirm event listeners are properly attached</check>
+      <check>Monitor memory usage of DOM query caches</check>
+    </healthChecks>
+    
+    <diagnostics>
+      <tool>debugStepSystem() - Visual step system diagnosis</tool>
+      <tool>getState() - Complete library state snapshot</tool>
+      <tool>logCurrentState() - Console state logging</tool>
+      <tool>FormLib.getFormData() - Current form data</tool>
+    </diagnostics>
+    
+    <performanceMetrics>
+      <metric>Module initialization time</metric>
+      <metric>Event processing latency</metric>
+      <metric>DOM query cache hit rate</metric>
+      <metric>Memory usage and cleanup effectiveness</metric>
+    </performanceMetrics>
+  </monitoring>
+
+  <!-- Webflow Implementation Specifics -->
+  <webflowIntegration>
+    <structure>
+      <form>
+        <pattern>Form must have: data-form="multistep" and data-logic="true"</pattern>
+        <example>&lt;form data-form="multistep" data-logic="true" class="multi-form_form"&gt;</example>
+      </form>
+      
+      <steps>
+        <pattern>Steps use mandatory two-level nesting structure with specific data attributes</pattern>
+        
+        <structure>
+          <outerLevel>
+            <element>div with data-form="step"</element>
+            <purpose>Container recognized by library for step detection</purpose>
+            <classes>Typically "multi-form_step" in Webflow</classes>
+          </outerLevel>
+          
+          <innerLevel>
+            <element>div with data-answer="step-id"</element>
+            <purpose>Navigation target registered by library</purpose>
+            <classes>Typically "step_wrapper" in Webflow</classes>
+            <required>data-answer value must be unique across entire form</required>
+          </innerLevel>
+          
+          <optionalAttributes>
+            <dataGoTo>data-go-to="target-step-id" - Forces navigation to specific step on next button</dataGoTo>
+            <dataBranch>data-branch="true" - Marks step as branching point with multiple options</dataBranch>
+            <stepMetadata>data-step-type, data-step-subtype, data-step-number for categorization</stepMetadata>
+          </optionalAttributes>
+          
+          <navigationElements>
+            <nextButton>data-form="next-btn" - Standard linear progression</nextButton>
+            <backButton>data-form="back-btn" - History-aware back navigation</backButton>
+            <skipButton>data-skip="target-step-id" - Jump to specific step</skipButton>
+            <radioButtons>input[type="radio"] with data-go-to="target-step-id" for branching</radioButtons>
+          </navigationElements>
+        </structure>
+        
+        <example>
+          &lt;div data-form="step" class="multi-form_step"&gt;
+            &lt;div data-answer="step-contact" data-go-to="step-company" data-step-type="contact" class="step_wrapper"&gt;
+              &lt;!-- Form fields --&gt;
+              &lt;input type="text" name="firstName" data-step-field-name="firstName" required&gt;
+              
+              &lt;!-- Branching radio buttons --&gt;
+              &lt;input type="radio" name="userType" data-go-to="step-individual" value="individual"&gt;
+              &lt;input type="radio" name="userType" data-go-to="step-business" value="business"&gt;
+              
+              &lt;!-- Standard navigation --&gt;
+              &lt;a data-form="back-btn" href="#"&gt;← Back&lt;/a&gt;
+              &lt;a data-form="next-btn" href="#"&gt;Next →&lt;/a&gt;
+              &lt;a data-skip="step-summary" href="#"&gt;Skip to Summary&lt;/a&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        </example>
+        
+        <criticalRules>
+          <rule>Library only recognizes .step_wrapper[data-answer] elements as navigation targets</rule>
+          <rule>data-go-to values must exactly match existing data-answer values</rule>
+          <rule>Radio buttons with data-go-to trigger immediate navigation on selection</rule>
+          <rule>data-form="next-btn" respects data-go-to on step wrapper for forced navigation</rule>
+          <rule>Missing data-answer targets will cause navigation failures with console errors</rule>
+        </criticalRules>
+      </steps>
+      
+      <radioButtons>
+        <pattern>Hidden radio buttons with visible labels for branching</pattern>
+        <example>
+          &lt;label class="radio_field w-radio"&gt;
+            &lt;input type="radio" name="userType" data-go-to="step-4a" 
+                   style="opacity:0;position:absolute;z-index:-1" 
+                   fs-inputactive-class="is-active-inputactive"&gt;
+            &lt;span class="radio_label"&gt;Individual&lt;/span&gt;
+          &lt;/label&gt;
+        </example>
+        <note>Library handles both input change AND label click events</note>
+      </radioButtons>
+      
+      <navigation>
+        <pattern>Standard navigation buttons with data-form attributes</pattern>
+        <example>
+          &lt;a data-form="next-btn" href="#" class="button"&gt;Next Step&lt;/a&gt;
+          &lt;a data-form="back-btn" href="#" class="button"&gt;Back&lt;/a&gt;
+          &lt;a data-skip="step-9" href="#" class="button"&gt;Skip Step&lt;/a&gt;
+        </example>
+      </navigation>
+    </structure>
+    
+    <dataAttributePatterns>
+      <destinations>
+        <attribute>data-answer="step-id"</attribute>
+        <purpose>Marks elements as navigation targets</purpose>
+        <required>true</required>
+        <example>data-answer="step-4a"</example>
+      </destinations>
+      
+      <sources>
+        <attribute>data-go-to="step-id"</attribute>
+        <purpose>Points to target with matching data-answer</purpose>
+        <context>Radio buttons, buttons, links</context>
+        <example>data-go-to="step-4a"</example>
+      </sources>
+      
+      <branching>
+        <attribute>data-branch="true"</attribute>
+        <purpose>Marks steps as branch points</purpose>
+        <context>Step wrapper elements that contain radio options</context>
+        <example>data-branch="true"</example>
+      </branching>
+      
+      <fields>
+        <attribute>data-step-field-name="fieldName"</attribute>
+        <purpose>Unique identifier for state management</purpose>
+        <context>Form inputs for data persistence</context>
+        <example>data-step-field-name="firstName"</example>
+      </fields>
+    </dataAttributePatterns>
+    
+    <specialCases>
+      <hiddenInputs>
+        <description>Webflow uses opacity:0 and absolute positioning to hide radio buttons</description>
+        <solution>Library detects label clicks and triggers hidden radio buttons</solution>
+        <styling>fs-inputactive-class attribute automatically applied on selection</styling>
+      </hiddenInputs>
+      
+      <dynamicClasses>
+        <description>Webflow applies dynamic classes for styling states</description>
+        <pattern>Active state classes applied via fs-inputactive-class attribute</pattern>
+        <handling>Library respects and maintains Webflow's class system</handling>
+      </dynamicClasses>
+      
+      <formSubmission>
+        <description>Library preserves Webflow's native form submission</description>
+        <behavior>Multi-step navigation stops at final step, submit button triggers normal Webflow flow</behavior>
+        <integration>Compatible with Webflow's form handling and integrations</integration>
+      </formSubmission>
+    </specialCases>
+  </webflowIntegration>
+
+  <!-- Real-World Examples from Project -->
+  <realWorldExamples>
+    <branchingFlow>
+      <description>User selects entity type, navigates to different step paths</description>
+      <implementation>
+        <step1>data-answer="step-4" with data-branch="true" contains radio options</step1>
+        <options>Each radio has data-go-to pointing to specific answer steps (step-4a, step-4b, etc.)</options>
+        <result>Immediate navigation on radio selection to appropriate step</result>
+      </implementation>
+    </branchingFlow>
+    
+    <stepCategories>
+      <description>Steps organized by type and subtype for logical grouping</description>
+      <implementation>
+        <contact>data-step-type="contact" data-step-subtype="info" data-step-number="1"</contact>
+        <company>data-step-type="company" data-step-subtype="names" data-step-number="1"</company>
+        <purpose>Enables validation scoping and summary organization</purpose>
+      </implementation>
+    </stepCategories>
+    
+    <fieldManagement>
+      <description>42 step wrappers with comprehensive field collection</description>
+      <patterns>
+        <personal>firstName, lastName, email, phone, address fields</personal>
+        <business>companyName1, companyName2, companyName3, extension fields</business>
+        <advanced>countryCode dropdowns, Google Places integration</advanced>
+      </patterns>
+    </fieldManagement>
+  </realWorldExamples>
+
+  <!-- Critical Success Factors -->
+  <criticalSuccessFactors>
+    <initialization>
+      <requirement>Library must auto-detect Webflow forms on page load</requirement>
+      <requirement>Integration with Webflow.push() timing system</requirement>
+      <requirement>Graceful handling of missing or malformed elements</requirement>
+    </initialization>
+    
+    <navigation>
+      <requirement>Immediate response to radio button selections</requirement>
+      <requirement>Branch-aware back navigation with history tracking</requirement>
+      <requirement>Validation scoped only to visited steps</requirement>
+    </navigation>
+    
+    <compatibility>
+      <requirement>Preserve all Webflow styling and behavior</requirement>
+      <requirement>Work with Webflow's form submission system</requirement>
+      <requirement>Support Webflow's dynamic class applications</requirement>
+    </compatibility>
+    
+    <debugging>
+      <requirement>Comprehensive console logging for troubleshooting</requirement>
+      <requirement>Built-in diagnostic tools (debugStepSystem(), getState())</requirement>
+      <requirement>Clear error messages for malformed HTML</requirement>
+    </debugging>
+  </criticalSuccessFactors>
+
+  <!-- Current Project Status -->
+  <projectStatus>
+    <architecture>
+      <status>Complete - Modular event-driven architecture implemented</status>
+      <modules>events.ts, formState.ts, multiStep.ts, validation.ts, errors.ts, summary.ts, utils.ts</modules>
+      <integration>Singleton FormLibrary class with auto-initialization</integration>
+    </architecture>
+    
+    <webflowCompatibility>
+      <status>Fully tested and compatible</status>
+      <testFiles>test-webflow.html, webflow/test.html</testFiles>
+      <features>Hidden radio detection, label click handling, branch navigation</features>
+    </webflowCompatibility>
+    
+    <deployment>
+      <status>Ready for production</status>
+      <cdn>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js</cdn>
+      <documentation>README.md, WEBFLOW_INTEGRATION.md, WEBFLOW_COMPATIBILITY_REPORT.md</documentation>
+    </deployment>
+    
+    <codeQuality>
+      <typescript>Full TypeScript implementation with strict typing</typescript>
+      <testing>Comprehensive test files for different scenarios</testing>
+      <logging>Verbose debug logging throughout all modules</logging>
+      <cleanup>Proper event listener cleanup and memory management</cleanup>
+    </codeQuality>
+  </projectStatus>
+
+  <!-- Troubleshooting & Maintenance -->
+  <troubleshooting>
+    <commonIssues>
+      <issue type="navigation-failure">
+        <symptoms>Steps not changing, radio buttons not working</symptoms>
+        <causes>Missing data-answer targets, malformed data-go-to references</causes>
+        <solution>Use FormLib.debugStepSystem() to check step registration</solution>
+      </issue>
+      
+      <issue type="validation-errors">
+        <symptoms>Validation triggering on unvisited steps</symptoms>
+        <causes>Validation not scoped to navigated steps</causes>
+        <solution>Check navigatedSteps tracking in validation module</solution>
+      </issue>
+      
+      <issue type="webflow-conflicts">
+        <symptoms>Styling broken, interactions not working</symptoms>
+        <causes>Library interfering with Webflow classes</causes>
+        <solution>Verify library preserves fs-inputactive-class and Webflow patterns</solution>
+      </issue>
+    </commonIssues>
+    
+    <debuggingTools>
+      <consoleCommands>
+        <tool name="FormLib.debugStepSystem()">Complete step system diagnosis with visibility checks</tool>
+        <tool name="FormLib.getState()">Full library state snapshot for debugging</tool>
+        <tool name="FormLib.getNavigatedSteps()">View which steps user has visited</tool>
+        <tool name="console.log('FormLib')">Check if library loaded and available</tool>
+      </consoleCommands>
+      
+      <browserMcpIntegration>
+        <workflow>
+          <step>Navigate to problematic Webflow form</step>
+          <step>Open browser developer tools (F12)</step>
+          <step>Execute debugging commands in console</step>
+          <step>Interact with form to reproduce issue</step>
+          <step>Use browser MCP to capture all console output</step>
+          <step>Save captured logs to project files for analysis</step>
+        </workflow>
+        
+        <logAnalysis>
+          <lookFor>🚀 [FormLib] initialization messages</lookFor>
+          <lookFor>📋 [MultiStep] step registration details</lookFor>
+          <lookFor>❌ Error messages with specific step IDs</lookFor>
+          <lookFor>⚠️ Warning messages about missing elements</lookFor>
+          <lookFor>🎯 Navigation events and step changes</lookFor>
+        </lookFor>
+        
+        <commonPatterns>
+          <pattern>Library not loading: Check for 404 errors on NPM CDN URL</pattern>
+          <pattern>Steps not registering: Look for "No step wrappers found" messages</pattern>
+          <pattern>Navigation failing: Check for "Step not found" errors with step IDs</pattern>
+          <pattern>Validation issues: Look for "Skipping validation" messages</pattern>
+        </commonPatterns>
+      </browserMcpIntegration>
+    </debuggingTools>
+    
+    <diagnosticChecklist>
+      <check>Verify form has data-form="multistep" and data-logic="true"</check>
+      <check>Confirm all data-go-to values have matching data-answer targets</check>
+      <check>Check browser console for initialization errors</check>
+      <check>Validate step_wrapper elements are properly nested in data-form="step"</check>
+      <check>Test in Webflow preview mode or published site (not Designer)</check>
+    </diagnosticChecklist>
+  </troubleshooting>
+
+  <!-- Maintenance Guidelines -->
+  <maintenance>
+    <versionControl>
+      <pattern>Use semantic versioning for releases (v1.0.0, v1.1.0, etc.)</pattern>
+      <deployment>Push to GitHub, create tags, jsDelivr automatically syncs</deployment>
+      <testing>Test new versions with actual Webflow forms before deployment</testing>
+    </versionControl>
+    
+    <codeUpdates>
+      <principle>Maintain backward compatibility with existing Webflow forms</principle>
+      <principle>Test all changes against webflow/test.html structure</principle>
+      <principle>Preserve data attribute patterns and event handling</principle>
+      <principle>Keep TypeScript compilation clean and error-free</principle>
+    </codeUpdates>
+    
+    <documentation>
+      <requirement>Update README.md for any API changes</requirement>
+      <requirement>Maintain WEBFLOW_INTEGRATION.md with current CDN URLs</requirement>
+      <requirement>Update version numbers in documentation examples</requirement>
+      <requirement>Keep compatibility reports current with testing results</requirement>
+    </documentation>
+  </maintenance>
+
+  <!-- Deployment & Publishing Requirements -->
+  <deployment>
+    <mandatoryProcess>
+      <step1>
+        <action>Commit all changes to GitHub repository</action>
+        <repository>https://github.com/CorporateDirect/Forms</repository>
+        <commands>
+          <command>git add .</command>
+          <command>git commit -m "feat: description of changes"</command>
+          <command>git push origin main</command>
+        </commands>
+        <commitFormat>Use conventional commits: feat:, fix:, docs:, refactor:, etc.</commitFormat>
+      </step1>
+      
+      <step2>
+        <action>Create version tag for release</action>
+        <commands>
+          <command>git tag v1.x.x</command>
+          <command>git push origin v1.x.x</command>
+        </commands>
+        <versioning>Follow semantic versioning (MAJOR.MINOR.PATCH)</versioning>
+        <note>jsDelivr CDN automatically syncs from GitHub tags</note>
+      </step2>
+      
+      <step3>
+        <action>Update NPM package</action>
+        <package>https://www.npmjs.com/package/form-functionality-library</package>
+        <commands>
+          <command>npm version patch|minor|major</command>
+          <command>npm run build</command>
+          <command>npm publish</command>
+        </commands>
+        <verification>Check package.json version matches git tag</verification>
+      </step3>
+      
+      <step4>
+        <action>Update documentation</action>
+        <files>
+          <file>README.md - Update version numbers in examples</file>
+          <file>WEBFLOW_INTEGRATION.md - Update CDN URLs to new version</file>
+          <file>.cursor/rules/rules.xml - Update projectStatus if needed</file>
+        </files>
+      </step4>
+    </mandatoryProcess>
+    
+    <cdnUrls>
+      <github>
+        <latest>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@latest/dist/index.min.js</latest>
+        <specific>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@v1.x.x/dist/index.min.js</specific>
+        <commit>https://cdn.jsdelivr.net/gh/CorporateDirect/Forms@{commit-hash}/dist/index.min.js</commit>
+      </github>
+      
+      <npm>
+        <latest>https://cdn.jsdelivr.net/npm/form-functionality-library@latest/dist/index.js</latest>
+        <specific>https://cdn.jsdelivr.net/npm/form-functionality-library@1.x.x/dist/index.js</specific>
+      </npm>
+    </cdnUrls>
+    
+    <testingRequirements>
+      <realWorldTesting>
+        <step1>Deploy to NPM package first</step1>
+        <step2>Add NPM CDN URL to live Webflow project</step2>
+        <step3>Publish Webflow project with new library version</step3>
+        <step4>Test functionality in live Webflow environment</step4>
+        <step5>Use browser MCP to capture and analyze console logs</step5>
+      </realWorldTesting>
+      
+      <webflowIntegration>
+        <npmUrl>https://cdn.jsdelivr.net/npm/form-functionality-library@latest/dist/index.js</npmUrl>
+        <placement>Add to Webflow Project Settings → Custom Code → Footer Code</placement>
+        <testingContext>Live published Webflow site (not Designer or preview)</testingContext>
+      </webflowIntegration>
+      
+      <browserMcpWorkflow>
+        <purpose>Capture console logs for troubleshooting and debugging</purpose>
+        <process>
+          <step>Navigate to live Webflow form with new library version</step>
+          <step>Open browser developer tools and interact with form</step>
+          <step>Use browser MCP to extract console logs</step>
+          <step>Save logs to project for analysis and debugging</step>
+          <step>Review logs for initialization errors, navigation issues, validation problems</step>
+        </process>
+        <logTargets>
+          <target>FormLib initialization messages</target>
+          <target>Step registration and navigation events</target>
+          <target>Validation and error handling logs</target>
+          <target>Any JavaScript errors or warnings</target>
+          <target>Performance metrics and timing information</target>
+        </logTargets>
+      </browserMcpWorkflow>
+      
+      <validationChecklist>
+        <check>Library loads without errors in Webflow environment</check>
+        <check>FormLib.debugStepSystem() reports correct step registration</check>
+        <check>Radio button navigation works with Webflow's hidden input pattern</check>
+        <check>Form validation triggers only on visited steps</check>
+        <check>Browser console shows clean initialization (no errors)</check>
+        <check>TypeScript compilation completed without errors before NPM publish</check>
+      </validationChecklist>
+    </testingRequirements>
+    
+    <rollbackProcedure>
+      <emergency>If deployed version has critical issues</emergency>
+      <steps>
+        <step>Revert git commit: git revert {commit-hash}</step>
+        <step>Create new patch version: git tag v1.x.x</step>
+        <step>Republish to NPM: npm publish</step>
+        <step>Update Webflow projects to use previous stable version</step>
+      </steps>
+    </rollbackProcedure>
+  </deployment>
+
+  <!-- Critical Reminders -->
+  <criticalReminders>
+    <reminder priority="HIGH">NEVER deploy without committing to GitHub first</reminder>
+    <reminder priority="HIGH">ALWAYS update NPM package after GitHub changes</reminder>
+    <reminder priority="HIGH">Test with actual Webflow forms before publishing</reminder>
+    <reminder priority="MEDIUM">Update version numbers in all documentation</reminder>
+    <reminder priority="MEDIUM">Verify CDN URLs work after deployment</reminder>
+    <reminder priority="LOW">Consider backward compatibility for existing forms</reminder>
+  </criticalReminders>
+</projectConfig>
