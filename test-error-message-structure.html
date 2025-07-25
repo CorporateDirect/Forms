@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error Message Structure Test</title>
+    <style>
+        .form-field_wrapper {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .form_field-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form_input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        
+        .form_input.error-field {
+            border-color: #e74c3c;
+            background-color: #fdf2f2;
+        }
+        
+        .form-field_wrapper.error-field {
+            border-color: #e74c3c;
+            background-color: #fef5f5;
+        }
+        
+        .form_error-message {
+            color: #e74c3c;
+            font-size: 0.875em;
+            margin-top: 5px;
+            display: block;
+        }
+        
+        .test-controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-success { background-color: #28a745; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; }
+    </style>
+</head>
+<body>
+    <h1>Form Error Message Structure Test</h1>
+    
+    <form data-form="multistep" data-logic="true">
+        <!-- Step 1 with new form-field_wrapper structure -->
+        <div data-form="step">
+            <div data-answer="test-step" class="step_wrapper">
+                <h2>Test Fields with New Structure</h2>
+                
+                <!-- Field 1: Pre-existing error container -->
+                <div class="form-field_wrapper">
+                    <label class="form_field-label">First Name*</label>
+                    <input type="text" class="form_input w-input" data-step-field-name="firstName" required>
+                    <div data-form="error" class="form_error-message">Pre-existing error container</div>
+                </div>
+                
+                <!-- Field 2: No error container (will be created) -->
+                <div class="form-field_wrapper">
+                    <label class="form_field-label">Email*</label>
+                    <input type="email" class="form_input w-input" data-step-field-name="email" required>
+                </div>
+                
+                <!-- Field 3: Legacy structure (should still work) -->
+                <div class="multi-form_field-wrapper">
+                    <label class="form_field-label">Phone</label>
+                    <input type="tel" class="form_input w-input" data-step-field-name="phone">
+                    <div data-form="error" class="text-size-tiny error-state">Legacy error container</div>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    <div class="test-controls">
+        <h3>Test Controls</h3>
+        <button type="button" class="btn-primary" onclick="initializeLibrary()">Initialize Library</button>
+        <button type="button" class="btn-danger" onclick="testShowErrors()">Show Test Errors</button>
+        <button type="button" class="btn-success" onclick="testClearErrors()">Clear All Errors</button>
+        <button type="button" class="btn-primary" onclick="debugSystem()">Debug System</button>
+    </div>
+    
+    <div id="console-output">
+        <h3>Console Output:</h3>
+        <div id="log-container" style="background: #f8f9fa; padding: 10px; border-radius: 5px; max-height: 300px; overflow-y: scroll;">
+        </div>
+    </div>
+
+    <!-- Load the library -->
+    <script type="module">
+        // Import the library (adjust path as needed)
+        import FormLib from './dist/index.js';
+        
+        // Make FormLib available globally for testing
+        window.FormLib = FormLib;
+        
+        // Intercept console.log to show output on page
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const logContainer = document.getElementById('log-container');
+            if (logContainer) {
+                const logEntry = document.createElement('div');
+                logEntry.textContent = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg).join(' ');
+                logEntry.style.marginBottom = '5px';
+                logContainer.appendChild(logEntry);
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        };
+        
+        // Test functions
+        window.initializeLibrary = function() {
+            console.log('🚀 Initializing FormLib...');
+            FormLib.init();
+            console.log('✅ FormLib initialized');
+        };
+        
+        window.testShowErrors = function() {
+            console.log('🔴 Testing error display...');
+            
+            // Test showing errors on different field types
+            FormLib.showError?.('firstName', 'First name is required');
+            FormLib.showError?.('email', 'Please enter a valid email address');
+            FormLib.showError?.('phone', 'Invalid phone number format');
+            
+            console.log('✅ Test errors displayed');
+        };
+        
+        window.testClearErrors = function() {
+            console.log('🟢 Clearing all errors...');
+            FormLib.clearAllErrors?.();
+            console.log('✅ All errors cleared');
+        };
+        
+        window.debugSystem = function() {
+            console.log('🔍 Running system diagnostics...');
+            FormLib.debugStepSystem?.();
+            console.log('📊 Current state:', FormLib.getState?.());
+        };
+        
+        // Auto-initialize on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 Page loaded, auto-initializing...');
+            setTimeout(() => {
+                window.initializeLibrary();
+            }, 500);
+        });
+    </script>
+</body>
+</html> 

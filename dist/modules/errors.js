@@ -138,31 +138,46 @@ function findOrCreateErrorElement(config) {
         });
         return null;
     }
-    // Look for existing error element
+    // Look for existing error element in form-field_wrapper structure
     let errorElement = null;
-    try {
-        errorElement = config.element.parentElement.querySelector(`${SELECTORS.ERROR_DISPLAY}[data-field="${config.fieldName}"]`);
+    // First, try to find error element in new uniform structure
+    const fieldWrapper = config.element.closest('.form-field_wrapper');
+    if (fieldWrapper) {
+        errorElement = fieldWrapper.querySelector('[data-form="error"]');
     }
-    catch (error) {
-        logVerbose(`Error finding existing error element for field: ${config.fieldName}`, error);
-        return null;
+    // Fallback: Look for existing error element by field name (legacy support)
+    if (!errorElement) {
+        try {
+            errorElement = config.element.parentElement.querySelector(`${SELECTORS.ERROR_DISPLAY}[data-field="${config.fieldName}"]`);
+        }
+        catch (error) {
+            logVerbose(`Error finding existing error element for field: ${config.fieldName}`, error);
+        }
     }
     if (!errorElement) {
         try {
-            // Create new error element
+            // Create new error element with proper structure
             errorElement = document.createElement('div');
             errorElement.setAttribute('data-form', 'error');
             errorElement.setAttribute('data-field', config.fieldName);
-            // Insert after the input
-            const parent = config.element.parentElement;
-            const nextSibling = config.element.nextSibling;
-            if (nextSibling) {
-                parent.insertBefore(errorElement, nextSibling);
+            errorElement.className = 'form_error-message';
+            // Insert in form-field_wrapper if available, otherwise fallback to old method
+            if (fieldWrapper) {
+                fieldWrapper.appendChild(errorElement);
+                logVerbose(`Created error element in form-field_wrapper for field: ${config.fieldName}`);
             }
             else {
-                parent.appendChild(errorElement);
+                // Fallback: Insert after the input (legacy behavior)
+                const parent = config.element.parentElement;
+                const nextSibling = config.element.nextSibling;
+                if (nextSibling) {
+                    parent.insertBefore(errorElement, nextSibling);
+                }
+                else {
+                    parent.appendChild(errorElement);
+                }
+                logVerbose(`Created error element (legacy method) for field: ${config.fieldName}`);
             }
-            logVerbose(`Created error element for field: ${config.fieldName}`);
         }
         catch (error) {
             logVerbose(`Error creating error element for field: ${config.fieldName}`, error);

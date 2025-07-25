@@ -18,7 +18,7 @@ console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 // Import all modules  
 import { initMultiStep, goToStep, goToStepById, debugStepSystem, getNavigatedSteps } from './modules/multiStep.js';
 import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/multiStep-clean.js';
-import { initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState } from './modules/multiStep-diagnostic.js';
+// import { initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState } from './modules/multiStep-diagnostic.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, getErrorState } from './modules/errors.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
@@ -204,6 +204,22 @@ class FormLibrary {
     getNavigatedSteps() {
         return getNavigatedSteps();
     }
+    // Error handling methods for testing
+    showError(fieldName, message) {
+        showError(fieldName, message);
+    }
+    clearError(fieldName) {
+        clearError(fieldName);
+    }
+    clearAllErrors() {
+        clearAllErrors();
+    }
+    hasError(fieldName) {
+        return hasError(fieldName);
+    }
+    getFieldsWithErrors() {
+        return getFieldsWithErrors();
+    }
 }
 // Create and export singleton instance
 const FormLib = FormLibrary.getInstance();
@@ -218,7 +234,9 @@ initMultiStep, goToStep, goToStepById,
 // Ultra-minimal clean version (zero legacy code)
 initMultiStepClean, goToStepByIdClean, getCleanState, 
 // Ultra-verbose diagnostic version for debugging
-initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState, 
+// initMultiStepDiagnostic,
+// goToStepByIdDiagnostic,
+// getDiagnosticState,
 // Validation
 initValidation, validateField, validateStep, validateAllVisibleFields, 
 // Errors

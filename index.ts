@@ -4,7 +4,7 @@
  * A modular, flexible form functionality library for Webflow forms
  * supporting single-step, multi-step, and branching forms.
  * 
- * Version: CACHE_BUST_2025_01_10_14_45_FRESH
+ * Version: CACHE_BUST_2025_01_25_18_00_PROGRESSIVE_DISCLOSURE_FIX
  */
 
 import { SELECTORS } from './config.js';
@@ -14,7 +14,7 @@ import { FormState } from './modules/formState.js';
 
 // Add version logging to verify which script is loading
 console.log('🚀 [FormLib] === SCRIPT VERSION CHECK ===');
-console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_10_14_45_FRESH');
+console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_25_18_00_PROGRESSIVE_DISCLOSURE_FIX');
 console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
 console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 
@@ -246,6 +246,27 @@ class FormLibrary {
   public getNavigatedSteps(): string[] {
     return getNavigatedSteps();
   }
+
+  // Error handling methods for testing
+  public showError(fieldName: string, message?: string): void {
+    showError(fieldName, message);
+  }
+
+  public clearError(fieldName: string): void {
+    clearError(fieldName);
+  }
+
+  public clearAllErrors(): void {
+    clearAllErrors();
+  }
+
+  public hasError(fieldName: string): boolean {
+    return hasError(fieldName);
+  }
+
+  public getFieldsWithErrors(): string[] {
+    return getFieldsWithErrors();
+  }
 }
 
 // Create and export singleton instance
@@ -301,25 +322,53 @@ if (typeof window !== 'undefined') {
     const multistepForms = document.querySelectorAll(SELECTORS.MULTISTEP);
     const stepElements = document.querySelectorAll(SELECTORS.STEP);
     
+    console.log('🔍 [FormLib] Auto-init check:', {
+      multistepForms: multistepForms.length,
+      stepElements: stepElements.length,
+      readyState: document.readyState
+    });
+    
     if (multistepForms.length > 0 || stepElements.length > 0) {
-      logVerbose('Auto-initializing FormLibrary via Webflow.push');
-      FormLib.init();
+      console.log('🚀 [FormLib] Auto-initializing FormLibrary');
+      try {
+        FormLib.init();
+        console.log('✅ [FormLib] Auto-initialization complete');
+      } catch (error) {
+        console.error('❌ [FormLib] Auto-initialization failed:', error);
+      }
+    } else {
+      console.log('⏭️ [FormLib] No compatible forms found, skipping auto-init');
     }
   };
 
-  // Use Webflow.push for proper Webflow integration timing
+  // Enhanced timing for Webflow compatibility
   const webflowWindow = window as unknown as { Webflow?: { push: (fn: () => void) => void } };
+  
+  // Try multiple initialization strategies for maximum compatibility
   if (webflowWindow.Webflow?.push) {
+    console.log('🌐 [FormLib] Using Webflow.push for initialization');
     webflowWindow.Webflow.push(autoInit);
   } else {
-    // Fallback to DOM ready if Webflow is not available
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', autoInit);
-    } else {
-      // DOM is already ready
+    console.log('🔄 [FormLib] Webflow not available, using DOM events');
+  }
+  
+  // Always add DOM ready fallback
+  if (document.readyState === 'loading') {
+    console.log('⏳ [FormLib] DOM loading, waiting for ready');
+    document.addEventListener('DOMContentLoaded', autoInit);
+  } else {
+    console.log('✅ [FormLib] DOM already ready, initializing now');
+    // Add slight delay to ensure all elements are rendered
+    setTimeout(autoInit, 100);
+  }
+  
+  // Additional fallback for dynamic content
+  setTimeout(() => {
+    if (!FormLib.isInitialized()) {
+      console.log('🔁 [FormLib] Fallback initialization attempt');
       autoInit();
     }
-  }
+  }, 1000);
 }
 
 // Make FormLib available globally for testing

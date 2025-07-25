@@ -68,6 +68,10 @@ export declare const SELECTORS: {
     readonly ERROR_MESSAGE: "[data-error-message]";
     readonly VALIDATE: "[data-validate]";
     readonly ALL_INPUTS: "input, select, textarea";
+    readonly FORM_FIELD_WRAPPER: ".form-field_wrapper";
+    readonly FORM_FIELD_LABEL: ".form_field-label";
+    readonly FORM_INPUT: ".form_input";
+    readonly FORM_ERROR_MESSAGE: ".form_error-message";
 };
 export declare const DEFAULTS: {
     readonly START_STEP: 1;
@@ -90,6 +94,10 @@ export declare const CSS_CLASSES: {
     readonly ERROR_FIELD: "error-field";
     readonly ACTIVE_ERROR: "active-error";
     readonly DISABLED: "disabled";
+    readonly FORM_FIELD_WRAPPER: "form-field_wrapper";
+    readonly FORM_FIELD_LABEL: "form_field-label";
+    readonly FORM_INPUT: "form_input";
+    readonly FORM_ERROR_MESSAGE: "form_error-message";
 };
 export type JoinType = keyof typeof DEFAULTS.JOIN_SEPARATOR;
 //# sourceMappingURL=config.d.ts.map

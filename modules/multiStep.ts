@@ -88,10 +88,17 @@ export function initMultiStep(root: Document | Element = document): void {
     regularSteps: steps.filter(s => !s.isBranch).map(s => s.id)
   });
   
-  // Hide all steps initially
+  // Hide all steps initially EXCEPT step-0
   steps.forEach((step, index) => {
-    console.log(`🫥 [MultiStep] Hiding step ${index} (${step.id})`);
-    hideElement(step.element);
+    if (step.id === 'step-0') {
+      console.log(`👁️ [MultiStep] Keeping step-0 visible for progressive disclosure`);
+      // Ensure step-0 is visible from the start
+      showElement(step.element);
+      step.element.classList.add('active-step');
+    } else {
+      console.log(`🫥 [MultiStep] Hiding step ${index} (${step.id})`);
+      hideElement(step.element);
+    }
   });
 
   // Set up navigation and events
@@ -99,10 +106,35 @@ export function initMultiStep(root: Document | Element = document): void {
   setupEventListeners();
   setupSkipListeners(root);
 
-  // Show first step
+  // Initialize to step 0 for progressive disclosure
   if (steps.length > 0) {
-    console.log('🎬 [MultiStep] Showing initial step: 0');
-    goToStep(0);
+    const step0Index = steps.findIndex(s => s.id === 'step-0');
+    if (step0Index !== -1) {
+      console.log('🎬 [MultiStep] Progressive disclosure: Setting step-0 as current');
+      currentStepIndex = step0Index;
+      currentStepId = 'step-0';
+      stepHistory = ['step-0'];
+      navigatedSteps.add('step-0');
+      
+      // Ensure step-0 is properly visible
+      const step0 = steps[step0Index];
+      showElement(step0.element);
+      step0.element.classList.add('active-step');
+      
+      // Update navigation buttons for step-0
+      updateNavigationButtons();
+      
+      // Emit initial step event
+      formEvents.emit('step:change', {
+        currentStepIndex: step0Index,
+        currentStepId: 'step-0',
+        navigatedSteps: Array.from(navigatedSteps),
+        isBranchStep: step0.isBranch
+      });
+    } else {
+      console.log('🎬 [MultiStep] No step-0 found, showing first step');
+      goToStep(0);
+    }
   }
 
   initialized = true;

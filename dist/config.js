@@ -83,7 +83,12 @@ export const SELECTORS = {
     ERROR_MESSAGE: '[data-error-message]',
     VALIDATE: '[data-validate]',
     // Generic
-    ALL_INPUTS: 'input, select, textarea'
+    ALL_INPUTS: 'input, select, textarea',
+    // New uniform form field selectors
+    FORM_FIELD_WRAPPER: '.form-field_wrapper',
+    FORM_FIELD_LABEL: '.form_field-label',
+    FORM_INPUT: '.form_input',
+    FORM_ERROR_MESSAGE: '.form_error-message'
 };
 export const DEFAULTS = {
     START_STEP: 1,
@@ -105,6 +110,11 @@ export const CSS_CLASSES = {
     HIDDEN_STEP_ITEM: 'hidden-step-item',
     ERROR_FIELD: 'error-field',
     ACTIVE_ERROR: 'active-error',
-    DISABLED: 'disabled'
+    DISABLED: 'disabled',
+    // New uniform form field classes
+    FORM_FIELD_WRAPPER: 'form-field_wrapper',
+    FORM_FIELD_LABEL: 'form_field-label',
+    FORM_INPUT: 'form_input',
+    FORM_ERROR_MESSAGE: 'form_error-message'
 };
 //# sourceMappingURL=config.js.map

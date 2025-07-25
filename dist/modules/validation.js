@@ -290,11 +290,24 @@ function updateFieldVisualState(input, isValid, errorMessage) {
     const fieldName = input.name || getAttrValue(input, 'data-step-field-name');
     if (!fieldName)
         return;
+    // Apply error state to input
     if (!isValid) {
+        input.classList.add('error-field');
         showError(fieldName, errorMessage);
     }
     else {
+        input.classList.remove('error-field');
         clearError(fieldName);
+    }
+    // Also apply error state to form-field_wrapper if present (new structure)
+    const fieldWrapper = input.closest('.form-field_wrapper');
+    if (fieldWrapper) {
+        if (!isValid) {
+            fieldWrapper.classList.add('error-field');
+        }
+        else {
+            fieldWrapper.classList.remove('error-field');
+        }
     }
 }
 /**
