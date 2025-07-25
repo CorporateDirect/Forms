@@ -423,11 +423,45 @@ function handleLabelClick(event: Event, target: Element): void {
 }
 
 /**
- * Handle direct navigation from any element with data-go-to
+ * Handle direct navigation from navigation elements (buttons, links) with data-go-to
+ * DOES NOT trigger on step wrapper containers - only on actual navigation elements
  */
 function handleDirectNavigation(event: Event, target: Element): void {
   // Skip if this is a radio button (handled by handleRadioNavigation)
   if (target instanceof HTMLInputElement && target.type === 'radio') {
+    return;
+  }
+  
+  // CRITICAL FIX: Only allow navigation from specific navigation elements
+  // Do NOT trigger navigation from step wrapper containers
+  const isStepWrapper = target.classList.contains('step_wrapper') || 
+                        target.classList.contains('step-wrapper') ||
+                        getAttrValue(target, 'data-answer');
+  
+  if (isStepWrapper) {
+    console.log('🛑 [MultiStep] Ignoring navigation from step wrapper:', {
+      stepId: getAttrValue(target, 'data-answer'),
+      reason: 'Step wrappers should not trigger direct navigation'
+    });
+    return;
+  }
+  
+  // Only allow navigation from actual navigation elements
+  const isNavigationElement = 
+    target.tagName === 'A' ||           // Links
+    target.tagName === 'BUTTON' ||     // Buttons
+    getAttrValue(target, 'data-form')?.includes('btn') ||  // Elements with data-form="*-btn"
+    getAttrValue(target, 'data-skip') ||                   // Skip elements
+    target.classList.contains('button') ||                 // Webflow button class
+    target.closest('[data-form*="btn"]') ||               // Child of button element
+    target.closest('button, a');                         // Child of button/link
+  
+  if (!isNavigationElement) {
+    console.log('🛑 [MultiStep] Ignoring navigation from non-navigation element:', {
+      element: target.tagName,
+      className: target.className,
+      reason: 'Only buttons, links, and navigation elements can trigger navigation'
+    });
     return;
   }
   
@@ -441,7 +475,8 @@ function handleDirectNavigation(event: Event, target: Element): void {
   console.log('🎯 [MultiStep] Direct navigation triggered:', {
     element: target.tagName,
     className: target.className,
-    goToValue
+    goToValue,
+    isNavigationElement: true
   });
   
   goToStepById(goToValue);
