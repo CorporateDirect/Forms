@@ -708,4 +708,56 @@
     <reminder priority="MEDIUM">Verify CDN URLs work after deployment</reminder>
     <reminder priority="LOW">Consider backward compatibility for existing forms</reminder>
   </criticalReminders>
+
+  <!-- Mandatory Workflow Rules -->
+  <mandatoryWorkflow>
+    <rule type="POST_CHANGE_PROMPT" priority="CRITICAL">
+      <trigger>After making ANY code changes to the project files</trigger>
+      <requirement>ALWAYS prompt the user to commit changes and update NPM package</requirement>
+      <message>
+        "🚨 DEPLOYMENT REQUIRED: Code changes detected. 
+        
+        Next steps required:
+        1. Commit changes to GitHub
+        2. Update NPM package version
+        3. Publish to NPM
+        4. Update Webflow with new CDN URL
+        
+        Would you like me to proceed with the deployment workflow?"
+      </message>
+      <exceptions>NONE - This prompt is mandatory for all code changes</exceptions>
+    </rule>
+    
+    <rule type="VERSION_INCREMENT" priority="CRITICAL">
+      <trigger>Before publishing to NPM</trigger>
+      <requirement>ALWAYS increment version number in package.json</requirement>
+      <pattern>Use semantic versioning: patch for fixes, minor for features, major for breaking changes</pattern>
+      <autoIncrement>true</autoIncrement>
+    </rule>
+    
+    <rule type="COMMIT_BEFORE_PUBLISH" priority="CRITICAL">
+      <trigger>Before NPM publish command</trigger>
+      <requirement>Ensure all changes are committed to GitHub first</requirement>
+      <verification>Check git status shows clean working directory</verification>
+      <failureAction>Block NPM publish and prompt for Git commit</failureAction>
+    </rule>
+    
+    <rule type="CDN_URL_UPDATE" priority="HIGH">
+      <trigger>After successful NPM publish</trigger>
+      <requirement>Provide updated CDN URL for Webflow integration</requirement>
+      <format>https://unpkg.com/form-functionality-library@{version}/dist/index.browser.min.js</format>
+      <note>Always use the minified browser build for production</note>
+    </rule>
+    
+    <rule type="DEPLOYMENT_VERIFICATION" priority="HIGH">
+      <trigger>After providing new CDN URL</trigger>
+      <requirement>Remind user to test with actual Webflow form</requirement>
+      <testingSteps>
+        <step>Update Webflow project with new CDN URL</step>
+        <step>Publish Webflow project</step>
+        <step>Test form functionality on live site</step>
+        <step>Use Browser MCP to capture console logs if issues arise</step>
+      </testingSteps>
+    </rule>
+  </mandatoryWorkflow>
 </projectConfig>

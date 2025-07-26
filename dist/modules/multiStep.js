@@ -59,19 +59,50 @@ export function initMultiStep(root = document) {
         branchSteps: steps.filter(s => s.isBranch).map(s => s.id),
         regularSteps: steps.filter(s => !s.isBranch).map(s => s.id)
     });
-    // Hide all steps initially
+    // Hide all steps initially EXCEPT step-0
     steps.forEach((step, index) => {
-        console.log(`🫥 [MultiStep] Hiding step ${index} (${step.id})`);
-        hideElement(step.element);
+        if (step.id === 'step-0') {
+            console.log(`👁️ [MultiStep] Keeping step-0 visible for progressive disclosure`);
+            // Ensure step-0 is visible from the start
+            showElement(step.element);
+            step.element.classList.add('active-step');
+        }
+        else {
+            console.log(`🫥 [MultiStep] Hiding step ${index} (${step.id})`);
+            hideElement(step.element);
+        }
     });
     // Set up navigation and events
     setupNavigationListeners(root);
     setupEventListeners();
     setupSkipListeners(root);
-    // Show first step
+    // Initialize to step 0 for progressive disclosure
     if (steps.length > 0) {
-        console.log('🎬 [MultiStep] Showing initial step: 0');
-        goToStep(0);
+        const step0Index = steps.findIndex(s => s.id === 'step-0');
+        if (step0Index !== -1) {
+            console.log('🎬 [MultiStep] Progressive disclosure: Setting step-0 as current');
+            currentStepIndex = step0Index;
+            currentStepId = 'step-0';
+            stepHistory = ['step-0'];
+            navigatedSteps.add('step-0');
+            // Ensure step-0 is properly visible
+            const step0 = steps[step0Index];
+            showElement(step0.element);
+            step0.element.classList.add('active-step');
+            // Update navigation buttons for step-0
+            updateNavigationButtons();
+            // Emit initial step event
+            formEvents.emit('step:change', {
+                currentStepIndex: step0Index,
+                currentStepId: 'step-0',
+                navigatedSteps: Array.from(navigatedSteps),
+                isBranchStep: step0.isBranch
+            });
+        }
+        else {
+            console.log('🎬 [MultiStep] No step-0 found, showing first step');
+            goToStep(0);
+        }
     }
     initialized = true;
     formEvents.registerModule('multiStep');
@@ -309,11 +340,40 @@ function handleLabelClick(event, target) {
     }
 }
 /**
- * Handle direct navigation from any element with data-go-to
+ * Handle direct navigation from navigation elements (buttons, links) with data-go-to
+ * DOES NOT trigger on step wrapper containers - only on actual navigation elements
  */
 function handleDirectNavigation(event, target) {
     // Skip if this is a radio button (handled by handleRadioNavigation)
     if (target instanceof HTMLInputElement && target.type === 'radio') {
+        return;
+    }
+    // CRITICAL FIX: Only allow navigation from specific navigation elements
+    // Do NOT trigger navigation from step wrapper containers
+    const isStepWrapper = target.classList.contains('step_wrapper') ||
+        target.classList.contains('step-wrapper') ||
+        getAttrValue(target, 'data-answer');
+    if (isStepWrapper) {
+        console.log('🛑 [MultiStep] Ignoring navigation from step wrapper:', {
+            stepId: getAttrValue(target, 'data-answer'),
+            reason: 'Step wrappers should not trigger direct navigation'
+        });
+        return;
+    }
+    // Only allow navigation from actual navigation elements
+    const isNavigationElement = target.tagName === 'A' || // Links
+        target.tagName === 'BUTTON' || // Buttons
+        getAttrValue(target, 'data-form')?.includes('btn') || // Elements with data-form="*-btn"
+        getAttrValue(target, 'data-skip') || // Skip elements
+        target.classList.contains('button') || // Webflow button class
+        target.closest('[data-form*="btn"]') || // Child of button element
+        target.closest('button, a'); // Child of button/link
+    if (!isNavigationElement) {
+        console.log('🛑 [MultiStep] Ignoring navigation from non-navigation element:', {
+            element: target.tagName,
+            className: target.className,
+            reason: 'Only buttons, links, and navigation elements can trigger navigation'
+        });
         return;
     }
     const goToValue = getAttrValue(target, 'data-go-to');
@@ -324,7 +384,8 @@ function handleDirectNavigation(event, target) {
     console.log('🎯 [MultiStep] Direct navigation triggered:', {
         element: target.tagName,
         className: target.className,
-        goToValue
+        goToValue,
+        isNavigationElement: true
     });
     goToStepById(goToValue);
 }

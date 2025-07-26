@@ -107,35 +107,49 @@ export function hasClass(element, className) {
 }
 /**
  * Show element (remove hidden-step class and restore display)
+ * Enhanced for progressive disclosure reliability
  */
 export function showElement(element) {
     removeClass(element, 'hidden-step');
     // Get the original display value from data attribute or compute it
     const originalDisplay = element.getAttribute('data-original-display') || '';
-    // If we have an original display value, use it; otherwise set to block as fallback
+    // Enhanced display detection for step_wrapper elements
+    const shouldBeFlex = element.classList.contains('flex') ||
+        element.classList.contains('d-flex') ||
+        element.classList.contains('step_wrapper') ||
+        element.classList.contains('step-wrapper') ||
+        getComputedStyle(element).display === 'flex';
+    // Determine the appropriate display value
+    let displayValue = 'block';
     if (originalDisplay && originalDisplay !== 'none') {
-        element.style.setProperty('display', originalDisplay, 'important');
+        displayValue = originalDisplay;
     }
-    else {
-        // Fallback to block, but check if it should be flex based on CSS classes
-        const shouldBeFlex = element.classList.contains('flex') ||
-            element.classList.contains('d-flex') ||
-            element.classList.contains('step_wrapper') ||
-            getComputedStyle(element).display === 'flex';
-        element.style.setProperty('display', shouldBeFlex ? 'flex' : 'block', 'important');
+    else if (shouldBeFlex) {
+        displayValue = 'flex';
     }
-    // Force visibility for critical elements with !important
+    // Force visibility with maximum specificity
+    element.style.setProperty('display', displayValue, 'important');
     element.style.setProperty('visibility', 'visible', 'important');
     element.style.setProperty('opacity', '1', 'important');
+    // Remove any transform that might hide the element
+    element.style.setProperty('transform', 'none', 'important');
+    // Ensure no height/width restrictions
+    element.style.removeProperty('height');
+    element.style.removeProperty('max-height');
+    element.style.removeProperty('width');
+    element.style.removeProperty('max-width');
     console.log(`🔄 [Utils] Showing element:`, {
         element: element,
         tagName: element.tagName,
         id: element.id,
         className: element.className,
+        dataAnswer: element.getAttribute('data-answer'),
+        displayValue,
         originalDisplay: originalDisplay || 'none stored',
         currentDisplay: element.style.display,
         computedDisplay: getComputedStyle(element).display,
         computedVisibility: getComputedStyle(element).visibility,
+        computedOpacity: getComputedStyle(element).opacity,
         hasHiddenClass: element.classList.contains('hidden-step'),
         isVisible: isVisible(element)
     });

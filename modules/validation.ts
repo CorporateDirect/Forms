@@ -106,8 +106,8 @@ function setupFieldValidations(inputs: NodeListOf<Element>): void {
 function extractValidationRules(input: Element): ValidationRule[] {
   const rules: ValidationRule[] = [];
 
-  // Required validation
-  if (input.hasAttribute('required')) {
+  // Required validation - check both 'required' and 'data-required' attributes
+  if (input.hasAttribute('required') || input.hasAttribute('data-required')) {
     rules.push({
       type: 'required',
       message: getAttrValue(input, 'data-error-message') || 'This field is required'
