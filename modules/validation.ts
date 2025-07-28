@@ -192,7 +192,7 @@ function setupValidationEventListeners(): void {
 }
 
 /**
- * Handle field validation events - UPDATED to only validate navigated steps and on user interaction
+ * Handle field validation events - UPDATED to clear errors on input and validate on interactions
  */
 function handleFieldValidationEvent(data: { fieldName: string; value: string | string[]; element: HTMLElement; eventType: string }): void {
   const { fieldName, element, eventType } = data;
@@ -201,18 +201,6 @@ function handleFieldValidationEvent(data: { fieldName: string; value: string | s
     logVerbose('Skipping validation - no field name found', {
       element,
       eventType
-    });
-    return;
-  }
-
-  // ENHANCED: Only validate on meaningful user interactions (blur, change, but not input during typing)
-  const shouldValidate = eventType === 'blur' || eventType === 'change';
-  
-  if (!shouldValidate) {
-    logVerbose(`Skipping validation for event type: ${eventType}`, {
-      fieldName,
-      eventType,
-      reason: 'Only validate on blur or change events'
     });
     return;
   }
@@ -231,16 +219,35 @@ function handleFieldValidationEvent(data: { fieldName: string; value: string | s
       });
       return;
     }
-    
-    logVerbose(`Validating field in navigated step: ${fieldName}`, {
-      stepId,
-      navigatedSteps: Array.from(navigatedSteps),
-      fieldInNavigatedStep: true,
-      eventType
-    });
   }
 
-  validateField(fieldName);
+  // ENHANCED: Different handling for different event types
+  if (eventType === 'input') {
+    // On input events, check if field has errors and clear them if valid
+    const fieldValidation = fieldValidations.get(fieldName);
+    if (fieldValidation && !fieldValidation.isValid) {
+      logVerbose(`Input event on error field, checking if valid: ${fieldName}`, {
+        currentlyValid: fieldValidation.isValid,
+        eventType
+      });
+      
+      // Only validate if field currently has errors to potentially clear them
+      const isNowValid = validateField(fieldName);
+      if (isNowValid) {
+        logVerbose(`Field error cleared on input: ${fieldName}`);
+      }
+    }
+  } else if (eventType === 'blur' || eventType === 'change') {
+    // On blur/change, always validate
+    logVerbose(`Validating field on ${eventType}: ${fieldName}`);
+    validateField(fieldName);
+  } else {
+    logVerbose(`Skipping validation for event type: ${eventType}`, {
+      fieldName,
+      eventType,
+      reason: 'Event type not handled'
+    });
+  }
 }
 
 /**
