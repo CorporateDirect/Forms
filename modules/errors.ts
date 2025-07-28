@@ -38,7 +38,7 @@ function injectErrorCSS(): void {
   }
 
   const css = `
-    /* Form Library Error Message Styles - Auto-injected v1.5.4 - Enhanced Error Styling */
+    /* Form Library Error Message Styles - Auto-injected v1.5.5 - Input-Only Error Styling */
     .form_error-message {
       display: none !important;
       opacity: 0 !important;
@@ -79,25 +79,6 @@ function injectErrorCSS(): void {
 
     .form-field_wrapper.error-field {
       position: relative;
-    }
-
-    .form-field_wrapper.error-field::before {
-      content: '';
-      position: absolute;
-      top: -3px;
-      left: -3px;
-      right: -3px;
-      bottom: -3px;
-      border: 2px solid #e74c3c;
-      border-radius: 6px;
-      pointer-events: none;
-      opacity: 0.4;
-      animation: errorPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes errorPulse {
-      0%, 100% { opacity: 0.4; }
-      50% { opacity: 0.7; }
     }
 
     @keyframes errorAppear {

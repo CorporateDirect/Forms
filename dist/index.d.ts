@@ -4,7 +4,7 @@
  * A modular, flexible form functionality library for Webflow forms
  * supporting single-step, multi-step, and branching forms.
  *
- * Version: CACHE_BUST_2025_01_28_22_15_ERROR_STYLING_FOCUS
+ * Version: CACHE_BUST_2025_01_28_22_20_INPUT_ONLY_BORDERS
  */
 import { FormState } from './modules/formState.js';
 import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';

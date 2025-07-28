@@ -496,10 +496,6 @@ function validateCurrentStep(currentStep) {
             showError(fieldName, errorMessage);
             // Add error styling to the input field itself
             input.classList.add('error-field');
-            const wrapper = input.closest('.form-field_wrapper');
-            if (wrapper) {
-                wrapper.classList.add('error-field');
-            }
             logVerbose(`❌ [MultiStep] Required field is empty: ${fieldName}`, {
                 fieldType: input.type || input.tagName,
                 value: value,
@@ -511,10 +507,6 @@ function validateCurrentStep(currentStep) {
             clearError(fieldName);
             // Remove error styling from valid fields
             input.classList.remove('error-field');
-            const wrapper = input.closest('.form-field_wrapper');
-            if (wrapper) {
-                wrapper.classList.remove('error-field');
-            }
             logVerbose(`✅ [MultiStep] Required field is filled: ${fieldName}`);
         }
     });
