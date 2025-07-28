@@ -1,6 +1,6 @@
 {
   "name": "form-functionality-library",
-  "version": "1.5.10",
+  "version": "1.5.11",
   "description": "A modular, flexible form functionality library for Webflow forms supporting single-step, multi-step, and branching forms",
   "main": "dist/index.js",
   "module": "dist/index.js",
