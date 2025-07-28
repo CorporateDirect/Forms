@@ -4,6 +4,7 @@
 import { SELECTORS } from '../config.js';
 import { logVerbose, getAttrValue, delegateEvent, showElement, hideElement, isVisible } from './utils.js';
 import { formEvents } from './events.js';
+import { showError } from './errors.js';
 let initialized = false;
 let cleanupFunctions = [];
 let eventCleanupFunctions = [];
@@ -458,7 +459,82 @@ function setupSkipListeners(root) {
     logVerbose('Skip listeners setup complete');
 }
 /**
- * Handle next button click - ENHANCED for branching logic
+ * Validate the current step before allowing navigation
+ */
+function validateCurrentStep(currentStep) {
+    logVerbose('🔍 [MultiStep] Starting validation for step:', currentStep.id);
+    // Find all required fields in the current step
+    const requiredFields = currentStep.element.querySelectorAll('input[data-required], select[data-required], textarea[data-required]');
+    if (requiredFields.length === 0) {
+        logVerbose('✅ [MultiStep] No required fields in step, validation passed');
+        return true; // No required fields, validation passes
+    }
+    logVerbose(`🔍 [MultiStep] Found ${requiredFields.length} required fields to validate`);
+    let hasErrors = false;
+    // Validate each required field
+    requiredFields.forEach((field, index) => {
+        const input = field;
+        const fieldName = input.name || input.getAttribute('data-step-field-name') || `field-${index}`;
+        const value = input.value?.trim() || '';
+        const isEmpty = !value;
+        if (isEmpty) {
+            hasErrors = true;
+            // Show error for this field
+            const errorMessage = getCustomErrorMessage(input) || 'This field is required';
+            showError(fieldName, errorMessage);
+            logVerbose(`❌ [MultiStep] Required field is empty: ${fieldName}`, {
+                fieldType: input.type || input.tagName,
+                value: value
+            });
+        }
+        else {
+            logVerbose(`✅ [MultiStep] Required field is filled: ${fieldName}`);
+        }
+    });
+    if (hasErrors) {
+        logVerbose(`🚫 [MultiStep] Validation failed - ${requiredFields.length} required fields with errors`);
+        // Scroll to first error field
+        const firstErrorField = currentStep.element.querySelector('input[data-required], select[data-required], textarea[data-required]');
+        if (firstErrorField) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => firstErrorField.focus(), 300);
+        }
+        return false;
+    }
+    logVerbose('✅ [MultiStep] All required fields validated successfully');
+    return true;
+}
+/**
+ * Get custom error message from associated .form_error-message element
+ */
+function getCustomErrorMessage(input) {
+    // Look in form-field_wrapper
+    const wrapper = input.closest('.form-field_wrapper');
+    if (wrapper) {
+        const errorElement = wrapper.querySelector('.form_error-message');
+        if (errorElement && errorElement.textContent) {
+            const text = errorElement.textContent.trim();
+            // Don't use placeholder text
+            if (!text.includes('This is some text inside of a div block')) {
+                return text;
+            }
+        }
+    }
+    // Look in parent element
+    const parent = input.parentElement;
+    if (parent) {
+        const errorElement = parent.querySelector('.form_error-message');
+        if (errorElement && errorElement.textContent) {
+            const text = errorElement.textContent.trim();
+            if (!text.includes('This is some text inside of a div block')) {
+                return text;
+            }
+        }
+    }
+    return null;
+}
+/**
+ * Handle next button click - ENHANCED with validation and branching logic
  */
 function handleNextClick(event) {
     event.preventDefault();
@@ -467,6 +543,17 @@ function handleNextClick(event) {
         console.error('❌ [MultiStep] No current step found for next navigation');
         return;
     }
+    // CRITICAL: Validate current step before allowing navigation
+    logVerbose('🔍 [MultiStep] Validating current step before navigation:', {
+        stepId: currentStep.id,
+        stepIndex: currentStepIndex
+    });
+    const isCurrentStepValid = validateCurrentStep(currentStep);
+    if (!isCurrentStepValid) {
+        logVerbose('🚫 [MultiStep] Navigation blocked - validation failed for step:', currentStep.id);
+        return; // Prevent navigation if validation fails
+    }
+    logVerbose('✅ [MultiStep] Validation passed, proceeding with navigation');
     // Check if current step has a data-go-to attribute (for branching)
     const currentGoTo = getAttrValue(currentStep.element, 'data-go-to');
     if (currentGoTo) {
