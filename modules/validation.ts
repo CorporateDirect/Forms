@@ -95,7 +95,11 @@ function setupFieldValidations(inputs: NodeListOf<Element>): void {
 
     logVerbose(`Validation rules set for field: ${fieldName}`, { 
       rules: rules.map(r => r.type),
-      rulesCount: rules.length 
+      rulesCount: rules.length,
+      elementId: (input as HTMLElement).id,
+      elementName: (input as HTMLInputElement).name,
+      elementValue: (input as HTMLInputElement).value,
+      elementTag: input.tagName
     });
   });
 }
@@ -271,7 +275,10 @@ export function validateField(fieldName: string): boolean {
     return true;
   }
 
-  const input = fieldValidation.element;
+  // Get fresh element from DOM to avoid stale references
+  const input = document.querySelector(`input[name="${fieldName}"], select[name="${fieldName}"], textarea[name="${fieldName}"]`) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement ||
+                fieldValidation.element;
+  
   if (!input) {
     logVerbose(`No element found for field: ${fieldName}`);
     return true;
