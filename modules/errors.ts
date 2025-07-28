@@ -55,6 +55,11 @@ function injectErrorCSS(): void {
       margin-top: 0.25rem !important;
       line-height: 1.4 !important;
       animation: errorAppear 0.2s ease-out !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      position: relative !important;
+      z-index: 1000 !important;
     }
 
     /* Error field styling - Enhanced red borders */

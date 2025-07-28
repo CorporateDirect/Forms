@@ -14,7 +14,7 @@ import { FormState } from './modules/formState.js';
 
 // Add version logging to verify which script is loading
 console.log('🚀 [FormLib] === SCRIPT VERSION CHECK ===');
-console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_28_22_30_ERROR_CLEAR_FIX');
+console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_28_22_45_VISUAL_ERROR_FIX');
 console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
 console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 

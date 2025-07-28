@@ -225,17 +225,28 @@ function handleFieldValidationEvent(data: { fieldName: string; value: string | s
   if (eventType === 'input') {
     // On input events, check if field has errors and clear them if valid
     const fieldValidation = fieldValidations.get(fieldName);
-    if (fieldValidation && !fieldValidation.isValid) {
+    const hasVisualErrors = element.classList.contains('error-field');
+    
+    // Validate if field has validation errors OR visual error styling
+    if ((fieldValidation && !fieldValidation.isValid) || hasVisualErrors) {
       logVerbose(`Input event on error field, checking if valid: ${fieldName}`, {
-        currentlyValid: fieldValidation.isValid,
+        currentlyValid: fieldValidation?.isValid || 'no-validation-rules',
+        hasVisualErrors,
         eventType
       });
       
-      // Only validate if field currently has errors to potentially clear them
+      // Validate to potentially clear errors
       const isNowValid = validateField(fieldName);
       if (isNowValid) {
         logVerbose(`Field error cleared on input: ${fieldName}`);
       }
+    } else {
+      logVerbose(`Input event on field without errors, skipping validation: ${fieldName}`, {
+        hasValidationRules: !!fieldValidation,
+        currentlyValid: fieldValidation?.isValid || 'no-rules',
+        hasVisualErrors,
+        eventType
+      });
     }
   } else if (eventType === 'blur' || eventType === 'change') {
     // On blur/change, always validate
