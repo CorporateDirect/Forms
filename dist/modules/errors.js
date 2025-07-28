@@ -133,6 +133,23 @@ export function initErrors(root = document) {
     logVerbose(`Error handling initialized for ${errorConfigs.size} fields`);
 }
 /**
+ * Scroll to field if it's not in viewport
+ */
+function scrollToFieldIfNeeded(element) {
+    const rect = element.getBoundingClientRect();
+    const isVisible = rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+    if (!isVisible) {
+        element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+        logVerbose(`Scrolled to field with error: ${element.name || 'unnamed'}`);
+    }
+}
+/**
  * Show error for a specific field
  */
 export function showError(fieldName, message) {
@@ -157,12 +174,21 @@ export function showError(fieldName, message) {
         if (!config.customMessage || message) {
             errorElement.textContent = errorMessage;
         }
-        // ALWAYS add active-error class to show the element
+        // WEBFLOW FIX: Use inline styles for guaranteed visibility instead of CSS classes
+        errorElement.style.display = 'block';
+        errorElement.style.visibility = 'visible';
+        errorElement.style.opacity = '1';
+        errorElement.style.color = '#e74c3c';
+        errorElement.style.fontSize = '0.875rem';
+        errorElement.style.marginTop = '0.25rem';
+        errorElement.style.lineHeight = '1.4';
+        // Still add the class for any additional styling
         addClass(errorElement, CSS_CLASSES.ACTIVE_ERROR);
         config.errorElement = errorElement;
         logVerbose(`Error element activated for field: ${fieldName}`, {
             elementVisible: errorElement.offsetParent !== null,
-            hasActiveClass: errorElement.classList.contains(CSS_CLASSES.ACTIVE_ERROR)
+            hasActiveClass: errorElement.classList.contains(CSS_CLASSES.ACTIVE_ERROR),
+            hasInlineStyles: true
         });
     }
     // Scroll to field if it's not visible
@@ -183,6 +209,10 @@ export function clearError(fieldName) {
     // Hide error message element
     if (config.errorElement) {
         config.errorElement.textContent = '';
+        // WEBFLOW FIX: Clear inline styles to hide the element
+        config.errorElement.style.display = 'none';
+        config.errorElement.style.visibility = 'hidden';
+        config.errorElement.style.opacity = '0';
         removeClass(config.errorElement, CSS_CLASSES.ACTIVE_ERROR);
     }
 }
@@ -262,15 +292,28 @@ function findOrCreateErrorElement(config) {
     // ENHANCED: First, try to find existing .form_error-message in field wrapper
     const fieldWrapper = config.element.closest('.form-field_wrapper');
     if (fieldWrapper) {
-        // Look for .form_error-message first (our standard)
-        errorElement = fieldWrapper.querySelector('.form_error-message');
+        // PRIORITY 1: Look for data-form="required" elements first (new standardized approach)
+        errorElement = fieldWrapper.querySelector('[data-form="required"]');
         // If found, extract custom message text and store it
         if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
             const customText = errorElement.textContent.trim();
             // Don't use generic placeholder text
             if (!customText.includes('This is some text inside of a div block')) {
                 config.customMessage = customText;
-                logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
+                logVerbose(`Found custom required error message for field: ${config.fieldName}`, { customText });
+            }
+        }
+        // PRIORITY 2: Look for .form_error-message (legacy support)
+        if (!errorElement) {
+            errorElement = fieldWrapper.querySelector('.form_error-message');
+            // If found, extract custom message text and store it
+            if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
+                const customText = errorElement.textContent.trim();
+                // Don't use generic placeholder text
+                if (!customText.includes('This is some text inside of a div block')) {
+                    config.customMessage = customText;
+                    logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
+                }
             }
         }
         // Fallback: Look for data-form="error" attribute
@@ -278,17 +321,29 @@ function findOrCreateErrorElement(config) {
             errorElement = fieldWrapper.querySelector('[data-form="error"]');
         }
     }
-    // ENHANCED: If no wrapper, look for .form_error-message near the input
+    // ENHANCED: If no wrapper, look for error elements near the input
     if (!errorElement) {
-        // Try to find .form_error-message as sibling or in parent
         const parentElement = config.element.parentElement;
-        errorElement = parentElement.querySelector('.form_error-message');
-        // Extract custom message if found
+        // PRIORITY 1: Look for data-form="required" elements (new standardized approach)
+        errorElement = parentElement.querySelector('[data-form="required"]');
+        // If found, extract custom message text and store it
         if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
             const customText = errorElement.textContent.trim();
             if (!customText.includes('This is some text inside of a div block')) {
                 config.customMessage = customText;
-                logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
+                logVerbose(`Found custom required error message for field: ${config.fieldName}`, { customText });
+            }
+        }
+        // PRIORITY 2: Try to find .form_error-message as sibling or in parent (legacy support)
+        if (!errorElement) {
+            errorElement = parentElement.querySelector('.form_error-message');
+            // Extract custom message if found
+            if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
+                const customText = errorElement.textContent.trim();
+                if (!customText.includes('This is some text inside of a div block')) {
+                    config.customMessage = customText;
+                    logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
+                }
             }
         }
     }
@@ -329,23 +384,6 @@ function findOrCreateErrorElement(config) {
         });
     }
     return errorElement;
-}
-/**
- * Scroll to field if it's not in viewport
- */
-function scrollToFieldIfNeeded(element) {
-    const rect = element.getBoundingClientRect();
-    const isVisible = rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth);
-    if (!isVisible) {
-        element.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
-        logVerbose(`Scrolled to field with error: ${element.name || 'unnamed'}`);
-    }
 }
 /**
  * Highlight field with error (alternative to standard error styling)
