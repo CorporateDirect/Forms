@@ -4,7 +4,7 @@
 import { SELECTORS } from '../config.js';
 import { logVerbose, getAttrValue, delegateEvent, showElement, hideElement, isVisible } from './utils.js';
 import { formEvents } from './events.js';
-import { showError } from './errors.js';
+import { showError, clearError } from './errors.js';
 let initialized = false;
 let cleanupFunctions = [];
 let eventCleanupFunctions = [];
@@ -477,6 +477,18 @@ function validateCurrentStep(currentStep) {
         const fieldName = input.name || input.getAttribute('data-step-field-name') || `field-${index}`;
         const value = input.value?.trim() || '';
         const isEmpty = !value;
+        // DEBUG: Log detailed field information
+        logVerbose(`🔍 [MultiStep] Validating field #${index}:`, {
+            fieldName,
+            inputName: input.name,
+            dataStepFieldName: input.getAttribute('data-step-field-name'),
+            fallbackName: `field-${index}`,
+            value: value,
+            valueLength: value.length,
+            isEmpty,
+            inputType: input.type || input.tagName,
+            inputId: input.id
+        });
         if (isEmpty) {
             hasErrors = true;
             // Show error for this field
@@ -488,17 +500,15 @@ function validateCurrentStep(currentStep) {
             });
         }
         else {
+            // Clear any existing error for this valid field
+            clearError(fieldName);
             logVerbose(`✅ [MultiStep] Required field is filled: ${fieldName}`);
         }
     });
     if (hasErrors) {
         logVerbose(`🚫 [MultiStep] Validation failed - ${requiredFields.length} required fields with errors`);
-        // Scroll to first error field
-        const firstErrorField = currentStep.element.querySelector('input[data-required], select[data-required], textarea[data-required]');
-        if (firstErrorField) {
-            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => firstErrorField.focus(), 300);
-        }
+        // Remove auto-focus behavior - let user naturally discover errors
+        // The errors are now visible via .active-error class and don't need forced focus
         return false;
     }
     logVerbose('✅ [MultiStep] All required fields validated successfully');

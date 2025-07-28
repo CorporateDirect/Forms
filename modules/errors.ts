@@ -38,18 +38,23 @@ function injectErrorCSS(): void {
   }
 
   const css = `
-    /* Form Library Error Message Styles - Auto-injected */
+    /* Form Library Error Message Styles - Auto-injected v1.5.2 */
     .form_error-message {
       display: none !important;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.2s ease-in-out;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      transition: all 0.2s ease-in-out !important;
     }
 
     .form_error-message.active-error {
       display: block !important;
-      opacity: 1;
-      visibility: visible;
+      opacity: 1 !important;
+      visibility: visible !important;
+      color: #e74c3c !important;
+      font-size: 0.875rem !important;
+      margin-top: 0.25rem !important;
+      line-height: 1.4 !important;
+      animation: errorAppear 0.2s ease-out !important;
     }
 
     /* Error field styling */
@@ -75,22 +80,14 @@ function injectErrorCSS(): void {
       opacity: 0.3;
     }
 
-    .form_error-message.active-error {
-      color: #e74c3c;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-      line-height: 1.4;
-      animation: errorAppear 0.2s ease-out;
-    }
-
     @keyframes errorAppear {
       from {
-        opacity: 0;
-        transform: translateY(-5px);
+        opacity: 0 !important;
+        transform: translateY(-5px) !important;
       }
       to {
-        opacity: 1;
-        transform: translateY(0);
+        opacity: 1 !important;
+        transform: translateY(0) !important;
       }
     }
   `;

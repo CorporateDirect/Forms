@@ -15,7 +15,7 @@ import {
 } from './utils.js';
 import { formEvents } from './events.js';
 import { validateStep, validateAllVisibleFields } from './validation.js';
-import { showError } from './errors.js';
+import { showError, clearError } from './errors.js';
 
 interface StepElement {
   element: HTMLElement;
@@ -590,6 +590,19 @@ function validateCurrentStep(currentStep: StepElement): boolean {
     const value = input.value?.trim() || '';
     const isEmpty = !value;
     
+    // DEBUG: Log detailed field information
+    logVerbose(`🔍 [MultiStep] Validating field #${index}:`, {
+      fieldName,
+      inputName: input.name,
+      dataStepFieldName: input.getAttribute('data-step-field-name'),
+      fallbackName: `field-${index}`,
+      value: value,
+      valueLength: value.length,
+      isEmpty,
+      inputType: input.type || input.tagName,
+      inputId: input.id
+    });
+    
     if (isEmpty) {
       hasErrors = true;
       
@@ -602,6 +615,8 @@ function validateCurrentStep(currentStep: StepElement): boolean {
         value: value
       });
     } else {
+      // Clear any existing error for this valid field
+      clearError(fieldName);
       logVerbose(`✅ [MultiStep] Required field is filled: ${fieldName}`);
     }
   });
@@ -609,12 +624,8 @@ function validateCurrentStep(currentStep: StepElement): boolean {
   if (hasErrors) {
     logVerbose(`🚫 [MultiStep] Validation failed - ${requiredFields.length} required fields with errors`);
     
-    // Scroll to first error field
-    const firstErrorField = currentStep.element.querySelector('input[data-required], select[data-required], textarea[data-required]') as HTMLElement;
-    if (firstErrorField) {
-      firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setTimeout(() => firstErrorField.focus(), 300);
-    }
+    // Remove auto-focus behavior - let user naturally discover errors
+    // The errors are now visible via .active-error class and don't need forced focus
     
     return false;
   }
