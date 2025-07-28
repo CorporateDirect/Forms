@@ -361,26 +361,20 @@ function findOrCreateErrorElement(config: ErrorConfig): HTMLElement | null {
     // If found, extract custom message text and store it
     if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
       const customText = errorElement.textContent.trim();
-      // Don't use generic placeholder text
-      if (!customText.includes('This is some text inside of a div block')) {
-        config.customMessage = customText;
-        logVerbose(`Found custom required error message for field: ${config.fieldName}`, { customText });
-      }
+      config.customMessage = customText;
+      logVerbose(`Found custom required error message for field: ${config.fieldName}`, { customText });
     }
     
     // PRIORITY 2: Look for .form_error-message (legacy support)
     if (!errorElement) {
       errorElement = fieldWrapper.querySelector('.form_error-message') as HTMLElement;
       
-      // If found, extract custom message text and store it
-      if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
-        const customText = errorElement.textContent.trim();
-        // Don't use generic placeholder text
-        if (!customText.includes('This is some text inside of a div block')) {
-          config.customMessage = customText;
-          logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
-        }
-      }
+             // If found, extract custom message text and store it
+       if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
+         const customText = errorElement.textContent.trim();
+         config.customMessage = customText;
+         logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
+       }
     }
     
     // Fallback: Look for data-form="error" attribute
@@ -396,27 +390,23 @@ function findOrCreateErrorElement(config: ErrorConfig): HTMLElement | null {
     // PRIORITY 1: Look for data-form="required" elements (new standardized approach)
     errorElement = parentElement.querySelector('[data-form="required"]') as HTMLElement;
     
-    // If found, extract custom message text and store it
-    if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
-      const customText = errorElement.textContent.trim();
-      if (!customText.includes('This is some text inside of a div block')) {
-        config.customMessage = customText;
-        logVerbose(`Found custom required error message for field: ${config.fieldName}`, { customText });
-      }
-    }
+         // If found, extract custom message text and store it
+     if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
+       const customText = errorElement.textContent.trim();
+       config.customMessage = customText;
+       logVerbose(`Found custom required error message for field: ${config.fieldName}`, { customText });
+     }
     
     // PRIORITY 2: Try to find .form_error-message as sibling or in parent (legacy support)
     if (!errorElement) {
       errorElement = parentElement.querySelector('.form_error-message') as HTMLElement;
       
-      // Extract custom message if found
-      if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
-        const customText = errorElement.textContent.trim();
-        if (!customText.includes('This is some text inside of a div block')) {
-          config.customMessage = customText;
-          logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
-        }
-      }
+             // Extract custom message if found
+       if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
+         const customText = errorElement.textContent.trim();
+         config.customMessage = customText;
+         logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
+       }
     }
   }
   
