@@ -144,14 +144,24 @@ function setupValidationEventListeners() {
     logVerbose('Validation module subscribed to centralized field and step events');
 }
 /**
- * Handle field validation events - UPDATED to only validate navigated steps
+ * Handle field validation events - UPDATED to only validate navigated steps and on user interaction
  */
 function handleFieldValidationEvent(data) {
-    const { fieldName, element } = data;
+    const { fieldName, element, eventType } = data;
     if (!fieldName) {
         logVerbose('Skipping validation - no field name found', {
             element,
-            eventType: data.eventType
+            eventType
+        });
+        return;
+    }
+    // ENHANCED: Only validate on meaningful user interactions (blur, change, but not input during typing)
+    const shouldValidate = eventType === 'blur' || eventType === 'change';
+    if (!shouldValidate) {
+        logVerbose(`Skipping validation for event type: ${eventType}`, {
+            fieldName,
+            eventType,
+            reason: 'Only validate on blur or change events'
         });
         return;
     }
@@ -163,14 +173,16 @@ function handleFieldValidationEvent(data) {
             logVerbose(`Skipping validation for field in non-navigated step: ${fieldName}`, {
                 stepId,
                 navigatedSteps: Array.from(navigatedSteps),
-                fieldInNavigatedStep: false
+                fieldInNavigatedStep: false,
+                eventType
             });
             return;
         }
         logVerbose(`Validating field in navigated step: ${fieldName}`, {
             stepId,
             navigatedSteps: Array.from(navigatedSteps),
-            fieldInNavigatedStep: true
+            fieldInNavigatedStep: true,
+            eventType
         });
     }
     validateField(fieldName);

@@ -4,7 +4,7 @@
  * A modular, flexible form functionality library for Webflow forms
  * supporting single-step, multi-step, and branching forms.
  *
- * Version: CACHE_BUST_2025_01_28_18_30_BROWSER_VALIDATION_FIX
+ * Version: CACHE_BUST_2025_01_28_20_00_AUTO_ERROR_STATE_MGMT
  */
 import { SELECTORS } from './config.js';
 import { logVerbose, initFieldCoordinator, resetFieldCoordinator } from './modules/utils.js';
@@ -12,7 +12,7 @@ import { clearQueryCache } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
 // Add version logging to verify which script is loading
 console.log('🚀 [FormLib] === SCRIPT VERSION CHECK ===');
-console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_28_18_30_BROWSER_VALIDATION_FIX');
+console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_28_20_00_AUTO_ERROR_STATE_MGMT');
 console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
 console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 // Import all modules  

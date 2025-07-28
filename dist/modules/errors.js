@@ -36,16 +36,29 @@ export function showError(fieldName, message) {
         logVerbose(`Cannot show error for unknown field: ${fieldName}`);
         return;
     }
-    const errorMessage = message || config.customMessage || 'This field has an error';
-    logVerbose(`Showing error for field: ${fieldName}`, { message: errorMessage });
+    // ENHANCED: Prioritize custom message from HTML, then passed message, then fallback
+    const errorMessage = config.customMessage || message || 'This field has an error';
+    logVerbose(`Showing error for field: ${fieldName}`, {
+        message: errorMessage,
+        hasCustomMessage: !!config.customMessage,
+        messageSource: config.customMessage ? 'html' : message ? 'parameter' : 'fallback'
+    });
     // Add error styling to the field
     addClass(config.element, CSS_CLASSES.ERROR_FIELD);
     // Create or update error message element
     const errorElement = findOrCreateErrorElement(config);
     if (errorElement) {
-        errorElement.textContent = errorMessage;
+        // ENHANCED: Only update text if we don't have custom HTML content or if it's a validation message
+        if (!config.customMessage || message) {
+            errorElement.textContent = errorMessage;
+        }
+        // ALWAYS add active-error class to show the element
         addClass(errorElement, CSS_CLASSES.ACTIVE_ERROR);
         config.errorElement = errorElement;
+        logVerbose(`Error element activated for field: ${fieldName}`, {
+            elementVisible: errorElement.offsetParent !== null,
+            hasActiveClass: errorElement.classList.contains(CSS_CLASSES.ACTIVE_ERROR)
+        });
     }
     // Scroll to field if it's not visible
     scrollToFieldIfNeeded(config.element);
@@ -121,6 +134,7 @@ export function setCustomErrorMessage(fieldName, message) {
 }
 /**
  * Find or create error message element for a field
+ * ENHANCED: Automatically detects existing .form_error-message elements and uses their custom text
  */
 function findOrCreateErrorElement(config) {
     // Defensive checks
@@ -140,10 +154,38 @@ function findOrCreateErrorElement(config) {
     }
     // Look for existing error element in form-field_wrapper structure
     let errorElement = null;
-    // First, try to find error element in new uniform structure
+    // ENHANCED: First, try to find existing .form_error-message in field wrapper
     const fieldWrapper = config.element.closest('.form-field_wrapper');
     if (fieldWrapper) {
-        errorElement = fieldWrapper.querySelector('[data-form="error"]');
+        // Look for .form_error-message first (our standard)
+        errorElement = fieldWrapper.querySelector('.form_error-message');
+        // If found, extract custom message text and store it
+        if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
+            const customText = errorElement.textContent.trim();
+            // Don't use generic placeholder text
+            if (!customText.includes('This is some text inside of a div block')) {
+                config.customMessage = customText;
+                logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
+            }
+        }
+        // Fallback: Look for data-form="error" attribute
+        if (!errorElement) {
+            errorElement = fieldWrapper.querySelector('[data-form="error"]');
+        }
+    }
+    // ENHANCED: If no wrapper, look for .form_error-message near the input
+    if (!errorElement) {
+        // Try to find .form_error-message as sibling or in parent
+        const parentElement = config.element.parentElement;
+        errorElement = parentElement.querySelector('.form_error-message');
+        // Extract custom message if found
+        if (errorElement && errorElement.textContent && errorElement.textContent.trim() !== '') {
+            const customText = errorElement.textContent.trim();
+            if (!customText.includes('This is some text inside of a div block')) {
+                config.customMessage = customText;
+                logVerbose(`Found custom error message for field: ${config.fieldName}`, { customText });
+            }
+        }
     }
     // Fallback: Look for existing error element by field name (legacy support)
     if (!errorElement) {
@@ -164,25 +206,22 @@ function findOrCreateErrorElement(config) {
             // Insert in form-field_wrapper if available, otherwise fallback to old method
             if (fieldWrapper) {
                 fieldWrapper.appendChild(errorElement);
-                logVerbose(`Created error element in form-field_wrapper for field: ${config.fieldName}`);
             }
             else {
-                // Fallback: Insert after the input (legacy behavior)
-                const parent = config.element.parentElement;
-                const nextSibling = config.element.nextSibling;
-                if (nextSibling) {
-                    parent.insertBefore(errorElement, nextSibling);
-                }
-                else {
-                    parent.appendChild(errorElement);
-                }
-                logVerbose(`Created error element (legacy method) for field: ${config.fieldName}`);
+                config.element.parentElement.insertBefore(errorElement, config.element.nextSibling);
             }
+            logVerbose(`Created new error element for field: ${config.fieldName}`);
         }
         catch (error) {
-            logVerbose(`Error creating error element for field: ${config.fieldName}`, error);
+            logVerbose(`Failed to create error element for field: ${config.fieldName}`, error);
             return null;
         }
+    }
+    else {
+        logVerbose(`Found existing error element for field: ${config.fieldName}`, {
+            className: errorElement.className,
+            hasCustomMessage: !!config.customMessage
+        });
     }
     return errorElement;
 }
