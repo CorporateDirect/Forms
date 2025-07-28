@@ -6,11 +6,86 @@ import { logVerbose, getAttrValue, addClass, removeClass } from './utils.js';
 import { formEvents } from './events.js';
 let errorConfigs = new Map();
 let errorStates = new Map();
+let cssInjected = false;
+/**
+ * Inject required CSS for error visibility
+ */
+function injectErrorCSS() {
+    if (cssInjected) {
+        return;
+    }
+    const css = `
+    /* Form Library Error Message Styles - Auto-injected */
+    .form_error-message {
+      display: none !important;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    .form_error-message.active-error {
+      display: block !important;
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Error field styling */
+    .form_input.error-field {
+      border-color: #e74c3c !important;
+      box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1) !important;
+    }
+
+    .form-field_wrapper.error-field {
+      position: relative;
+    }
+
+    .form-field_wrapper.error-field::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      border: 2px solid #e74c3c;
+      border-radius: 4px;
+      pointer-events: none;
+      opacity: 0.3;
+    }
+
+    .form_error-message.active-error {
+      color: #e74c3c;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      line-height: 1.4;
+      animation: errorAppear 0.2s ease-out;
+    }
+
+    @keyframes errorAppear {
+      from {
+        opacity: 0;
+        transform: translateY(-5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  `;
+    // Create and inject style element
+    const styleElement = document.createElement('style');
+    styleElement.setAttribute('data-form-lib', 'error-styles');
+    styleElement.textContent = css;
+    document.head.appendChild(styleElement);
+    cssInjected = true;
+    logVerbose('📦 [Errors] CSS auto-injected for error visibility');
+}
 /**
  * Initialize error handling
  */
 export function initErrors(root = document) {
     logVerbose('Initializing error handling');
+    // Inject required CSS for error visibility
+    injectErrorCSS();
     // Find all form inputs and set up error configurations
     const inputs = root.querySelectorAll('input, select, textarea');
     inputs.forEach(input => {
