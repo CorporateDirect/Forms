@@ -38,7 +38,7 @@ function injectErrorCSS(): void {
   }
 
   const css = `
-    /* Form Library Error Message Styles - Auto-injected v1.5.5 - Input-Only Error Styling */
+    /* Form Library Error Message Styles - Auto-injected v1.5.10 - Nuclear CSS Override */
     .form_error-message {
       display: none !important;
       opacity: 0 !important;
@@ -46,7 +46,11 @@ function injectErrorCSS(): void {
       transition: all 0.2s ease-in-out !important;
     }
 
-    .form_error-message.active-error {
+    /* Ultra-aggressive CSS overrides for Webflow */
+    .form_error-message.active-error,
+    div.form_error-message.active-error,
+    .form-field_wrapper .form_error-message.active-error,
+    .w-form .form_error-message.active-error {
       display: block !important;
       opacity: 1 !important;
       visibility: visible !important;
@@ -60,6 +64,29 @@ function injectErrorCSS(): void {
       overflow: visible !important;
       position: relative !important;
       z-index: 1000 !important;
+      /* Nuclear-level Webflow overrides */
+      width: auto !important;
+      min-height: 1rem !important;
+      padding: 0.25rem 0 !important;
+      margin-bottom: 0.25rem !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      transform: none !important;
+      clip: auto !important;
+      clip-path: none !important;
+      white-space: normal !important;
+      font-weight: 400 !important;
+      text-transform: none !important;
+      letter-spacing: normal !important;
+      text-align: left !important;
+      left: auto !important;
+      right: auto !important;
+      top: auto !important;
+      bottom: auto !important;
+      float: none !important;
+      clear: none !important;
+      content: normal !important;
     }
 
     /* Error field styling - Enhanced red borders */

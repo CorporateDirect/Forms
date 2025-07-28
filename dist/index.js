@@ -12,7 +12,7 @@ import { clearQueryCache } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
 // Add version logging to verify which script is loading
 console.log('🚀 [FormLib] === SCRIPT VERSION CHECK ===');
-console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_28_23_00_DOM_REFRESH_FIX');
+console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_28_23_35_NUCLEAR_CSS_OVERRIDE');
 console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
 console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 // Import all modules  
