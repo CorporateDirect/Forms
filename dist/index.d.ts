@@ -4,13 +4,14 @@
  * A modular, flexible form functionality library for Webflow forms
  * supporting single-step, multi-step, and branching forms.
  *
- * Version: CACHE_BUST_2025_01_25_18_00_PROGRESSIVE_DISCLOSURE_FIX
+ * Version: CACHE_BUST_2025_01_28_18_30_BROWSER_VALIDATION_FIX
  */
 import { FormState } from './modules/formState.js';
 import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
 import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/multiStep-clean.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors } from './modules/errors.js';
+import { initBrowserValidationFix } from './modules/browserValidationFix.js';
 import { initSummary, updateSummary, clearSummary } from './modules/summary.js';
 /**
  * Main FormLib class - singleton instance
@@ -70,5 +71,5 @@ declare class FormLibrary {
 }
 declare const FormLib: FormLibrary;
 export default FormLib;
-export { FormState, initMultiStep, goToStep, goToStepById, initMultiStepClean, goToStepByIdClean, getCleanState, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, initSummary, updateSummary, clearSummary };
+export { FormState, initMultiStep, goToStep, goToStepById, initMultiStepClean, goToStepByIdClean, getCleanState, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, initBrowserValidationFix, initSummary, updateSummary, clearSummary };
 //# sourceMappingURL=index.d.ts.map

@@ -4,7 +4,7 @@
  * A modular, flexible form functionality library for Webflow forms
  * supporting single-step, multi-step, and branching forms.
  *
- * Version: CACHE_BUST_2025_01_25_18_00_PROGRESSIVE_DISCLOSURE_FIX
+ * Version: CACHE_BUST_2025_01_28_18_30_BROWSER_VALIDATION_FIX
  */
 import { SELECTORS } from './config.js';
 import { logVerbose, initFieldCoordinator, resetFieldCoordinator } from './modules/utils.js';
@@ -12,7 +12,7 @@ import { clearQueryCache } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
 // Add version logging to verify which script is loading
 console.log('🚀 [FormLib] === SCRIPT VERSION CHECK ===');
-console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_25_18_00_PROGRESSIVE_DISCLOSURE_FIX');
+console.log('📦 [FormLib] Script Version: CACHE_BUST_2025_01_28_18_30_BROWSER_VALIDATION_FIX');
 console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
 console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 // Import all modules  
@@ -21,6 +21,7 @@ import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/
 // import { initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState } from './modules/multiStep-diagnostic.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, getErrorState } from './modules/errors.js';
+import { initBrowserValidationFix } from './modules/browserValidationFix.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
 // Skip functionality now integrated into multiStep.js
 /**
@@ -70,11 +71,13 @@ class FormLibrary {
         try {
             // 1. Initialize centralized field coordinator (used by all modules)
             initFieldCoordinator(root);
-            // 2. Initialize error handling (used by validation)
+            // 2. Fix browser validation conflicts (must happen before validation)
+            initBrowserValidationFix(root);
+            // 3. Initialize error handling (used by validation)
             initErrors(root);
-            // 3. Initialize validation (used by multi-step navigation)
+            // 4. Initialize validation (used by multi-step navigation)
             initValidation(root);
-            // 4. Initialize multi-step navigation (linear navigation only)
+            // 5. Initialize multi-step navigation (linear navigation only)
             if (multistepForms.length > 0 || stepElements.length > 0) {
                 initMultiStep(root); // Includes integrated skip functionality
             }
@@ -241,6 +244,8 @@ initMultiStepClean, goToStepByIdClean, getCleanState,
 initValidation, validateField, validateStep, validateAllVisibleFields, 
 // Errors
 initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, 
+// Browser Validation Fix
+initBrowserValidationFix, 
 // Summary
 initSummary, updateSummary, clearSummary };
 // Auto-initialize using Webflow's push system for proper timing

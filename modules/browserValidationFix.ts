@@ -8,7 +8,7 @@ import { logVerbose } from './utils.js';
 /**
  * Disable browser validation conflicts
  */
-export function initBrowserValidationFix(root: Document | Element = document): void {
+export function initBrowserValidationFix(root: Document | Element = document): { formsFixed: number; inputsFixed: number; conflictsEliminated: boolean } {
   logVerbose('Initializing browser validation fix');
 
   // 1. Add novalidate to all forms

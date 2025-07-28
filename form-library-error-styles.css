@@ -1,0 +1,67 @@
+/**
+ * Form Library Error Message Styles
+ * Automatic error state management for .form_error-message elements
+ */
+
+/* Hide all error messages by default */
+.form_error-message {
+  display: none !important;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* Show error messages when active */
+.form_error-message.active-error {
+  display: block !important;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Error field styling */
+.form_input.error-field {
+  border-color: #e74c3c !important;
+  box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1) !important;
+}
+
+/* Form field wrapper error state */
+.form-field_wrapper.error-field {
+  position: relative;
+}
+
+.form-field_wrapper.error-field::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border: 2px solid #e74c3c;
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0.3;
+}
+
+/* Ensure error messages are styled appropriately */
+.form_error-message.active-error {
+  color: #e74c3c;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+}
+
+/* Animation for error appearance */
+@keyframes errorAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.form_error-message.active-error {
+  animation: errorAppear 0.2s ease-out;
+} 
