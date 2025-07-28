@@ -610,13 +610,29 @@ function validateCurrentStep(currentStep: StepElement): boolean {
       const errorMessage = getCustomErrorMessage(input) || 'This field is required';
       showError(fieldName, errorMessage);
       
+      // Add error styling to the input field itself
+      input.classList.add('error-field');
+      const wrapper = input.closest('.form-field_wrapper');
+      if (wrapper) {
+        wrapper.classList.add('error-field');
+      }
+      
       logVerbose(`❌ [MultiStep] Required field is empty: ${fieldName}`, {
         fieldType: input.type || input.tagName,
-        value: value
+        value: value,
+        errorStylingApplied: true
       });
     } else {
       // Clear any existing error for this valid field
       clearError(fieldName);
+      
+      // Remove error styling from valid fields
+      input.classList.remove('error-field');
+      const wrapper = input.closest('.form-field_wrapper');
+      if (wrapper) {
+        wrapper.classList.remove('error-field');
+      }
+      
       logVerbose(`✅ [MultiStep] Required field is filled: ${fieldName}`);
     }
   });
@@ -624,8 +640,26 @@ function validateCurrentStep(currentStep: StepElement): boolean {
   if (hasErrors) {
     logVerbose(`🚫 [MultiStep] Validation failed - ${requiredFields.length} required fields with errors`);
     
-    // Remove auto-focus behavior - let user naturally discover errors
-    // The errors are now visible via .active-error class and don't need forced focus
+    // Auto-focus the FIRST EMPTY required field (not just any field)
+    const firstEmptyField = currentStep.element.querySelector('input[data-required]:invalid, input[data-required][value=""], select[data-required][value=""], textarea[data-required][value=""]') as HTMLElement;
+    
+    if (!firstEmptyField) {
+      // Fallback: find first empty required field manually
+      const emptyField = Array.from(requiredFields).find(field => {
+        const input = field as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+        return !input.value?.trim();
+      }) as HTMLElement;
+      
+      if (emptyField) {
+        logVerbose('🎯 [MultiStep] Auto-focusing first empty required field');
+        emptyField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => emptyField.focus(), 300);
+      }
+    } else {
+      logVerbose('🎯 [MultiStep] Auto-focusing first empty required field (via selector)');
+      firstEmptyField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => firstEmptyField.focus(), 300);
+    }
     
     return false;
   }

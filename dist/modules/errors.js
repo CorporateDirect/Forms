@@ -15,7 +15,7 @@ function injectErrorCSS() {
         return;
     }
     const css = `
-    /* Form Library Error Message Styles - Auto-injected v1.5.2 */
+    /* Form Library Error Message Styles - Auto-injected v1.5.4 - Enhanced Error Styling */
     .form_error-message {
       display: none !important;
       opacity: 0 !important;
@@ -34,10 +34,24 @@ function injectErrorCSS() {
       animation: errorAppear 0.2s ease-out !important;
     }
 
-    /* Error field styling */
+    /* Error field styling - Enhanced red borders */
+    input.error-field,
+    select.error-field,
+    textarea.error-field,
     .form_input.error-field {
-      border-color: #e74c3c !important;
-      box-shadow: 0 0 0 2px rgba(231, 76, 60, 0.1) !important;
+      border: 2px solid #e74c3c !important;
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+      background-color: rgba(231, 76, 60, 0.02) !important;
+      transition: all 0.2s ease-in-out !important;
+    }
+
+    input.error-field:focus,
+    select.error-field:focus,
+    textarea.error-field:focus,
+    .form_input.error-field:focus {
+      border-color: #c0392b !important;
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2) !important;
+      outline: none !important;
     }
 
     .form-field_wrapper.error-field {
@@ -47,14 +61,20 @@ function injectErrorCSS() {
     .form-field_wrapper.error-field::before {
       content: '';
       position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
+      top: -3px;
+      left: -3px;
+      right: -3px;
+      bottom: -3px;
       border: 2px solid #e74c3c;
-      border-radius: 4px;
+      border-radius: 6px;
       pointer-events: none;
-      opacity: 0.3;
+      opacity: 0.4;
+      animation: errorPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes errorPulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 0.7; }
     }
 
     @keyframes errorAppear {
