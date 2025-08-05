@@ -174,49 +174,12 @@ export function showError(fieldName, message) {
         if (!config.customMessage || message) {
             errorElement.textContent = errorMessage;
         }
-        // WEBFLOW FIX: Use persistent aggressive inline styles to override any CSS rules
-        const applyErrorStyles = () => {
-            errorElement.style.setProperty('display', 'block', 'important');
-            errorElement.style.setProperty('visibility', 'visible', 'important');
-            errorElement.style.setProperty('opacity', '1', 'important');
-            errorElement.style.setProperty('color', '#e74c3c', 'important');
-            errorElement.style.setProperty('fontSize', '0.875rem', 'important');
-            errorElement.style.setProperty('marginTop', '0.25rem', 'important');
-            errorElement.style.setProperty('lineHeight', '1.4', 'important');
-            // Additional aggressive overrides to force visibility
-            errorElement.style.setProperty('position', 'relative', 'important');
-            errorElement.style.setProperty('width', 'auto', 'important');
-            errorElement.style.setProperty('height', 'auto', 'important');
-            errorElement.style.setProperty('maxWidth', 'none', 'important');
-            errorElement.style.setProperty('maxHeight', 'none', 'important');
-            errorElement.style.setProperty('minWidth', '0', 'important');
-            errorElement.style.setProperty('minHeight', '0', 'important');
-            errorElement.style.setProperty('overflow', 'visible', 'important');
-            errorElement.style.setProperty('clip', 'auto', 'important');
-            errorElement.style.setProperty('clipPath', 'none', 'important');
-        };
-        // Apply styles immediately
-        applyErrorStyles();
-        // PERSISTENT FIX: Reapply styles after a delay to overcome conflicts
-        setTimeout(applyErrorStyles, 50);
-        setTimeout(applyErrorStyles, 200);
-        setTimeout(applyErrorStyles, 500);
-        // Store reference for persistent monitoring
-        if (!errorElement.hasAttribute('data-persistent-override')) {
-            errorElement.setAttribute('data-persistent-override', 'true');
-            // Set up interval to keep styles applied (defensive approach)
-            const persistentInterval = setInterval(() => {
-                if (!document.contains(errorElement) || !errorElement.classList.contains(CSS_CLASSES.ACTIVE_ERROR)) {
-                    clearInterval(persistentInterval);
-                    return;
-                }
-                // Only reapply if styles have been overridden
-                const computed = window.getComputedStyle(errorElement);
-                if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') {
-                    applyErrorStyles();
-                }
-            }, 100); // Check every 100ms
-        }
+        // WEBFLOW-FRIENDLY: Apply basic styling to work with Webflow's system
+        errorElement.style.display = 'block';
+        errorElement.style.color = '#e74c3c';
+        errorElement.style.fontSize = '0.875rem';
+        errorElement.style.marginTop = '0.25rem';
+        errorElement.style.lineHeight = '1.4';
         // Still add the class for any additional styling
         addClass(errorElement, CSS_CLASSES.ACTIVE_ERROR);
         config.errorElement = errorElement;
@@ -244,19 +207,12 @@ export function clearError(fieldName) {
     // Hide error message element
     if (config.errorElement) {
         config.errorElement.textContent = '';
-        // WEBFLOW FIX: Clear all aggressive inline styles by removing the properties
-        const stylesToRemove = [
-            'display', 'visibility', 'opacity', 'color', 'fontSize', 'marginTop', 'lineHeight',
-            'position', 'width', 'height', 'maxWidth', 'maxHeight', 'minWidth', 'minHeight',
-            'overflow', 'clip', 'clipPath'
-        ];
-        stylesToRemove.forEach(property => {
-            config.errorElement.style.removeProperty(property);
-        });
-        // Remove persistent override attribute to stop monitoring
-        config.errorElement.removeAttribute('data-persistent-override');
-        // Then set display to none to ensure it's hidden
-        config.errorElement.style.setProperty('display', 'none', 'important');
+        // WEBFLOW-FRIENDLY: Simple style clearing
+        config.errorElement.style.display = 'none';
+        config.errorElement.style.removeProperty('color');
+        config.errorElement.style.removeProperty('fontSize');
+        config.errorElement.style.removeProperty('marginTop');
+        config.errorElement.style.removeProperty('lineHeight');
         removeClass(config.errorElement, CSS_CLASSES.ACTIVE_ERROR);
     }
 }

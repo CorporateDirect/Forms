@@ -571,8 +571,8 @@ function setupSkipListeners(root: Document | Element): void {
 function validateCurrentStep(currentStep: StepElement): boolean {
   logVerbose('🔍 [MultiStep] Starting validation for step:', currentStep.id);
   
-  // Find all required fields in the current step
-  const requiredFields = currentStep.element.querySelectorAll('input[data-required], select[data-required], textarea[data-required]');
+  // Find all required fields in the current step (both Webflow and non-Webflow forms)
+  const requiredFields = currentStep.element.querySelectorAll('input[required], input[data-required], select[required], select[data-required], textarea[required], textarea[data-required]');
   
   if (requiredFields.length === 0) {
     logVerbose('✅ [MultiStep] No required fields in step, validation passed');
@@ -633,7 +633,7 @@ function validateCurrentStep(currentStep: StepElement): boolean {
     logVerbose(`🚫 [MultiStep] Validation failed - ${requiredFields.length} required fields with errors`);
     
     // Auto-focus the FIRST EMPTY required field (not just any field)
-    const firstEmptyField = currentStep.element.querySelector('input[data-required]:invalid, input[data-required][value=""], select[data-required][value=""], textarea[data-required][value=""]') as HTMLElement;
+    const firstEmptyField = currentStep.element.querySelector('input[required]:invalid, input[data-required]:invalid, input[required][value=""], input[data-required][value=""], select[required][value=""], select[data-required][value=""], textarea[required][value=""], textarea[data-required][value=""]') as HTMLElement;
     
     if (!firstEmptyField) {
       // Fallback: find first empty required field manually

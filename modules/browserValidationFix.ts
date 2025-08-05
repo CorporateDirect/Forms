@@ -1,17 +1,17 @@
 /**
  * Browser Validation Fix Module
- * Disables HTML5 browser validation conflicts and converts required → data-required
+ * Webflow-aware validation fix that preserves required attributes for Webflow integration
  */
 
 import { logVerbose } from './utils.js';
 
 /**
- * Disable browser validation conflicts
+ * Disable browser validation conflicts with Webflow-aware approach
  */
 export function initBrowserValidationFix(root: Document | Element = document): { formsFixed: number; inputsFixed: number; conflictsEliminated: boolean } {
-  logVerbose('Initializing browser validation fix');
+  logVerbose('Initializing Webflow-aware browser validation fix');
 
-  // 1. Add novalidate to all forms
+  // 1. Add novalidate to all forms to prevent browser validation
   const forms = root.querySelectorAll('form');
   let formsFixed = 0;
   
@@ -23,7 +23,7 @@ export function initBrowserValidationFix(root: Document | Element = document): {
     }
   });
 
-  // 2. Convert required attributes to data-required
+  // 2. Handle required attributes based on form type
   const requiredInputs = root.querySelectorAll('input[required], select[required], textarea[required]');
   let inputsFixed = 0;
   
@@ -32,12 +32,22 @@ export function initBrowserValidationFix(root: Document | Element = document): {
                       input.getAttribute('data-step-field-name') || 
                       'unnamed';
     
-    // Store original required state in data attribute for our validation
-    input.setAttribute('data-required', 'true');
-    input.removeAttribute('required');
-    inputsFixed++;
+    // Check if this input is in a Webflow multistep form
+    const isWebflowForm = input.closest('form[data-form="multistep"]') !== null;
     
-    logVerbose(`Fixed validation conflict: ${fieldName} (required → data-required)`);
+    if (isWebflowForm) {
+      // For Webflow forms: Keep required attribute, add data-required as backup
+      input.setAttribute('data-required', 'true');
+      // Keep the required attribute for Webflow integration
+      logVerbose(`Webflow form detected - keeping required attribute: ${fieldName}`);
+    } else {
+      // For non-Webflow forms: Convert required to data-required
+      input.setAttribute('data-required', 'true');
+      input.removeAttribute('required');
+      logVerbose(`Non-Webflow form - converted required → data-required: ${fieldName}`);
+    }
+    
+    inputsFixed++;
   });
 
   // 3. Clear any existing browser validation messages
@@ -48,7 +58,7 @@ export function initBrowserValidationFix(root: Document | Element = document): {
     }
   });
 
-  logVerbose(`Browser validation fix complete: ${formsFixed} forms, ${inputsFixed} inputs fixed`);
+  logVerbose(`Webflow-aware validation fix complete: ${formsFixed} forms, ${inputsFixed} inputs processed`);
   
   return {
     formsFixed,

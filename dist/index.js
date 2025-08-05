@@ -22,6 +22,7 @@ import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, getErrorState } from './modules/errors.js';
 import { initBrowserValidationFix } from './modules/browserValidationFix.js';
+import { initWebflowIntegration, getWebflowIntegrationStatus } from './modules/webflowIntegration.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
 // Skip functionality now integrated into multiStep.js
 /**
@@ -81,7 +82,9 @@ class FormLibrary {
             if (multistepForms.length > 0 || stepElements.length > 0) {
                 initMultiStep(root); // Includes integrated skip functionality
             }
-            // 6. Initialize summary functionality (listens to field changes)
+            // 6. Initialize Webflow integration (hooks into Webflow's validation system)
+            initWebflowIntegration();
+            // 7. Initialize summary functionality (listens to field changes)
             initSummary(root);
             this.initialized = true;
             logVerbose('FormLibrary initialization complete');
@@ -135,6 +138,7 @@ class FormLibrary {
             multiStep: { note: "Simplified linear navigation - debug info removed" },
             validation: getValidationState(),
             errors: getErrorState(),
+            webflowIntegration: getWebflowIntegrationStatus(),
             summary: getSummaryState(),
             // skip functionality integrated into multiStep
         };
