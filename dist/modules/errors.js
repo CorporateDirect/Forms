@@ -176,26 +176,12 @@ export function showError(fieldName, message) {
         if (!config.customMessage || message) {
             errorElement.textContent = errorMessage;
         }
-        // V1.7.3 ROBUST FIX: Find error element in multiple possible locations
+        // V1.8.0 CLEAN FIX: Find error element within form field wrapper
         const visibleStep = document.querySelector('.step_wrapper[style*="flex"]');
-        const fieldInput = visibleStep?.querySelector(`input[name="${config.element.getAttribute('name')}"]`);
-        let currentStepErrorElement = null;
-        if (fieldInput) {
-            // Try same parent first
-            currentStepErrorElement = fieldInput.parentElement?.querySelector('.form_error-message[data-form="required"]');
-            // Try grandparent if not found in parent
-            if (!currentStepErrorElement) {
-                currentStepErrorElement = fieldInput.parentElement?.parentElement?.querySelector('.form_error-message[data-form="required"]');
-            }
-            // Try sibling if not found in parent or grandparent
-            if (!currentStepErrorElement) {
-                currentStepErrorElement = fieldInput.parentElement?.nextElementSibling?.querySelector?.('.form_error-message[data-form="required"]');
-            }
-            // Fallback: try any .form_error-message with data-form="required" near the field
-            if (!currentStepErrorElement) {
-                currentStepErrorElement = fieldInput.closest('.form-field_wrapper, .multi-form_input-field, .form_input-phone-wrapper')?.querySelector('.form_error-message[data-form="required"]');
-            }
-        }
+        const fieldInput = visibleStep?.querySelector(`input[name="${config.element.getAttribute('name')}"]`) || config.element;
+        // Find error element by traversing up to .form-field_wrapper and searching within it
+        const formFieldWrapper = fieldInput.closest('.form-field_wrapper');
+        const currentStepErrorElement = formFieldWrapper?.querySelector('.form_error-message[data-form="required"]');
         const actualErrorElement = (currentStepErrorElement || errorElement);
         // V1.7.0 WEBFLOW HARMONY: Follow Webflow's official error display pattern
         // Simple, elegant approach that works WITH Webflow's system
