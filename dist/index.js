@@ -12,7 +12,7 @@ import { clearQueryCache } from './modules/utils.js';
 import { FormState } from './modules/formState.js';
 // Add version logging to verify which script is loading
 console.log('🚀 [FormLib] === SCRIPT VERSION CHECK ===');
-console.log('📦 [FormLib] Script Version: v1.7.2 CURRENT STEP ELEMENT FIX');
+console.log('📦 [FormLib] Script Version: v1.7.3 ROBUST ELEMENT LOOKUP');
 console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
 console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 // Import all modules  

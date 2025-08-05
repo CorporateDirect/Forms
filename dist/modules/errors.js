@@ -176,10 +176,26 @@ export function showError(fieldName, message) {
         if (!config.customMessage || message) {
             errorElement.textContent = errorMessage;
         }
-        // V1.7.2 BUG FIX: Find error element in current visible step for this specific field
+        // V1.7.3 ROBUST FIX: Find error element in multiple possible locations
         const visibleStep = document.querySelector('.step_wrapper[style*="flex"]');
         const fieldInput = visibleStep?.querySelector(`input[name="${config.element.getAttribute('name')}"]`);
-        const currentStepErrorElement = fieldInput?.parentElement?.querySelector('.form_error-message[data-form="required"]');
+        let currentStepErrorElement = null;
+        if (fieldInput) {
+            // Try same parent first
+            currentStepErrorElement = fieldInput.parentElement?.querySelector('.form_error-message[data-form="required"]');
+            // Try grandparent if not found in parent
+            if (!currentStepErrorElement) {
+                currentStepErrorElement = fieldInput.parentElement?.parentElement?.querySelector('.form_error-message[data-form="required"]');
+            }
+            // Try sibling if not found in parent or grandparent
+            if (!currentStepErrorElement) {
+                currentStepErrorElement = fieldInput.parentElement?.nextElementSibling?.querySelector?.('.form_error-message[data-form="required"]');
+            }
+            // Fallback: try any .form_error-message with data-form="required" near the field
+            if (!currentStepErrorElement) {
+                currentStepErrorElement = fieldInput.closest('.form-field_wrapper, .multi-form_input-field, .form_input-phone-wrapper')?.querySelector('.form_error-message[data-form="required"]');
+            }
+        }
         const actualErrorElement = (currentStepErrorElement || errorElement);
         // V1.7.0 WEBFLOW HARMONY: Follow Webflow's official error display pattern
         // Simple, elegant approach that works WITH Webflow's system
@@ -202,7 +218,8 @@ export function showError(fieldName, message) {
             elementVisible: actualErrorElement.offsetParent !== null,
             hasActiveClass: actualErrorElement.classList.contains(CSS_CLASSES.ACTIVE_ERROR),
             hasInlineStyles: true,
-            usingCurrentStepElement: !!currentStepErrorElement
+            usingCurrentStepElement: !!currentStepErrorElement,
+            elementLookupSuccess: currentStepErrorElement ? 'found in current step' : 'using cached element'
         });
     }
     // Scroll to field if it's not visible
