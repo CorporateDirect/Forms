@@ -131,11 +131,13 @@ export function showFieldError(fieldName: string, message?: string): void {
   
   const { fieldElement, errorElement } = config;
   
-  // Add .active-error to .form_input for red border
+  // Add .active-error to .form_input for red border (Webflow handles styling)
   addClass(fieldElement, 'active-error');
   
-  // Add .active-error to .form_error-message for visibility
+  // Add .active-error to .form_error-message for visibility (Webflow handles styling)
   addClass(errorElement, 'active-error');
+  
+  // Let Webflow handle the styling - don't inject custom CSS
   
   // Optionally update the error message text
   if (message && errorElement.textContent !== message) {
