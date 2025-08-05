@@ -25,21 +25,62 @@ function injectErrorCSS() {
       transition: all 0.2s ease-in-out;
     }
 
-    /* Webflow-compatible error message display - Maximum CSS specificity */
+    /* NUCLEAR CSS: Override ALL possible hiding techniques */
     .form_error-message.active-error,
     .form-field_wrapper .form_error-message.active-error,
     div.form_error-message.active-error,
     .w-form .form_error-message.active-error {
+      /* Basic display overrides */
       display: block !important;
       visibility: visible !important;
       opacity: 1 !important;
+      
+      /* Size and positioning overrides */
       height: auto !important;
+      min-height: 1em !important;
       max-height: none !important;
+      width: auto !important;
+      min-width: 1px !important;
+      max-width: none !important;
+      
+      /* Positioning overrides */
+      position: relative !important;
+      top: auto !important;
+      left: auto !important;
+      right: auto !important;
+      bottom: auto !important;
+      
+      /* Transform overrides */
+      transform: none !important;
+      translate: none !important;
+      
+      /* Clipping overrides */
+      clip: auto !important;
+      clip-path: none !important;
+      
+      /* Overflow overrides */
       overflow: visible !important;
+      overflow-x: visible !important;
+      overflow-y: visible !important;
+      
+      /* Z-index to ensure visibility */
+      z-index: 9999 !important;
+      
+      /* Font and spacing */
       color: #e74c3c !important;
       font-size: 0.875rem !important;
       margin-top: 0.25rem !important;
+      margin-bottom: 0.25rem !important;
+      padding: 0.25rem 0 !important;
       line-height: 1.4 !important;
+      
+      /* Remove any potential hiding styles */
+      text-indent: 0 !important;
+      border: none !important;
+      outline: none !important;
+      background: transparent !important;
+      
+      /* Animation */
       animation: errorAppear 0.2s ease-out;
     }
 
