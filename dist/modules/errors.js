@@ -178,7 +178,8 @@ export function showError(fieldName, message) {
         }
         // V1.7.0 WEBFLOW HARMONY: Follow Webflow's official error display pattern
         // Simple, elegant approach that works WITH Webflow's system
-        errorElement.style.display = 'block';
+        // Use !important to override Webflow's CSS specificity
+        errorElement.style.setProperty('display', 'block', 'important');
         // Optional: Add basic styling that doesn't conflict with Webflow
         if (!errorElement.style.color) {
             errorElement.style.color = '#e74c3c';
@@ -217,7 +218,8 @@ export function clearError(fieldName) {
     if (config.errorElement) {
         config.errorElement.textContent = '';
         // V1.7.0 WEBFLOW HARMONY: Simple, clean error clearing
-        config.errorElement.style.display = 'none';
+        // Use !important to ensure proper hiding
+        config.errorElement.style.setProperty('display', 'none', 'important');
         removeClass(config.errorElement, CSS_CLASSES.ACTIVE_ERROR);
     }
 }
