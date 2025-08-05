@@ -14,6 +14,7 @@ import {
   isVisible
 } from './utils.js';
 import { showError, clearError } from './errors.js';
+import { showFieldError, clearFieldError } from './webflowNativeErrors.js';
 import { formEvents } from './events.js';
 
 interface ValidationRule {
@@ -293,7 +294,11 @@ export function validateField(fieldName: string): boolean {
     if (!isValid) {
       fieldValidation.isValid = false;
       fieldValidation.errorMessage = message || 'Invalid field';
-      showError(fieldName, fieldValidation.errorMessage);
+      
+      // Use both error systems for maximum compatibility
+      showError(fieldName, fieldValidation.errorMessage);           // Legacy system
+      showFieldError(fieldName, fieldValidation.errorMessage);      // New Webflow-native system
+      
       updateFieldVisualState(input, false, fieldValidation.errorMessage);
       return false;
     }
@@ -301,7 +306,11 @@ export function validateField(fieldName: string): boolean {
 
   // All rules passed
   fieldValidation.isValid = true;
-  clearError(fieldName);
+  
+  // Clear errors in both systems
+  clearError(fieldName);          // Legacy system
+  clearFieldError(fieldName);     // New Webflow-native system
+  
   updateFieldVisualState(input, true);
   return true;
 }
