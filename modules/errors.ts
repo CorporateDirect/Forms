@@ -47,17 +47,25 @@ function injectErrorCSS(): void {
       transition: all 0.2s ease-in-out;
     }
 
-    /* Webflow-compatible error message display */
-    .form_error-message.active-error {
-      display: block;
-      color: #e74c3c;
-      font-size: 0.875rem;
-      margin-top: 0.25rem;
-      line-height: 1.4;
+    /* Webflow-compatible error message display - Maximum CSS specificity */
+    .form_error-message.active-error,
+    .form-field_wrapper .form_error-message.active-error,
+    div.form_error-message.active-error,
+    .w-form .form_error-message.active-error {
+      display: block !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+      color: #e74c3c !important;
+      font-size: 0.875rem !important;
+      margin-top: 0.25rem !important;
+      line-height: 1.4 !important;
       animation: errorAppear 0.2s ease-out;
     }
 
-    /* Webflow-compatible error field styling */
+    /* Webflow-compatible error field styling - Legacy system */
     input.error-field,
     select.error-field,
     textarea.error-field,
@@ -66,6 +74,17 @@ function injectErrorCSS(): void {
       box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
       background-color: rgba(231, 76, 60, 0.02);
       transition: all 0.2s ease-in-out;
+    }
+    
+    /* Webflow-native error field styling - New .active-error pattern */
+    input.active-error,
+    select.active-error,
+    textarea.active-error,
+    .form_input.active-error {
+      border: 2px solid #e74c3c !important;
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
+      background-color: rgba(231, 76, 60, 0.02) !important;
+      transition: all 0.2s ease-in-out !important;
     }
 
     input.error-field:focus,
