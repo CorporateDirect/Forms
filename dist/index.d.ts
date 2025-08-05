@@ -11,6 +11,7 @@ import { initMultiStep, goToStep, goToStepById } from './modules/multiStep.js';
 import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/multiStep-clean.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors } from './modules/errors.js';
+import { initializeWebflowErrorHandling, showFieldError, clearFieldError, validateCurrentStep, clearAllErrors as clearAllWebflowErrors, hasFieldError, getFieldsWithErrors as getWebflowFieldsWithErrors } from './modules/webflowNativeErrors.js';
 import { initBrowserValidationFix } from './modules/browserValidationFix.js';
 import { initSummary, updateSummary, clearSummary } from './modules/summary.js';
 /**
@@ -71,5 +72,5 @@ declare class FormLibrary {
 }
 declare const FormLib: FormLibrary;
 export default FormLib;
-export { FormState, initMultiStep, goToStep, goToStepById, initMultiStepClean, goToStepByIdClean, getCleanState, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, initBrowserValidationFix, initSummary, updateSummary, clearSummary };
+export { FormState, initMultiStep, goToStep, goToStepById, initMultiStepClean, goToStepByIdClean, getCleanState, initValidation, validateField, validateStep, validateAllVisibleFields, initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, initializeWebflowErrorHandling, showFieldError, clearFieldError, validateCurrentStep, clearAllWebflowErrors, hasFieldError, getWebflowFieldsWithErrors, initBrowserValidationFix, initSummary, updateSummary, clearSummary };
 //# sourceMappingURL=index.d.ts.map

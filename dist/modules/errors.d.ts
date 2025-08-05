@@ -1,5 +1,6 @@
 /**
- * Error handling and display module
+ * Error handling and display module - Legacy System
+ * Note: v1.9.0 introduces webflowNativeErrors.ts for Webflow-native error handling
  */
 /**
  * Initialize error handling

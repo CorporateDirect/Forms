@@ -1,13 +1,13 @@
 /**
- * Error handling and display module
+ * Error handling and display module - Legacy System
+ * Note: v1.9.0 introduces webflowNativeErrors.ts for Webflow-native error handling
  */
+
+import { logVerbose, addClass, removeClass } from './utils.js';
 
 import { CSS_CLASSES, SELECTORS } from '../config.js';
 import { 
-  logVerbose, 
-  getAttrValue, 
-  addClass,
-  removeClass
+  getAttrValue
 } from './utils.js';
 import { formEvents } from './events.js';
 

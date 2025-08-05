@@ -24,6 +24,7 @@ import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/
 // import { initMultiStepDiagnostic, goToStepByIdDiagnostic, getDiagnosticState } from './modules/multiStep-diagnostic.js';
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, getErrorState } from './modules/errors.js';
+import { initializeWebflowErrorHandling, showFieldError, clearFieldError, validateCurrentStep, clearAllErrors as clearAllWebflowErrors, hasFieldError, getFieldsWithErrors as getWebflowFieldsWithErrors } from './modules/webflowNativeErrors.js';
 import { initBrowserValidationFix } from './modules/browserValidationFix.js';
 import { initWebflowIntegration, getWebflowIntegrationStatus } from './modules/webflowIntegration.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
@@ -91,6 +92,9 @@ class FormLibrary {
       
       // 3. Initialize error handling (used by validation)
       initErrors(root);
+      
+      // 3.1. Initialize Webflow-native error handling (v1.9.0)
+      initializeWebflowErrorHandling();
 
       // 4. Initialize validation (used by multi-step navigation)
       initValidation(root);
@@ -190,9 +194,20 @@ class FormLibrary {
     }
 
     logVerbose('Validating entire form');
-    const isValid = validateAllVisibleFields();
     
-    logVerbose('Form validation result', { isValid });
+    // Use both validation systems
+    const legacyIsValid = validateAllVisibleFields();
+    const webflowValidation = validateCurrentStep();
+    
+    const isValid = legacyIsValid && webflowValidation.isValid;
+    
+    logVerbose('Form validation result', { 
+      legacyValidation: legacyIsValid,
+      webflowValidation: webflowValidation.isValid,
+      overallValid: isValid,
+      webflowErrors: webflowValidation.errors
+    });
+    
     return isValid;
   }
 
@@ -318,6 +333,15 @@ export {
   showErrors,
   hasError,
   getFieldsWithErrors,
+  
+  // Webflow Native Errors (v1.9.0)
+  initializeWebflowErrorHandling,
+  showFieldError,
+  clearFieldError,
+  validateCurrentStep,
+  clearAllWebflowErrors,
+  hasFieldError,
+  getWebflowFieldsWithErrors,
   
   // Browser Validation Fix
   initBrowserValidationFix,
