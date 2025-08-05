@@ -41,75 +41,40 @@ function injectErrorCSS(): void {
   }
 
   const css = `
-    /* Form Library Error Message Styles - Auto-injected v1.5.10 - Nuclear CSS Override */
+    /* Form Library Error Message Styles - Webflow Harmony v1.8.3 */
     .form_error-message {
-      display: none !important;
-      opacity: 0 !important;
-      visibility: hidden !important;
-      transition: all 0.2s ease-in-out !important;
+      display: none;
+      transition: all 0.2s ease-in-out;
     }
 
-    /* Ultra-aggressive CSS overrides for Webflow */
-    .form_error-message.active-error,
-    div.form_error-message.active-error,
-    .form-field_wrapper .form_error-message.active-error,
-    .w-form .form_error-message.active-error {
-      display: block !important;
-      opacity: 1 !important;
-      visibility: visible !important;
-      color: #e74c3c !important;
-      font-size: 0.875rem !important;
-      margin-top: 0.25rem !important;
-      line-height: 1.4 !important;
-      animation: errorAppear 0.2s ease-out !important;
-      height: auto !important;
-      max-height: none !important;
-      overflow: visible !important;
-      position: relative !important;
-      z-index: 1000 !important;
-      /* Nuclear-level Webflow overrides */
-      width: auto !important;
-      min-height: 1rem !important;
-      padding: 0.25rem 0 !important;
-      margin-bottom: 0.25rem !important;
-      background: transparent !important;
-      border: none !important;
-      box-shadow: none !important;
-      transform: none !important;
-      clip: auto !important;
-      clip-path: none !important;
-      white-space: normal !important;
-      font-weight: 400 !important;
-      text-transform: none !important;
-      letter-spacing: normal !important;
-      text-align: left !important;
-      left: auto !important;
-      right: auto !important;
-      top: auto !important;
-      bottom: auto !important;
-      float: none !important;
-      clear: none !important;
-      content: normal !important;
+    /* Webflow-compatible error message display */
+    .form_error-message.active-error {
+      display: block;
+      color: #e74c3c;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      line-height: 1.4;
+      animation: errorAppear 0.2s ease-out;
     }
 
-    /* Error field styling - Enhanced red borders */
+    /* Webflow-compatible error field styling */
     input.error-field,
     select.error-field,
     textarea.error-field,
     .form_input.error-field {
-      border: 2px solid #e74c3c !important;
-      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
-      background-color: rgba(231, 76, 60, 0.02) !important;
-      transition: all 0.2s ease-in-out !important;
+      border: 2px solid #e74c3c;
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+      background-color: rgba(231, 76, 60, 0.02);
+      transition: all 0.2s ease-in-out;
     }
 
     input.error-field:focus,
     select.error-field:focus,
     textarea.error-field:focus,
     .form_input.error-field:focus {
-      border-color: #c0392b !important;
-      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2) !important;
-      outline: none !important;
+      border-color: #c0392b;
+      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.2);
+      outline: none;
     }
 
     .form-field_wrapper.error-field {
@@ -118,12 +83,12 @@ function injectErrorCSS(): void {
 
     @keyframes errorAppear {
       from {
-        opacity: 0 !important;
-        transform: translateY(-5px) !important;
+        opacity: 0;
+        transform: translateY(-5px);
       }
       to {
-        opacity: 1 !important;
-        transform: translateY(0) !important;
+        opacity: 1;
+        transform: translateY(0);
       }
     }
   `;
@@ -227,21 +192,24 @@ export function showError(fieldName: string, message?: string): void {
     
     const actualErrorElement = (currentStepErrorElement || errorElement) as HTMLElement;
     
-    // V1.7.0 WEBFLOW HARMONY: Follow Webflow's official error display pattern
-    // Simple, elegant approach that works WITH Webflow's system
-    // Use !important to override Webflow's CSS specificity
-    actualErrorElement.style.setProperty('display', 'block', 'important');
+    // V1.8.3 WEBFLOW HARMONY: Work with Webflow's natural flow
+    // Simple, elegant approach that follows Webflow's patterns
     
-    // Optional: Add basic styling that doesn't conflict with Webflow
-    if (!actualErrorElement.style.color) {
-      actualErrorElement.style.color = '#e74c3c';
-    }
-    if (!actualErrorElement.style.fontSize) {
-      actualErrorElement.style.fontSize = '0.875rem';
-    }
-    if (!actualErrorElement.style.marginTop) {
-      actualErrorElement.style.marginTop = '0.25rem';
-    }
+    // Strategy 1: Use Webflow's standard display approach
+    actualErrorElement.style.display = 'block';
+    
+    // Strategy 2: Add Webflow-compatible error styling
+    actualErrorElement.style.color = '#e74c3c';
+    actualErrorElement.style.fontSize = '0.875rem';
+    actualErrorElement.style.marginTop = '0.25rem';
+    actualErrorElement.style.lineHeight = '1.4';
+    
+    // Strategy 3: Remove any hiding attributes that might exist
+    actualErrorElement.removeAttribute('hidden');
+    
+    // Strategy 4: Add accessibility and visual state
+    actualErrorElement.setAttribute('aria-live', 'polite');
+    actualErrorElement.setAttribute('role', 'alert');
     
     // Still add the class for any additional styling
     addClass(actualErrorElement, CSS_CLASSES.ACTIVE_ERROR);
