@@ -174,25 +174,49 @@ export function showError(fieldName, message) {
         if (!config.customMessage || message) {
             errorElement.textContent = errorMessage;
         }
-        // WEBFLOW FIX: Use aggressive inline styles with !important to override any CSS rules
-        errorElement.style.setProperty('display', 'block', 'important');
-        errorElement.style.setProperty('visibility', 'visible', 'important');
-        errorElement.style.setProperty('opacity', '1', 'important');
-        errorElement.style.setProperty('color', '#e74c3c', 'important');
-        errorElement.style.setProperty('fontSize', '0.875rem', 'important');
-        errorElement.style.setProperty('marginTop', '0.25rem', 'important');
-        errorElement.style.setProperty('lineHeight', '1.4', 'important');
-        // Additional aggressive overrides to force visibility
-        errorElement.style.setProperty('position', 'relative', 'important');
-        errorElement.style.setProperty('width', 'auto', 'important');
-        errorElement.style.setProperty('height', 'auto', 'important');
-        errorElement.style.setProperty('maxWidth', 'none', 'important');
-        errorElement.style.setProperty('maxHeight', 'none', 'important');
-        errorElement.style.setProperty('minWidth', '0', 'important');
-        errorElement.style.setProperty('minHeight', '0', 'important');
-        errorElement.style.setProperty('overflow', 'visible', 'important');
-        errorElement.style.setProperty('clip', 'auto', 'important');
-        errorElement.style.setProperty('clipPath', 'none', 'important');
+        // WEBFLOW FIX: Use persistent aggressive inline styles to override any CSS rules
+        const applyErrorStyles = () => {
+            errorElement.style.setProperty('display', 'block', 'important');
+            errorElement.style.setProperty('visibility', 'visible', 'important');
+            errorElement.style.setProperty('opacity', '1', 'important');
+            errorElement.style.setProperty('color', '#e74c3c', 'important');
+            errorElement.style.setProperty('fontSize', '0.875rem', 'important');
+            errorElement.style.setProperty('marginTop', '0.25rem', 'important');
+            errorElement.style.setProperty('lineHeight', '1.4', 'important');
+            // Additional aggressive overrides to force visibility
+            errorElement.style.setProperty('position', 'relative', 'important');
+            errorElement.style.setProperty('width', 'auto', 'important');
+            errorElement.style.setProperty('height', 'auto', 'important');
+            errorElement.style.setProperty('maxWidth', 'none', 'important');
+            errorElement.style.setProperty('maxHeight', 'none', 'important');
+            errorElement.style.setProperty('minWidth', '0', 'important');
+            errorElement.style.setProperty('minHeight', '0', 'important');
+            errorElement.style.setProperty('overflow', 'visible', 'important');
+            errorElement.style.setProperty('clip', 'auto', 'important');
+            errorElement.style.setProperty('clipPath', 'none', 'important');
+        };
+        // Apply styles immediately
+        applyErrorStyles();
+        // PERSISTENT FIX: Reapply styles after a delay to overcome conflicts
+        setTimeout(applyErrorStyles, 50);
+        setTimeout(applyErrorStyles, 200);
+        setTimeout(applyErrorStyles, 500);
+        // Store reference for persistent monitoring
+        if (!errorElement.hasAttribute('data-persistent-override')) {
+            errorElement.setAttribute('data-persistent-override', 'true');
+            // Set up interval to keep styles applied (defensive approach)
+            const persistentInterval = setInterval(() => {
+                if (!document.contains(errorElement) || !errorElement.classList.contains(CSS_CLASSES.ACTIVE_ERROR)) {
+                    clearInterval(persistentInterval);
+                    return;
+                }
+                // Only reapply if styles have been overridden
+                const computed = window.getComputedStyle(errorElement);
+                if (computed.display === 'none' || computed.visibility === 'hidden' || computed.opacity === '0') {
+                    applyErrorStyles();
+                }
+            }, 100); // Check every 100ms
+        }
         // Still add the class for any additional styling
         addClass(errorElement, CSS_CLASSES.ACTIVE_ERROR);
         config.errorElement = errorElement;
@@ -229,6 +253,8 @@ export function clearError(fieldName) {
         stylesToRemove.forEach(property => {
             config.errorElement.style.removeProperty(property);
         });
+        // Remove persistent override attribute to stop monitoring
+        config.errorElement.removeAttribute('data-persistent-override');
         // Then set display to none to ensure it's hidden
         config.errorElement.style.setProperty('display', 'none', 'important');
         removeClass(config.errorElement, CSS_CLASSES.ACTIVE_ERROR);
