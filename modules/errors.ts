@@ -214,12 +214,21 @@ export function showError(fieldName: string, message?: string): void {
       errorElement.textContent = errorMessage;
     }
     
-    // WEBFLOW-FRIENDLY: Apply basic styling to work with Webflow's system
-    errorElement.style.display = 'block';
-    errorElement.style.color = '#e74c3c';
-    errorElement.style.fontSize = '0.875rem';
-    errorElement.style.marginTop = '0.25rem';
-    errorElement.style.lineHeight = '1.4';
+    // HYBRID APPROACH: Work with Webflow validation timing, but use strong CSS for visibility
+    // Apply aggressive styles only for error display (not fighting Webflow's validation system)
+    errorElement.style.setProperty('display', 'block', 'important');
+    errorElement.style.setProperty('visibility', 'visible', 'important');
+    errorElement.style.setProperty('opacity', '1', 'important');
+    errorElement.style.setProperty('color', '#e74c3c', 'important');
+    errorElement.style.setProperty('fontSize', '0.875rem', 'important');
+    errorElement.style.setProperty('marginTop', '0.25rem', 'important');
+    errorElement.style.setProperty('lineHeight', '1.4', 'important');
+    
+    // Additional overrides to ensure visibility
+    errorElement.style.setProperty('position', 'relative', 'important');
+    errorElement.style.setProperty('width', 'auto', 'important');
+    errorElement.style.setProperty('height', 'auto', 'important');
+    errorElement.style.setProperty('overflow', 'visible', 'important');
     
     // Still add the class for any additional styling
     addClass(errorElement, CSS_CLASSES.ACTIVE_ERROR);
@@ -255,12 +264,18 @@ export function clearError(fieldName: string): void {
   if (config.errorElement) {
     config.errorElement.textContent = '';
     
-    // WEBFLOW-FRIENDLY: Simple style clearing
-    config.errorElement.style.display = 'none';
-    config.errorElement.style.removeProperty('color');
-    config.errorElement.style.removeProperty('fontSize');
-    config.errorElement.style.removeProperty('marginTop');
-    config.errorElement.style.removeProperty('lineHeight');
+    // HYBRID APPROACH: Clear all aggressive error styles
+    const stylesToClear = [
+      'display', 'visibility', 'opacity', 'color', 'fontSize', 'marginTop', 
+      'lineHeight', 'position', 'width', 'height', 'overflow'
+    ];
+    
+    stylesToClear.forEach(property => {
+      config.errorElement!.style.removeProperty(property);
+    });
+    
+    // Set display to none to ensure it's hidden
+    config.errorElement.style.setProperty('display', 'none', 'important');
     
     removeClass(config.errorElement, CSS_CLASSES.ACTIVE_ERROR);
   }
