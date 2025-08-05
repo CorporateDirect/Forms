@@ -12,7 +12,7 @@
 }
 
 /* Show error messages when active */
-.form_error-message.active-error {
+.form_error-message.error-active {
   display: block !important;
   opacity: 1;
   visibility: visible;

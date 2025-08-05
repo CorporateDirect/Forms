@@ -214,14 +214,26 @@ export function showError(fieldName: string, message?: string): void {
       errorElement.textContent = errorMessage;
     }
     
-    // WEBFLOW FIX: Use inline styles for guaranteed visibility instead of CSS classes
-    errorElement.style.display = 'block';
-    errorElement.style.visibility = 'visible';
-    errorElement.style.opacity = '1';
-    errorElement.style.color = '#e74c3c';
-    errorElement.style.fontSize = '0.875rem';
-    errorElement.style.marginTop = '0.25rem';
-    errorElement.style.lineHeight = '1.4';
+    // WEBFLOW FIX: Use aggressive inline styles with !important to override any CSS rules
+    errorElement.style.setProperty('display', 'block', 'important');
+    errorElement.style.setProperty('visibility', 'visible', 'important');
+    errorElement.style.setProperty('opacity', '1', 'important');
+    errorElement.style.setProperty('color', '#e74c3c', 'important');
+    errorElement.style.setProperty('fontSize', '0.875rem', 'important');
+    errorElement.style.setProperty('marginTop', '0.25rem', 'important');
+    errorElement.style.setProperty('lineHeight', '1.4', 'important');
+    
+    // Additional aggressive overrides to force visibility
+    errorElement.style.setProperty('position', 'relative', 'important');
+    errorElement.style.setProperty('width', 'auto', 'important');
+    errorElement.style.setProperty('height', 'auto', 'important');
+    errorElement.style.setProperty('maxWidth', 'none', 'important');
+    errorElement.style.setProperty('maxHeight', 'none', 'important');
+    errorElement.style.setProperty('minWidth', '0', 'important');
+    errorElement.style.setProperty('minHeight', '0', 'important');
+    errorElement.style.setProperty('overflow', 'visible', 'important');
+    errorElement.style.setProperty('clip', 'auto', 'important');
+    errorElement.style.setProperty('clipPath', 'none', 'important');
     
     // Still add the class for any additional styling
     addClass(errorElement, CSS_CLASSES.ACTIVE_ERROR);
@@ -257,10 +269,19 @@ export function clearError(fieldName: string): void {
   if (config.errorElement) {
     config.errorElement.textContent = '';
     
-    // WEBFLOW FIX: Clear inline styles to hide the element
-    config.errorElement.style.display = 'none';
-    config.errorElement.style.visibility = 'hidden';
-    config.errorElement.style.opacity = '0';
+    // WEBFLOW FIX: Clear all aggressive inline styles by removing the properties
+    const stylesToRemove = [
+      'display', 'visibility', 'opacity', 'color', 'fontSize', 'marginTop', 'lineHeight',
+      'position', 'width', 'height', 'maxWidth', 'maxHeight', 'minWidth', 'minHeight',
+      'overflow', 'clip', 'clipPath'
+    ];
+    
+    stylesToRemove.forEach(property => {
+      config.errorElement!.style.removeProperty(property);
+    });
+    
+    // Then set display to none to ensure it's hidden
+    config.errorElement.style.setProperty('display', 'none', 'important');
     
     removeClass(config.errorElement, CSS_CLASSES.ACTIVE_ERROR);
   }
