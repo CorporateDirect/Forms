@@ -14,7 +14,7 @@ import { FormState } from './modules/formState.js';
 
 // Add version logging to verify which script is loading
 console.log('🚀 [FormLib] === SCRIPT VERSION CHECK ===');
-console.log('📦 [FormLib] Script Version: v1.6.2 NUCLEAR CSS OVERRIDE');
+console.log('📦 [FormLib] Script Version: v1.7.0 WEBFLOW HARMONY EDITION');
 console.log('🔗 [FormLib] Expected URL: @9705259 or newer');
 console.log('⏰ [FormLib] Load Time:', new Date().toISOString());
 

@@ -1,6 +1,6 @@
 /**
- * Webflow Integration Module - v1.6.1 
- * FIXED: Comprehensive solution for GET forms, jQuery dependency, timing, and event interception
+ * Webflow Integration Module - v1.7.0 HARMONY EDITION
+ * Following Webflow's official patterns and best practices for elegant integration
  */
 
 import { logVerbose } from './utils.js';
@@ -19,9 +19,8 @@ export function initWebflowIntegration(): void {
     return;
   }
 
-  // Use both logVerbose AND console.log to ensure visibility
-  logVerbose('[WebflowIntegration] 🚀 Starting comprehensive integration (v1.6.2)');
-  console.log('[WebflowIntegration] 🚀 Starting comprehensive integration (v1.6.2) - NUCLEAR CSS EDITION');
+  logVerbose('[WebflowIntegration] 🤝 Starting Webflow Harmony Integration (v1.7.0)');
+  console.log('[WebflowIntegration] 🤝 Webflow Harmony Edition - Working WITH Webflow, not against it');
 
   // Find all forms with data-form="multistep" 
   const multistepForms = document.querySelectorAll('form[data-form="multistep"]');
@@ -51,35 +50,168 @@ export function initWebflowIntegration(): void {
     });
   });
 
-  // Set up multiple integration strategies for maximum compatibility
-  console.log('[WebflowIntegration] 🔧 Setting up comprehensive hooks...');
-  setupComprehensiveHooks();
+  // Set up Webflow's official integration pattern
+  console.log('[WebflowIntegration] 🤝 Setting up Webflow.push() integration...');
+  setupWebflowNativeIntegration();
   
   webflowInitialized = true;
   logVerbose('[WebflowIntegration] ✅ Integration initialized successfully');
 }
 
 /**
- * Setup comprehensive hooks for maximum compatibility (v1.6.1)
+ * Setup Webflow's native integration using their official patterns (v1.7.0 HARMONY)
  */
-function setupComprehensiveHooks(): void {
-  logVerbose('[WebflowIntegration] 🔧 Setting up comprehensive hooks');
+function setupWebflowNativeIntegration(): void {
+  logVerbose('[WebflowIntegration] 🤝 Setting up Webflow native integration');
 
-  // Strategy 1: Direct event listeners (immediate)
-  setupDirectEventListeners();
-
-  // Strategy 2: Webflow.push() integration (if available)
-  setupWebflowPushIntegration();
-
-  // Strategy 3: Submit button interception (GET form workaround)
-  setupSubmitButtonInterception();
-
-  // Strategy 4: Final safety net with form action override
-  setupFormActionOverride();
+  // Check if Webflow object exists
+  if (typeof (window as any).Webflow === 'undefined') {
+    logVerbose('[WebflowIntegration] ⚠️ Webflow object not found, setting up fallback');
+    setupFallbackIntegration();
+    return;
+  }
+  
+  // Use Webflow's official integration pattern
+  (window as any).Webflow.push(function () {
+    console.log('[WebflowIntegration] 🎯 Webflow.push() executed - Setting up form validation');
+    
+    // Set up validation for each multistep form using Webflow's pattern
+    formElements.forEach((formElement, formId) => {
+      setupWebflowFormValidation(formElement, formId);
+    });
+  });
+  
+  logVerbose('[WebflowIntegration] ✅ Webflow.push() integration activated');
 }
 
 /**
- * Strategy 1: Direct native JavaScript event listeners
+ * Setup Webflow-compatible form validation following their official patterns
+ */
+function setupWebflowFormValidation(form: HTMLFormElement, formId: string): void {
+  logVerbose(`[WebflowIntegration] 🎯 Setting up validation for form: ${formId}`);
+  
+  // Use jQuery's submit event (Webflow's preferred method)
+  if (typeof (window as any).$ !== 'undefined') {
+    (window as any).$(form).submit(function() {
+      console.log(`[WebflowIntegration] 📝 Form submit intercepted: ${formId}`);
+      
+      // Perform validation using our harmonious approach
+      const isValid = performWebflowCompatibleValidation(form);
+      
+      if (!isValid) {
+        logVerbose(`[WebflowIntegration] ❌ Validation failed for: ${formId}`);
+        return false; // Prevent submission (Webflow's standard pattern)
+      }
+      
+      logVerbose(`[WebflowIntegration] ✅ Validation passed for: ${formId}`);
+      return true; // Allow submission
+    });
+  } else {
+    // Fallback to native events if jQuery not available
+    form.addEventListener('submit', function(event) {
+      if (!performWebflowCompatibleValidation(form)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
+  }
+}
+
+/**
+ * Fallback integration for when Webflow object is not available
+ */
+function setupFallbackIntegration(): void {
+  logVerbose('[WebflowIntegration] 🔄 Setting up fallback integration');
+  
+  formElements.forEach((formElement, formId) => {
+    formElement.addEventListener('submit', function(event) {
+      if (!performWebflowCompatibleValidation(formElement)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    });
+  });
+}
+
+/**
+ * Perform Webflow-compatible validation following their simple patterns
+ * This replaces the complex validation logic with Webflow's elegant approach
+ */
+function performWebflowCompatibleValidation(form: HTMLFormElement): boolean {
+  logVerbose('[WebflowIntegration] 🔍 Performing Webflow-compatible validation');
+  
+  // Clear existing errors first
+  clearFormErrors(form);
+  
+  // Find required fields using Webflow's native 'required' attribute
+  const requiredFields = form.querySelectorAll('input[required], select[required], textarea[required]');
+  
+  let isValid = true;
+  let firstErrorField: HTMLElement | null = null;
+  
+  requiredFields.forEach((field) => {
+    const input = field as HTMLInputElement;
+    const fieldName = input.name || input.id || 'unnamed-field';
+    
+    // Simple empty check (Webflow's approach)
+    if (!input.value || input.value.trim() === '') {
+      isValid = false;
+      
+      // Show error using our harmonious error display
+      showWebflowCompatibleError(input, 'This field is required');
+      
+      // Track first error for focus
+      if (!firstErrorField) {
+        firstErrorField = input;
+      }
+    }
+  });
+  
+  // Focus first error field (Webflow pattern)
+  if (firstErrorField) {
+    (firstErrorField as HTMLInputElement).focus();
+    logVerbose('[WebflowIntegration] 🎯 Focused first error field');
+  }
+  
+  logVerbose(`[WebflowIntegration] Validation result: ${isValid ? 'PASSED' : 'FAILED'}`);
+  return isValid;
+}
+
+/**
+ * Show error message using Webflow-compatible approach
+ */
+function showWebflowCompatibleError(input: HTMLInputElement, message: string): void {
+  const fieldName = input.name || input.id;
+  
+  if (fieldName) {
+    // Use our harmonious showError function
+    showError(fieldName, message);
+    
+    // Add Webflow-style error class to input
+    input.classList.add('input-error');
+    input.classList.remove('input-success');
+  }
+}
+
+/**
+ * Clear all form errors using simple approach
+ */
+function clearFormErrors(form: HTMLFormElement): void {
+  // Remove error classes from inputs
+  const inputs = form.querySelectorAll('input.input-error, select.input-error, textarea.input-error');
+  inputs.forEach(input => {
+    input.classList.remove('input-error');
+  });
+  
+  // Clear error messages using our error system
+  const errorElements = form.querySelectorAll('.form_error-message[data-form="required"]');
+  errorElements.forEach(element => {
+    (element as HTMLElement).style.display = 'none';
+  });
+}
+
+/**
+ * Strategy 1: Direct native JavaScript event listeners (LEGACY - will be removed)
  */
 function setupDirectEventListeners(): void {
   logVerbose('[WebflowIntegration] 📡 Strategy 1: Setting up direct event listeners');

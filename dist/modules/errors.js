@@ -7,85 +7,8 @@ import { formEvents } from './events.js';
 let errorConfigs = new Map();
 let errorStates = new Map();
 let cssInjected = false;
-// Nuclear CSS injection for maximum override power
-let nuclearStyleSheet = null;
-const nuclearSelectors = new Set();
-/**
- * NUCLEAR CSS INJECTION - Maximum specificity override
- * Creates a style tag with extremely high specificity to override any Webflow CSS
- */
-function injectNuclearCSS(errorElement) {
-    // Generate unique selector for this specific element
-    const elementId = errorElement.id || `nuclear-error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    if (!errorElement.id) {
-        errorElement.id = elementId;
-    }
-    const nuclearSelector = `#${elementId}.${CSS_CLASSES.ACTIVE_ERROR}`;
-    // Only inject once per selector
-    if (nuclearSelectors.has(nuclearSelector)) {
-        return;
-    }
-    nuclearSelectors.add(nuclearSelector);
-    // Create nuclear stylesheet if it doesn't exist
-    if (!nuclearStyleSheet) {
-        nuclearStyleSheet = document.createElement('style');
-        nuclearStyleSheet.id = 'formlib-nuclear-css-override';
-        nuclearStyleSheet.setAttribute('data-source', 'FormLib Nuclear CSS v1.6.2');
-        document.head.appendChild(nuclearStyleSheet);
-        logVerbose('[NuclearCSS] 💥 Nuclear stylesheet created');
-    }
-    // Generate nuclear CSS with maximum specificity
-    const nuclearCSS = `
-/* FormLib Nuclear CSS Override v1.6.2 - MAXIMUM SPECIFICITY */
-${nuclearSelector} {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  color: #e74c3c !important;
-  font-size: 0.875rem !important;
-  margin-top: 0.25rem !important;
-  line-height: 1.4 !important;
-  position: relative !important;
-  width: auto !important;
-  height: auto !important;
-  overflow: visible !important;
-  max-width: none !important;
-  max-height: none !important;
-  min-width: auto !important;
-  min-height: auto !important;
-  transform: none !important;
-  clip: auto !important;
-  clip-path: none !important;
-  z-index: 9999 !important;
-}
-
-/* Additional nuclear overrides for stubborn Webflow styles */
-html body div form div ${nuclearSelector} {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Extra specificity boost */
-html body div form div div ${nuclearSelector} {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Maximum specificity nuclear option */
-html body div.w-form form div div ${nuclearSelector} {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-`;
-    // Append to existing stylesheet
-    nuclearStyleSheet.innerHTML += nuclearCSS;
-    logVerbose(`[NuclearCSS] 💥 Injected nuclear styles for: ${nuclearSelector}`);
-    // Force a reflow to ensure styles are applied
-    void errorElement.offsetHeight;
-}
+// V1.7.0 WEBFLOW HARMONY: Removed nuclear CSS approach
+// Now following Webflow's official patterns for elegant integration
 /**
  * Inject required CSS for error visibility
  */
@@ -253,21 +176,19 @@ export function showError(fieldName, message) {
         if (!config.customMessage || message) {
             errorElement.textContent = errorMessage;
         }
-        // V1.6.2 NUCLEAR CSS OVERRIDE: Inject stylesheet with maximum specificity
-        injectNuclearCSS(errorElement);
-        // Also apply inline styles as fallback
-        errorElement.style.setProperty('display', 'block', 'important');
-        errorElement.style.setProperty('visibility', 'visible', 'important');
-        errorElement.style.setProperty('opacity', '1', 'important');
-        errorElement.style.setProperty('color', '#e74c3c', 'important');
-        errorElement.style.setProperty('fontSize', '0.875rem', 'important');
-        errorElement.style.setProperty('marginTop', '0.25rem', 'important');
-        errorElement.style.setProperty('lineHeight', '1.4', 'important');
-        // Additional overrides to ensure visibility
-        errorElement.style.setProperty('position', 'relative', 'important');
-        errorElement.style.setProperty('width', 'auto', 'important');
-        errorElement.style.setProperty('height', 'auto', 'important');
-        errorElement.style.setProperty('overflow', 'visible', 'important');
+        // V1.7.0 WEBFLOW HARMONY: Follow Webflow's official error display pattern
+        // Simple, elegant approach that works WITH Webflow's system
+        errorElement.style.display = 'block';
+        // Optional: Add basic styling that doesn't conflict with Webflow
+        if (!errorElement.style.color) {
+            errorElement.style.color = '#e74c3c';
+        }
+        if (!errorElement.style.fontSize) {
+            errorElement.style.fontSize = '0.875rem';
+        }
+        if (!errorElement.style.marginTop) {
+            errorElement.style.marginTop = '0.25rem';
+        }
         // Still add the class for any additional styling
         addClass(errorElement, CSS_CLASSES.ACTIVE_ERROR);
         config.errorElement = errorElement;
@@ -295,16 +216,8 @@ export function clearError(fieldName) {
     // Hide error message element
     if (config.errorElement) {
         config.errorElement.textContent = '';
-        // HYBRID APPROACH: Clear all aggressive error styles
-        const stylesToClear = [
-            'display', 'visibility', 'opacity', 'color', 'fontSize', 'marginTop',
-            'lineHeight', 'position', 'width', 'height', 'overflow'
-        ];
-        stylesToClear.forEach(property => {
-            config.errorElement.style.removeProperty(property);
-        });
-        // Set display to none to ensure it's hidden
-        config.errorElement.style.setProperty('display', 'none', 'important');
+        // V1.7.0 WEBFLOW HARMONY: Simple, clean error clearing
+        config.errorElement.style.display = 'none';
         removeClass(config.errorElement, CSS_CLASSES.ACTIVE_ERROR);
     }
 }
