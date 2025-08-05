@@ -25,6 +25,7 @@ import { initMultiStepClean, goToStepByIdClean, getCleanState } from './modules/
 import { initValidation, validateField, validateStep, validateAllVisibleFields, getValidationState } from './modules/validation.js';
 import { initErrors, showError, clearError, clearAllErrors, showErrors, hasError, getFieldsWithErrors, getErrorState } from './modules/errors.js';
 import { initializeWebflowErrorHandling, showFieldError, clearFieldError, validateCurrentStep, clearAllErrors as clearAllWebflowErrors, hasFieldError, getFieldsWithErrors as getWebflowFieldsWithErrors } from './modules/webflowNativeErrors.js';
+import { initializeCustomErrorSystem, showCustomError, clearCustomError, clearAllCustomErrors, getFieldsWithCustomErrors } from './modules/webflowListenerErrors.js';
 import { initBrowserValidationFix } from './modules/browserValidationFix.js';
 import { initWebflowIntegration, getWebflowIntegrationStatus } from './modules/webflowIntegration.js';
 import { initSummary, updateSummary, clearSummary, getSummaryState } from './modules/summary.js';
@@ -95,6 +96,9 @@ class FormLibrary {
       
       // 3.1. Initialize Webflow-native error handling (v1.9.0)
       initializeWebflowErrorHandling();
+      
+      // 3.2. Initialize custom error system that listens to Webflow (v1.9.5)
+      initializeCustomErrorSystem();
 
       // 4. Initialize validation (used by multi-step navigation)
       initValidation(root);
@@ -342,6 +346,13 @@ export {
   clearAllWebflowErrors,
   hasFieldError,
   getWebflowFieldsWithErrors,
+  
+  // Custom Error System - Webflow Listener (v1.9.5)
+  initializeCustomErrorSystem,
+  showCustomError,
+  clearCustomError,
+  clearAllCustomErrors,
+  getFieldsWithCustomErrors,
   
   // Browser Validation Fix
   initBrowserValidationFix,
