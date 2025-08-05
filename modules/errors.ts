@@ -29,6 +29,96 @@ interface ErrorState {
 let errorStates: Map<string, ErrorState> = new Map();
 let cssInjected = false;
 
+// Nuclear CSS injection for maximum override power
+let nuclearStyleSheet: HTMLStyleElement | null = null;
+const nuclearSelectors = new Set<string>();
+
+/**
+ * NUCLEAR CSS INJECTION - Maximum specificity override
+ * Creates a style tag with extremely high specificity to override any Webflow CSS
+ */
+function injectNuclearCSS(errorElement: HTMLElement): void {
+  // Generate unique selector for this specific element
+  const elementId = errorElement.id || `nuclear-error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  if (!errorElement.id) {
+    errorElement.id = elementId;
+  }
+  
+  const nuclearSelector = `#${elementId}.${CSS_CLASSES.ACTIVE_ERROR}`;
+  
+  // Only inject once per selector
+  if (nuclearSelectors.has(nuclearSelector)) {
+    return;
+  }
+  
+  nuclearSelectors.add(nuclearSelector);
+  
+  // Create nuclear stylesheet if it doesn't exist
+  if (!nuclearStyleSheet) {
+    nuclearStyleSheet = document.createElement('style');
+    nuclearStyleSheet.id = 'formlib-nuclear-css-override';
+    nuclearStyleSheet.setAttribute('data-source', 'FormLib Nuclear CSS v1.6.2');
+    document.head.appendChild(nuclearStyleSheet);
+    
+    logVerbose('[NuclearCSS] 💥 Nuclear stylesheet created');
+  }
+  
+  // Generate nuclear CSS with maximum specificity
+  const nuclearCSS = `
+/* FormLib Nuclear CSS Override v1.6.2 - MAXIMUM SPECIFICITY */
+${nuclearSelector} {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #e74c3c !important;
+  font-size: 0.875rem !important;
+  margin-top: 0.25rem !important;
+  line-height: 1.4 !important;
+  position: relative !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-width: auto !important;
+  min-height: auto !important;
+  transform: none !important;
+  clip: auto !important;
+  clip-path: none !important;
+  z-index: 9999 !important;
+}
+
+/* Additional nuclear overrides for stubborn Webflow styles */
+html body div form div ${nuclearSelector} {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Extra specificity boost */
+html body div form div div ${nuclearSelector} {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Maximum specificity nuclear option */
+html body div.w-form form div div ${nuclearSelector} {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+`;
+  
+  // Append to existing stylesheet
+  nuclearStyleSheet.innerHTML += nuclearCSS;
+  
+  logVerbose(`[NuclearCSS] 💥 Injected nuclear styles for: ${nuclearSelector}`);
+  
+  // Force a reflow to ensure styles are applied
+  void errorElement.offsetHeight;
+}
+
 /**
  * Inject required CSS for error visibility
  */
@@ -214,8 +304,10 @@ export function showError(fieldName: string, message?: string): void {
       errorElement.textContent = errorMessage;
     }
     
-    // HYBRID APPROACH: Work with Webflow validation timing, but use strong CSS for visibility
-    // Apply aggressive styles only for error display (not fighting Webflow's validation system)
+    // V1.6.2 NUCLEAR CSS OVERRIDE: Inject stylesheet with maximum specificity
+    injectNuclearCSS(errorElement);
+    
+    // Also apply inline styles as fallback
     errorElement.style.setProperty('display', 'block', 'important');
     errorElement.style.setProperty('visibility', 'visible', 'important');
     errorElement.style.setProperty('opacity', '1', 'important');

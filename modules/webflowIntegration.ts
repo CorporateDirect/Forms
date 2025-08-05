@@ -19,15 +19,19 @@ export function initWebflowIntegration(): void {
     return;
   }
 
-  logVerbose('[WebflowIntegration] 🚀 Starting comprehensive integration (v1.6.1)');
+  // Use both logVerbose AND console.log to ensure visibility
+  logVerbose('[WebflowIntegration] 🚀 Starting comprehensive integration (v1.6.2)');
+  console.log('[WebflowIntegration] 🚀 Starting comprehensive integration (v1.6.2) - NUCLEAR CSS EDITION');
 
   // Find all forms with data-form="multistep" 
   const multistepForms = document.querySelectorAll('form[data-form="multistep"]');
   
   logVerbose(`[WebflowIntegration] Found ${multistepForms.length} multistep forms`);
+  console.log(`[WebflowIntegration] Found ${multistepForms.length} multistep forms`);
   
   if (multistepForms.length === 0) {
     logVerbose('[WebflowIntegration] ⚠️ No multistep forms found for integration');
+    console.log('[WebflowIntegration] ⚠️ No multistep forms found for integration');
     return;
   }
 
@@ -48,6 +52,7 @@ export function initWebflowIntegration(): void {
   });
 
   // Set up multiple integration strategies for maximum compatibility
+  console.log('[WebflowIntegration] 🔧 Setting up comprehensive hooks...');
   setupComprehensiveHooks();
   
   webflowInitialized = true;
