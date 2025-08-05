@@ -176,27 +176,33 @@ export function showError(fieldName, message) {
         if (!config.customMessage || message) {
             errorElement.textContent = errorMessage;
         }
+        // V1.7.2 BUG FIX: Find error element in current visible step for this specific field
+        const visibleStep = document.querySelector('.step_wrapper[style*="flex"]');
+        const fieldInput = visibleStep?.querySelector(`input[name="${config.element.getAttribute('name')}"]`);
+        const currentStepErrorElement = fieldInput?.parentElement?.querySelector('.form_error-message[data-form="required"]');
+        const actualErrorElement = (currentStepErrorElement || errorElement);
         // V1.7.0 WEBFLOW HARMONY: Follow Webflow's official error display pattern
         // Simple, elegant approach that works WITH Webflow's system
         // Use !important to override Webflow's CSS specificity
-        errorElement.style.setProperty('display', 'block', 'important');
+        actualErrorElement.style.setProperty('display', 'block', 'important');
         // Optional: Add basic styling that doesn't conflict with Webflow
-        if (!errorElement.style.color) {
-            errorElement.style.color = '#e74c3c';
+        if (!actualErrorElement.style.color) {
+            actualErrorElement.style.color = '#e74c3c';
         }
-        if (!errorElement.style.fontSize) {
-            errorElement.style.fontSize = '0.875rem';
+        if (!actualErrorElement.style.fontSize) {
+            actualErrorElement.style.fontSize = '0.875rem';
         }
-        if (!errorElement.style.marginTop) {
-            errorElement.style.marginTop = '0.25rem';
+        if (!actualErrorElement.style.marginTop) {
+            actualErrorElement.style.marginTop = '0.25rem';
         }
         // Still add the class for any additional styling
-        addClass(errorElement, CSS_CLASSES.ACTIVE_ERROR);
-        config.errorElement = errorElement;
+        addClass(actualErrorElement, CSS_CLASSES.ACTIVE_ERROR);
+        config.errorElement = actualErrorElement;
         logVerbose(`Error element activated for field: ${fieldName}`, {
-            elementVisible: errorElement.offsetParent !== null,
-            hasActiveClass: errorElement.classList.contains(CSS_CLASSES.ACTIVE_ERROR),
-            hasInlineStyles: true
+            elementVisible: actualErrorElement.offsetParent !== null,
+            hasActiveClass: actualErrorElement.classList.contains(CSS_CLASSES.ACTIVE_ERROR),
+            hasInlineStyles: true,
+            usingCurrentStepElement: !!currentStepErrorElement
         });
     }
     // Scroll to field if it's not visible
